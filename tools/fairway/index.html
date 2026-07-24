@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>FAIRWAY — find, preview & book a tee time</title>
+<meta name="description" content="Find golf courses near you — real course data, previews, tee-time booking, and directions in one place." />
+<meta name="theme-color" content="#0a1410" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f1b14'/%3E%3Cpath d='M12 24V7l9 3.5-9 3.5' fill='none' stroke='%237ee2a8' stroke-width='2.4' stroke-linejoin='round' stroke-linecap='round'/%3E%3Ccircle cx='12' cy='25' r='1.6' fill='%23f0c33c'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     FAIRWAY v2 — course finder + preview + tee-time booking.
+     Its own identity (course-green, night-fairway) — deliberately
+     NOT the Fusion dark language; a golf tool should feel like turf,
+     dusk and flags. Real data (OSM), generated hole art, a full
+     booking FLOW (clearly a demo — no live inventory/payment).
+     z: 0 bg · 2 content · 60 sheet-scrim · 61 sheet
+     ============================================================ */
+  :root{
+    --bg:#0a1410; --bg2:#0e1b14; --panel:#101c15; --card:#12211a; --card2:#16281f;
+    --line:#22342a; --edge:rgba(126,226,168,.32); --edge-hi:rgba(126,226,168,.12);
+    --green:#5ec88a; --green-bright:#7ee2a8; --deep:#2e7d54; --flag:#f0c33c; --sky:#8fd0ff;
+    --sand:#d8c48a; --water:#49a7d8;
+    --text:#eaf3ed; --muted:#93a89c; --faint:#5f7568;
+    --good:#5ec88a; --warn:#e0a63c; --hot:#ff6b5c;
+    --font:'Inter',-apple-system,system-ui,sans-serif;
+    --display:'Chakra Petch','Inter',system-ui,sans-serif;
+    --mono:'JetBrains Mono','Consolas',ui-monospace,monospace;
+    --ease:cubic-bezier(.16,1,.3,1);
+    --spring:cubic-bezier(.34,1.4,.64,1);
+    --shadow:0 24px 60px -30px rgba(0,0,0,.85);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{touch-action:manipulation}
+  body{background:radial-gradient(1100px 620px at 50% -10%,#12241a,var(--bg) 62%);color:var(--text);
+    font-family:var(--font);min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;
+    background-image:radial-gradient(circle at 50% 15%,rgba(126,226,168,.05),transparent 60%)}
+  :focus-visible{outline:2.5px solid var(--green);outline-offset:2px;border-radius:8px}
+
+  .wrap{position:relative;z-index:2;max-width:1120px;margin:0 auto;padding:22px 16px calc(70px + env(safe-area-inset-bottom))}
+
+  /* header + tabs */
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:11px}
+  .brand .logo{width:38px;height:38px;border-radius:11px;flex:none;display:grid;place-items:center;
+    background:linear-gradient(150deg,var(--green-bright),var(--deep));box-shadow:0 8px 22px -8px rgba(94,200,138,.6),0 1px 0 rgba(255,255,255,.3) inset}
+  .brand .logo svg{width:21px;height:21px;stroke:#06130c;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .brand h1{font-family:var(--display);font-size:22px;font-weight:700;letter-spacing:.1em;color:var(--green-bright)}
+  .brand .sub{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+  .tabs{display:flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px}
+  .tab{font:inherit;font-size:13px;font-weight:600;color:var(--muted);background:none;border:none;cursor:pointer;
+    padding:9px 16px;min-height:44px;border-radius:999px;display:inline-flex;align-items:center;gap:7px;transition:color .25s var(--ease),background .25s var(--ease)}
+  .tab .n{font-size:10px;background:var(--card2);color:var(--muted);border-radius:999px;padding:1px 7px;font-variant-numeric:tabular-nums}
+  .tab[aria-selected="true"]{color:#06130c;background:linear-gradient(180deg,var(--green-bright),var(--green))}
+  .tab[aria-selected="true"] .n{background:rgba(6,19,12,.25);color:#06130c}
+
+  /* controls */
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:11px}
+  .controls input[type=text]{flex:1;min-width:190px;background:var(--bg2);border:1px solid var(--line);border-radius:11px;color:var(--text);padding:0 14px;min-height:46px;font-family:inherit;font-size:15px;transition:border-color .2s,box-shadow .2s}
+  .controls input:focus{outline:none;border-color:var(--edge);box-shadow:0 0 0 3px rgba(94,200,138,.1)}
+  select{background:var(--bg2);color:var(--text);border:1px solid var(--line);border-radius:11px;padding:0 12px;min-height:46px;font-family:inherit;font-size:14px;cursor:pointer}
+  .btn{font-family:var(--display);background:linear-gradient(180deg,var(--green-bright),var(--green));color:#06130c;border:none;font-weight:700;letter-spacing:.06em;padding:0 20px;min-height:46px;border-radius:11px;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;
+    box-shadow:0 0 0 1px rgba(255,255,255,.14) inset,0 8px 22px -8px rgba(94,200,138,.5);transition:transform .18s var(--spring),box-shadow .3s}
+  .btn:hover{transform:translateY(-1.5px)} .btn:active{transform:translateY(0)} .btn:disabled{opacity:.5;cursor:default;transform:none}
+  .btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .btn.ghost{background:var(--card2);color:var(--text);border:1px solid var(--line);box-shadow:none}
+  .btn.ghost:hover{border-color:var(--edge)}
+  .btn.big{width:100%;justify-content:center;min-height:54px;font-size:15px}
+  .statusline{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--muted);margin-top:10px;min-height:18px;display:flex;align-items:center;gap:8px}
+  .spin{width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--green);border-radius:50%;animation:sp .7s linear infinite;flex:none}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .err{color:#ff9a9b}
+
+  /* filter/sort bar */
+  .filterbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px}
+  .chip{font:inherit;font-size:12px;font-weight:500;color:var(--muted);background:var(--card);border:1px solid var(--line);
+    border-radius:999px;padding:8px 13px;min-height:44px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s var(--ease)}
+  .chip[aria-pressed="true"]{color:var(--green-bright);border-color:var(--edge);background:var(--card2)}
+  .chip svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+  .filterbar .sortsel{margin-left:auto}
+
+  .cols{display:grid;grid-template-columns:340px 1fr;gap:16px;margin-top:16px;align-items:start}
+  @media(max-width:880px){.cols{grid-template-columns:1fr}.radarbox{order:2}}
+  .radarbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;position:sticky;top:14px}
+  @media(max-width:880px){.radarbox{position:static}}
+  .radarbox canvas{width:100%;aspect-ratio:1;display:block}
+  .radarbox .cap{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);text-align:center;margin-top:8px}
+
+  /* course cards — now with a generated hero thumbnail */
+  .list{display:flex;flex-direction:column;gap:12px}
+  .course{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:16px;
+    overflow:hidden;transition:border-color .2s,box-shadow .3s,transform .3s var(--ease);cursor:pointer;display:flex;flex-direction:column}
+  .course:hover,.course.hot{border-color:var(--edge);box-shadow:0 14px 32px -18px rgba(0,0,0,.6);transform:translateY(-2px)}
+  .chero{position:relative;height:112px;overflow:hidden;background:#0c1711}
+  .chero canvas{width:100%;height:100%;display:block}
+  .chero .price{position:absolute;right:9px;bottom:9px;font-family:var(--mono);font-weight:600;font-size:13px;color:#06130c;
+    background:linear-gradient(180deg,var(--green-bright),var(--green));border-radius:8px;padding:4px 9px;box-shadow:0 4px 12px -4px rgba(0,0,0,.5)}
+  .chero .price small{font-size:9px;opacity:.75}
+  .chero .rate{position:absolute;left:9px;top:9px;font-family:var(--mono);font-weight:600;font-size:11px;color:#0c1711;
+    background:rgba(240,195,60,.95);border-radius:7px;padding:3px 8px;display:inline-flex;align-items:center;gap:3px}
+  .chero .rate svg{width:11px;height:11px;fill:#0c1711}
+  .cbody{padding:13px 14px 14px}
+  .crow{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .cname{font-family:var(--display);font-weight:700;font-size:15.5px;letter-spacing:.02em;line-height:1.2}
+  .cdist{font-family:var(--mono);font-size:11px;color:var(--green);white-space:nowrap}
+  .ctags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
+  .tag.gem{color:var(--flag);border-color:rgba(240,195,60,.45)}
+  .tag.open{color:var(--green-bright);border-color:var(--edge)}
+  .cactions{display:flex;gap:8px;margin-top:12px}
+  .cactions .btn{flex:1;justify-content:center;padding:0 12px;min-height:44px;font-size:12.5px}
+  .navrow{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+  .navrow a{display:inline-flex;align-items:center;gap:6px;font-family:var(--display);font-size:11px;letter-spacing:.04em;text-decoration:none;color:var(--text);background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:8px 11px;min-height:44px;cursor:pointer;transition:border-color .2s,color .2s}
+  .navrow a:hover{border-color:var(--edge);color:var(--green-bright)}
+  .navrow svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .fav{background:none;border:1px solid var(--line);border-radius:9px;color:var(--faint);cursor:pointer;
+    display:inline-grid;place-items:center;flex:none;padding:0;font-size:0;min-width:44px;min-height:44px;
+    transition:color .2s,border-color .2s,transform .3s var(--spring)}
+  .fav svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .fav:hover{color:var(--flag);border-color:rgba(240,195,60,.45)}
+  .fav[aria-pressed="true"]{color:var(--flag);border-color:rgba(240,195,60,.6)}
+  .fav[aria-pressed="true"] svg{fill:rgba(240,195,60,.3)}
+  .fav:active{transform:scale(.9)}
+  .empty{border:1.5px dashed var(--line);border-radius:16px;padding:38px 24px;text-align:center;color:var(--faint);font-size:14px;line-height:1.6}
+  .empty b{color:var(--muted);display:block;margin-bottom:4px}
+
+  footer{margin-top:28px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--faint);line-height:1.9}
+  footer a{color:var(--muted)}
+
+  /* view switching */
+  .view{display:none}.view.on{display:block}
+
+  /* ===== detail / booking sheet ===== */
+  .scrim{position:fixed;inset:0;z-index:60;background:rgba(4,10,7,.62);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+    opacity:0;pointer-events:none;transition:opacity .35s var(--ease)}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .sheet{position:fixed;z-index:61;left:50%;top:50%;transform:translate(-50%,-46%) scale(.98);opacity:0;pointer-events:none;
+    width:min(560px,94vw);max-height:90dvh;overflow-y:auto;background:linear-gradient(180deg,var(--bg2),var(--panel));
+    border:1px solid var(--edge);border-radius:22px;box-shadow:var(--shadow);transition:transform .4s var(--ease),opacity .35s var(--ease);
+    -webkit-overflow-scrolling:touch}
+  .sheet.on{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
+  @media(max-width:560px){.sheet{width:100vw;max-height:94dvh;border-radius:22px 22px 0 0;top:auto;bottom:0;transform:translate(-50%,110%)}
+    .sheet.on{transform:translate(-50%,0)}}
+  .shero{position:relative;height:190px;overflow:hidden;border-radius:22px 22px 0 0}
+  .shero canvas{width:100%;height:100%;display:block}
+  .shero .close{position:absolute;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;
+    background:rgba(6,19,12,.6);color:#fff;display:grid;place-items:center;backdrop-filter:blur(6px)}
+  .shero .close svg{width:18px;height:18px;stroke:currentColor;stroke-width:2.4;fill:none;stroke-linecap:round}
+  .shero .htitle{position:absolute;left:16px;bottom:12px;right:16px}
+  .shero .htitle h2{font-family:var(--display);font-size:22px;font-weight:700;letter-spacing:.01em;text-shadow:0 2px 12px rgba(0,0,0,.7)}
+  .shero .htitle .meta{font-family:var(--mono);font-size:11px;color:#dfeee6;margin-top:3px;text-shadow:0 1px 8px rgba(0,0,0,.8);display:flex;gap:10px;flex-wrap:wrap}
+  .sbody{padding:16px 18px 20px}
+  .statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+  .statgrid div{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:10px 6px;text-align:center}
+  .statgrid b{display:block;font-family:var(--display);font-size:17px;font-weight:700;color:var(--green-bright);font-variant-numeric:tabular-nums}
+  .statgrid span{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .amen{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+  .amen .a{font-size:11px;color:var(--muted);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:5px 9px;display:inline-flex;align-items:center;gap:5px}
+  .amen .a svg{width:12px;height:12px;stroke:var(--green);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .seclabel{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--green);margin:4px 0 10px;display:flex;align-items:center;gap:8px}
+  .seclabel::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--edge),transparent)}
+  .datebar{display:flex;gap:7px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px}
+  .datebar button{flex:none;font:inherit;font-size:12px;font-weight:600;color:var(--muted);background:var(--card);border:1px solid var(--line);
+    border-radius:11px;padding:8px 12px;min-height:52px;min-width:58px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;transition:all .2s}
+  .datebar button small{font-size:9px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em}
+  .datebar button[aria-pressed="true"]{color:#06130c;background:linear-gradient(180deg,var(--green-bright),var(--green));border-color:transparent}
+  .datebar button[aria-pressed="true"] small{color:rgba(6,19,12,.7)}
+  .teegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+  .tee{font:inherit;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:9px;cursor:pointer;text-align:center;
+    transition:all .2s var(--ease);min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+  .tee:hover{border-color:var(--edge);transform:translateY(-1px)}
+  .tee .tt{font-family:var(--mono);font-weight:600;font-size:13.5px;font-variant-numeric:tabular-nums}
+  .tee .tp{font-size:12px;color:var(--green-bright);font-weight:700}
+  .tee .ts{font-size:9px;color:var(--faint);letter-spacing:.04em}
+  .tee.twi .tp{color:var(--flag)}
+  .demoline{font-size:10.5px;color:var(--faint);margin-top:12px;line-height:1.5;font-style:italic}
+
+  /* booking step */
+  .bstep{padding:18px}
+  .bstep h3{font-family:var(--display);font-size:19px;font-weight:700;margin-bottom:4px}
+  .bstep .bsub{color:var(--muted);font-size:13px;margin-bottom:16px}
+  .bsummary{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px 15px;margin-bottom:16px}
+  .bsummary .r{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:3px 0}
+  .bsummary .r span:first-child{color:var(--muted)}
+  .bsummary .r b{font-variant-numeric:tabular-nums}
+  .bsummary .tot{border-top:1px solid var(--line);margin-top:6px;padding-top:9px;font-size:15px}
+  .bsummary .tot b{color:var(--green-bright)}
+  .fieldlabel{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:12px 0 6px}
+  .players{display:flex;gap:8px}
+  .players button{flex:1;font:inherit;font-size:15px;font-weight:600;background:var(--card);border:1px solid var(--line);color:var(--text);
+    border-radius:11px;min-height:48px;cursor:pointer;transition:all .2s}
+  .players button[aria-pressed="true"]{color:#06130c;background:linear-gradient(180deg,var(--green-bright),var(--green));border-color:transparent}
+  .bstep input[type=text]{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:11px;color:var(--text);
+    padding:0 14px;min-height:48px;font-family:inherit;font-size:15px}
+  .bstep input:focus{outline:none;border-color:var(--edge);box-shadow:0 0 0 3px rgba(94,200,138,.1)}
+  .demobanner{background:rgba(240,195,60,.1);border:1px solid rgba(240,195,60,.35);border-radius:11px;padding:11px 13px;
+    font-size:12px;color:#f0d68a;line-height:1.5;margin-bottom:16px;display:flex;gap:9px}
+  .demobanner svg{width:16px;height:16px;stroke:var(--flag);fill:none;stroke-width:2;flex:none;margin-top:1px}
+  .confirm{text-align:center;padding:26px 20px}
+  .confirm .ck{width:64px;height:64px;border-radius:50%;margin:0 auto 16px;display:grid;place-items:center;
+    background:linear-gradient(150deg,var(--green-bright),var(--deep));box-shadow:0 12px 30px -10px rgba(94,200,138,.6)}
+  .confirm .ck svg{width:32px;height:32px;stroke:#06130c;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+  .confirm h3{font-family:var(--display);font-size:22px;font-weight:700}
+  .confirm .code{font-family:var(--mono);font-size:15px;letter-spacing:.14em;color:var(--green-bright);background:var(--card);
+    border:1px dashed var(--edge);border-radius:11px;padding:11px;margin:14px 0}
+
+  /* bookings list */
+  .booking{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;gap:13px;align-items:center}
+  .booking .bth{width:56px;height:56px;border-radius:11px;overflow:hidden;flex:none}
+  .booking .bth canvas{width:100%;height:100%;display:block}
+  .booking .bmeta{flex:1;min-width:0}
+  .booking .bmeta b{font-family:var(--display);font-size:14.5px;font-weight:700;display:block}
+  .booking .bmeta span{font-size:12px;color:var(--muted);font-family:var(--mono)}
+  .booking .bcode{font-family:var(--mono);font-size:10px;color:var(--flag);letter-spacing:.06em}
+  .booking .del{border:none;background:none;color:var(--faint);cursor:pointer;min-width:44px;min-height:44px;display:grid;place-items:center}
+  .booking .del:hover{color:var(--hot)} .booking .del svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 21V4l10 4-10 3.8"/><circle cx="9" cy="21" r="1.4" fill="#06130c" stroke="none"/></svg></span>
+      <div><h1>FAIRWAY</h1><div class="sub">Find · Preview · Book a tee time</div></div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-find" aria-selected="true" data-view="find">Find</button>
+      <button class="tab" role="tab" id="tab-saved" aria-selected="false" data-view="saved">Saved <span class="n" id="savedN">0</span></button>
+      <button class="tab" role="tab" id="tab-book" aria-selected="false" data-view="bookings">Bookings <span class="n" id="bookN">0</span></button>
+    </div>
+  </header>
+
+  <!-- FIND -->
+  <section class="view on" id="view-find" role="tabpanel" aria-labelledby="tab-find">
+    <div class="controls">
+      <button class="btn" id="locBtn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg> Near me</button>
+      <input type="text" id="place" placeholder="City, town, or zip" aria-label="Search a place" />
+      <select id="radius" aria-label="Search radius">
+        <option value="15000">15 km</option><option value="30000" selected>30 km</option><option value="60000">60 km</option><option value="100000">100 km</option>
+      </select>
+      <button class="btn ghost" id="searchBtn">Search</button>
+    </div>
+    <div class="statusline" id="status">Tap <b>&nbsp;Near me&nbsp;</b> or search a place — courses appear with previews, tee times and directions.</div>
+
+    <div class="filterbar" id="filterbar" hidden>
+      <button class="chip" data-filter="open" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-9"/></svg> Tee times today</button>
+      <button class="chip" data-filter="public" aria-pressed="false">Public only</button>
+      <button class="chip" data-filter="18" aria-pressed="false">18 holes</button>
+      <button class="chip" data-filter="gem" aria-pressed="false">Hidden gems</button>
+      <select class="sortsel" id="sortsel" aria-label="Sort courses">
+        <option value="dist">Nearest first</option>
+        <option value="price">Cheapest tee time</option>
+        <option value="rating">Highest rated</option>
+      </select>
+    </div>
+
+    <div class="cols">
+      <div class="radarbox"><canvas id="radar"></canvas><div class="cap" id="radarCap">radar idle</div></div>
+      <div class="list" id="list"><div class="empty"><b>No search yet</b>The radar sweeps once you look for courses.</div></div>
+    </div>
+  </section>
+
+  <!-- SAVED -->
+  <section class="view" id="view-saved" role="tabpanel" aria-labelledby="tab-saved">
+    <div class="list" id="savedlist" style="margin-top:16px"></div>
+  </section>
+
+  <!-- BOOKINGS -->
+  <section class="view" id="view-bookings" role="tabpanel" aria-labelledby="tab-book">
+    <div class="list" id="bookinglist" style="margin-top:16px"></div>
+  </section>
+
+  <footer>
+    Course + place data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a> (Overpass + Nominatim, no keys) ·
+    Course previews are generated illustrations · <b style="color:var(--flag)">Tee times &amp; bookings are a demonstration</b> — not live inventory, no payment is taken ·
+    Directions open your installed map app
+  </footer>
+</div>
+
+<!-- detail / booking sheet -->
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div id="sheetInner"></div></div>
+
+<script>
+'use strict';
+/* ================== state + math ================== */
+const state={origin:null,placeName:null,courses:[],radius:30000,busy:false,hot:-1,
+  filters:{open:false,public:false,'18':false,gem:false}, sort:'dist', view:'find',
+  detail:null, dateIdx:0, booking:null};
+const R_EARTH=6371, rad=d=>d*Math.PI/180;
+function distKm(a,b){ const dLat=rad(b.lat-a.lat),dLon=rad(b.lon-a.lon);
+  const h=Math.sin(dLat/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dLon/2)**2;
+  return 2*R_EARTH*Math.asin(Math.sqrt(h)); }
+function bearing(a,b){ const y=Math.sin(rad(b.lon-a.lon))*Math.cos(rad(b.lat));
+  const x=Math.cos(rad(a.lat))*Math.sin(rad(b.lat))-Math.sin(rad(a.lat))*Math.cos(rad(b.lat))*Math.cos(rad(b.lon-a.lon));
+  return (Math.atan2(y,x)*180/Math.PI+360)%360; }
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+/* deterministic per-course generators (float Park-Miller — never negative) */
+function hashId(s){ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
+function rng(seed){ let s=(seed>>>0)||1; return ()=>{ s=(s*48271)%2147483647; return s/2147483647; }; }
+function courseRating(c){ const r=rng(hashId(c.id)+7); return +(3.6+r()*1.3).toFixed(1); }
+function coursePar(c){ const h=+(c.holes)||18; return h>=18?70+Math.round(rng(hashId(c.id)+3)()*4):34+Math.round(rng(hashId(c.id)+3)()*4); }
+function courseLen(c){ const h=+(c.holes)||18; return h>=18?6100+Math.round(rng(hashId(c.id)+5)()*900):3000+Math.round(rng(hashId(c.id)+5)()*500); }
+const AMEN_POOL=[['Driving range','range'],['Pro shop','shop'],['Cart rental','cart'],['Clubhouse & grill','food'],['Putting green','green'],['Club rental','clubs'],['Lessons','lesson']];
+function courseAmenities(c){ const r=rng(hashId(c.id)+11); return AMEN_POOL.filter(()=>r()>.42); }
+/* a tee sheet for a course + day: realistic times/prices/open slots (DEMO — not live) */
+function teeSheet(c,dayOffset){
+  const r=rng(hashId(c.id)+dayOffset*131+41);
+  const eighteen=(+c.holes||18)>=18, weekend=((new Date().getDay()+dayOffset)%7)<2;
+  const out=[];
+  for(let h=6;h<=18;h++){ for(const m of [0,10,20,30,40,50]){
+    if(r()<0.5) continue;
+    const twi=h>=15;
+    let price=(eighteen?42:26)+(weekend?9:0)+(h<8?-5:0)+(twi?-14:0)+Math.round(r()*8);
+    price=Math.max(9,price);
+    out.push({t:`${h}:${String(m).padStart(2,'0')}`, hour:h, min:m, price, twi, slots:1+Math.floor(r()*4)});
+  }}
+  return out;
+}
+function cheapestToday(c){ const s=teeSheet(c,0); return s.length?Math.min(...s.map(t=>t.price)):null; }
+
+/* ================== generated course art (the "photos") ================== */
+function drawCourse(cv,c,scale){
+  const DPR=Math.min(devicePixelRatio||1,2), rect=cv.getBoundingClientRect();
+  const w=Math.max(1,Math.round((rect.width||cv.width||200)*DPR)), h=Math.max(1,Math.round((rect.height||cv.height||120)*DPR));
+  if(cv.width!==w||cv.height!==h){ cv.width=w; cv.height=h; }
+  const x=cv.getContext('2d'); const r=rng(hashId(c.id)+1);
+  // rough (dark turf) gradient
+  const g=x.createLinearGradient(0,0,0,h); g.addColorStop(0,'#1c3a26'); g.addColorStop(1,'#122a1b');
+  x.fillStyle=g; x.fillRect(0,0,w,h);
+  // mown texture
+  x.globalAlpha=.06; x.fillStyle='#000';
+  for(let i=0;i<h;i+=6*DPR){ if((i/(6*DPR))%2) x.fillRect(0,i,w,3*DPR); } x.globalAlpha=1;
+  // fairway: a sweeping lighter-green band
+  const y0=h*(.25+r()*.2), y1=h*(.7+r()*.15), bend=(r()-.5)*w*.4;
+  x.fillStyle='#3f8f57';
+  x.beginPath();
+  x.moveTo(-w*.1,y0); x.quadraticCurveTo(w*.5+bend,h*.5,w*1.1,y1);
+  x.lineTo(w*1.1,y1+h*.22); x.quadraticCurveTo(w*.5+bend,h*.72,-w*.1,y0+h*.22); x.closePath(); x.fill();
+  x.fillStyle='rgba(126,226,168,.18)'; // highlight edge
+  x.beginPath(); x.moveTo(-w*.1,y0); x.quadraticCurveTo(w*.5+bend,h*.5,w*1.1,y1);
+  x.lineTo(w*1.1,y1+h*.05); x.quadraticCurveTo(w*.5+bend,h*.55,-w*.1,y0+h*.05); x.closePath(); x.fill();
+  // water hazard (sometimes)
+  if(r()>.5){ x.fillStyle='#2f7fae'; x.beginPath();
+    const wx=w*(.15+r()*.5), wy=h*(.55+r()*.3), wr=w*(.09+r()*.06);
+    x.ellipse(wx,wy,wr,wr*.6,r(),0,6.3); x.fill();
+    x.strokeStyle='rgba(180,230,255,.4)'; x.lineWidth=DPR; x.stroke(); }
+  // bunkers
+  const nb=1+Math.floor(r()*3);
+  for(let i=0;i<nb;i++){ x.fillStyle='#d8c48a'; x.beginPath();
+    x.ellipse(w*(.2+r()*.6),h*(.3+r()*.5),w*(.05+r()*.05),h*(.06+r()*.05),r()*3,0,6.3); x.fill();
+    x.strokeStyle='rgba(0,0,0,.15)'; x.lineWidth=DPR; x.stroke(); }
+  // green with flag (top-right of the fairway sweep)
+  const gx=w*(.7+r()*.15), gy=y1*.55+h*.12;
+  x.fillStyle='#57c07f'; x.beginPath(); x.ellipse(gx,gy,w*.08,h*.1,0,0,6.3); x.fill();
+  x.strokeStyle='rgba(255,255,255,.25)'; x.lineWidth=DPR; x.stroke();
+  x.strokeStyle='#eef6f0'; x.lineWidth=1.6*DPR; x.beginPath(); x.moveTo(gx,gy); x.lineTo(gx,gy-h*.22); x.stroke();
+  x.fillStyle=(c.gem?'#f0c33c':'#ff5a5c'); x.beginPath(); x.moveTo(gx,gy-h*.22); x.lineTo(gx+w*.05,gy-h*.19); x.lineTo(gx,gy-h*.16); x.closePath(); x.fill();
+  // vignette
+  const vg=x.createRadialGradient(w/2,h/2,h*.3,w/2,h/2,h*.9);
+  vg.addColorStop(0,'transparent'); vg.addColorStop(1,'rgba(0,0,0,.35)'); x.fillStyle=vg; x.fillRect(0,0,w,h);
+}
+
+/* ================== data (real sources, no keys) ================== */
+function setStatus(html,spin){ document.getElementById('status').innerHTML=(spin?'<span class="spin"></span>':'')+html; }
+async function overpass(lat,lon,radius){
+  const q=`[out:json][timeout:25];(node["leisure"="golf_course"](around:${radius},${lat},${lon});way["leisure"="golf_course"](around:${radius},${lat},${lon});relation["leisure"="golf_course"](around:${radius},${lat},${lon}););out center tags;`;
+  const r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'}});
+  if(!r.ok) throw new Error('Overpass HTTP '+r.status);
+  const d=await r.json();
+  return (d.elements||[]).map(e=>{
+    const lat2=e.lat??e.center?.lat, lon2=e.lon??e.center?.lon; if(lat2==null) return null;
+    const t=e.tags||{};
+    return { id:e.type+'/'+e.id, lat:lat2, lon:lon2,
+      name:t.name||'Unnamed course', holes:t.holes||null, access:t.access||null,
+      website:t.website||t['contact:website']||null, phone:t.phone||t['contact:phone']||null,
+      gem:!(t.website||t['contact:website']||t.phone||t['contact:phone']||t.wikipedia) };
+  }).filter(Boolean);
+}
+async function geocode(q){
+  const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q),{headers:{'Accept':'application/json'}});
+  if(!r.ok) throw new Error('Nominatim HTTP '+r.status);
+  const d=await r.json(); if(!d.length) throw new Error('Place not found — try a nearby city or a zip code.');
+  return {lat:+d[0].lat, lon:+d[0].lon, name:d[0].display_name.split(',').slice(0,2).join(',')};
+}
+
+/* ================== search flows ================== */
+async function runSearch(lat,lon,label){
+  if(state.busy) return;
+  state.busy=true; state.origin={lat,lon}; state.placeName=label; state.radius=+document.getElementById('radius').value;
+  setStatus('Scanning for courses within '+(state.radius/1000)+' km of <b>'+esc(label)+'</b>…',true);
+  try{
+    const found=await overpass(lat,lon,state.radius);
+    found.forEach(c=>{ c.km=distKm(state.origin,c); c.deg=bearing(state.origin,c);
+      c.rating=courseRating(c); c.cheap=cheapestToday(c); });
+    found.sort((a,b)=>a.km-b.km);
+    state.courses=found; state.hot=-1;
+    document.getElementById('filterbar').hidden=!found.length;
+    render();
+    const gems=found.filter(c=>c.gem).length;
+    setStatus(found.length
+      ? `<b>${found.length}</b> course${found.length===1?'':'s'} near ${esc(label)} · <b>${gems}</b> hidden gem${gems===1?'':'s'} · tap one to preview & book`
+      : 'No courses in this radius — try a wider one.');
+  }catch(e){ setStatus('<span class="err">'+esc(e.message)+(/Overpass/.test(e.message)?' — the map service may be busy; try again in a few seconds.':'')+'</span>'); }
+  finally{ state.busy=false; }
+}
+function useMyLocation(){
+  if(!navigator.geolocation){ setStatus('<span class="err">This browser has no location access — search a place instead.</span>'); return; }
+  setStatus('Getting your location…',true);
+  navigator.geolocation.getCurrentPosition(
+    p=>runSearch(p.coords.latitude,p.coords.longitude,'you'),
+    e=>setStatus('<span class="err">Location blocked ('+esc(e.message)+') — search a place instead.</span>'),
+    {enableHighAccuracy:true,timeout:12000});
+}
+async function searchPlace(){
+  const q=document.getElementById('place').value.trim(); if(!q) return;
+  setStatus('Finding "'+esc(q)+'"…',true);
+  try{ const p=await geocode(q); runSearch(p.lat,p.lon,p.name); }
+  catch(e){ setStatus('<span class="err">'+esc(e.message)+'</span>'); }
+}
+
+/* ================== nav links ================== */
+function navLinks(c){
+  const ll=c.lat+','+c.lon;
+  return `<div class="navrow">
+    <a href="https://www.google.com/maps/dir/?api=1&destination=${ll}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11a7 7 0 0114 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>Google</a>
+    <a href="https://maps.apple.com/?daddr=${ll}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M4 6l6-2 4 2 6-2v14l-6 2-4-2-6 2z"/><path d="M10 4v14M14 6v14"/></svg>Apple</a>
+    <a href="https://waze.com/ul?ll=${ll}&navigate=yes" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><circle cx="12" cy="11" r="7"/><path d="M9 10h.01M15 10h.01M9.5 13.5c.7.7 1.6 1 2.5 1s1.8-.3 2.5-1"/></svg>Waze</a>
+    <a href="https://www.openstreetmap.org/${c.id}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3.5 12h17M12 3.5c2.7 2.3 4 5.2 4 8.5s-1.3 6.2-4 8.5c-2.7-2.3-4-5.2-4-8.5s1.3-6.2 4-8.5z"/></svg>Info</a>
+  </div>`;
+}
+const starIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.3 1.1 6-5.4-2.9L6.6 19.7l1.1-6L3.2 9.4l6.1-.8z"/></svg>';
+function favBtn(c){ const on=isSaved(c.id);
+  return `<button class="fav" data-save="${esc(c.id)}" aria-pressed="${on}" aria-label="${on?'Remove from':'Add to'} saved">${starIcon}</button>`; }
+
+/* ================== saved (versioned) ================== */
+const SAVE_KEY='fairway.saved.v1';
+function loadSaved(){ try{ const d=JSON.parse(localStorage.getItem(SAVE_KEY)); if(d&&d.v===1&&Array.isArray(d.items)) return d.items; }catch{} return []; }
+function persistSaved(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify({v:1,items:state.saved})); }catch{} }
+state.saved=loadSaved();
+const isSaved=id=>state.saved.some(s=>s.id===id);
+function toggleSave(c){
+  if(isSaved(c.id)) state.saved=state.saved.filter(s=>s.id!==c.id);
+  else state.saved.push({id:c.id,lat:c.lat,lon:c.lon,name:c.name,holes:c.holes||null,access:c.access||null,
+    website:c.website||null,gem:!!c.gem,savedAt:Date.now(),near:state.placeName||null});
+  persistSaved(); refreshCounts(); render(); if(state.view==='saved') renderSaved();
+  document.querySelectorAll(`[data-save="${CSS.escape(c.id)}"]`).forEach(b=>{
+    const on=isSaved(c.id); b.setAttribute('aria-pressed',on); b.setAttribute('aria-label',(on?'Remove from':'Add to')+' saved'); });
+}
+/* ================== bookings (versioned) ================== */
+const BOOK_KEY='fairway.bookings.v1';
+function loadBookings(){ try{ const d=JSON.parse(localStorage.getItem(BOOK_KEY)); if(d&&d.v===1&&Array.isArray(d.items)) return d.items; }catch{} return []; }
+function persistBookings(){ try{ localStorage.setItem(BOOK_KEY,JSON.stringify({v:1,items:state.bookings})); }catch{} }
+state.bookings=loadBookings();
+function refreshCounts(){ document.getElementById('savedN').textContent=state.saved.length;
+  document.getElementById('bookN').textContent=state.bookings.length; }
+
+/* one delegated handler for star buttons (ids like way/123 break inline onclick) */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-save]'); if(!b) return; e.stopPropagation();
+  const id=b.dataset.save; const c=state.courses.find(x=>x.id===id)||state.saved.find(x=>x.id===id); if(c) toggleSave(c);
+},true);
+
+/* ================== render: course list (with filters + sort) ================== */
+function visibleCourses(){
+  let cs=state.courses.slice();
+  const f=state.filters;
+  if(f.public) cs=cs.filter(c=>c.access!=='private');
+  if(f['18']) cs=cs.filter(c=>(+c.holes||0)>=18);
+  if(f.gem) cs=cs.filter(c=>c.gem);
+  if(f.open) cs=cs.filter(c=>teeSheet(c,0).length>0);
+  if(state.sort==='price') cs.sort((a,b)=>(a.cheap??1e9)-(b.cheap??1e9));
+  else if(state.sort==='rating') cs.sort((a,b)=>b.rating-a.rating);
+  else cs.sort((a,b)=>a.km-b.km);
+  return cs;
+}
+function courseCard(c,i){
+  const open=teeSheet(c,0).length>0;
+  return `<div class="course" data-id="${esc(c.id)}">
+    <div class="chero"><canvas data-hero="${esc(c.id)}"></canvas>
+      <span class="rate"><svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.3 1.1 6-5.4-2.9L6.6 19.7l1.1-6L3.2 9.4l6.1-.8z"/></svg>${c.rating.toFixed(1)}</span>
+      ${c.cheap!=null?`<span class="price">$${c.cheap}<small>/round</small></span>`:''}</div>
+    <div class="cbody">
+      <div class="crow"><span class="cname">${esc(c.name)}</span><span class="cdist">${c.km.toFixed(1)} km · ${Math.round(c.deg)}°</span></div>
+      <div class="ctags">
+        ${open?'<span class="tag open">tee times today</span>':''}
+        ${c.gem?'<span class="tag gem">⛳ hidden gem</span>':''}
+        ${c.holes?`<span class="tag">${esc(c.holes)} holes</span>`:'<span class="tag">18 holes</span>'}
+        ${c.access==='private'?'<span class="tag">private</span>':'<span class="tag">public</span>'}
+      </div>
+      <div class="cactions">
+        <button class="btn view-detail" data-id="${esc(c.id)}"><svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg> Preview &amp; book</button>
+        ${favBtn(c)}
+      </div>
+      ${navLinks(c)}
+    </div>
+  </div>`;
+}
+function render(){
+  const list=document.getElementById('list');
+  const cs=visibleCourses();
+  if(!state.courses.length){ list.innerHTML='<div class="empty"><b>No search yet</b>The radar sweeps once you look for courses.</div>'; drawRadar(); return; }
+  if(!cs.length){ list.innerHTML='<div class="empty"><b>No courses match those filters</b>Clear a filter to see more.</div>'; drawRadar(); return; }
+  list.innerHTML=cs.map((c,i)=>courseCard(c,i)).join('');
+  cs.forEach(c=>{ const cv=list.querySelector(`[data-hero="${CSS.escape(c.id)}"]`); if(cv) drawCourse(cv,c); });
+  drawRadar();
+}
+
+/* ================== detail / booking sheet ================== */
+let lastFocus=null;
+function openSheet(html){ document.getElementById('sheetInner').innerHTML=html;
+  document.getElementById('scrim').classList.add('on'); document.getElementById('sheet').classList.add('on');
+  lastFocus=document.activeElement; const first=document.querySelector('#sheet button,#sheet input'); if(first) first.focus();
+  document.body.style.overflow='hidden'; }
+function closeSheet(){ document.getElementById('scrim').classList.remove('on'); document.getElementById('sheet').classList.remove('on');
+  state.detail=null; state.booking=null; document.body.style.overflow=''; if(lastFocus&&lastFocus.focus) lastFocus.focus(); }
+document.getElementById('scrim').addEventListener('click',closeSheet);
+addEventListener('keydown',e=>{ if(e.key==='Escape'&&document.getElementById('sheet').classList.contains('on')) closeSheet(); });
+
+function dateLabel(off){ const d=new Date(); d.setDate(d.getDate()+off);
+  return {dow:off===0?'Today':off===1?'Tmrw':d.toLocaleDateString(undefined,{weekday:'short'}), day:d.getDate()}; }
+function openDetail(c){
+  state.detail=c; state.dateIdx=0;
+  const amen=courseAmenities(c), par=coursePar(c), len=courseLen(c), holes=+c.holes||18;
+  const dates=[0,1,2,3,4,5,6].map(dateLabel);
+  const amIcon='<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-9"/></svg>';
+  openSheet(`
+    <div class="shero"><canvas id="sheetHero"></canvas>
+      <button class="close" id="sheetClose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <div class="htitle"><h2 id="sheetTitle">${esc(c.name)}</h2>
+        <div class="meta"><span>★ ${c.rating.toFixed(1)}</span><span>${c.km.toFixed(1)} km away</span><span>${c.access==='private'?'Private':'Public'}</span></div>
+      </div>
+    </div>
+    <div class="sbody">
+      <div class="statgrid">
+        <div><b>${holes}</b><span>Holes</span></div><div><b>${par}</b><span>Par</span></div>
+        <div><b>${(len).toLocaleString()}</b><span>Yards</span></div><div><b>${c.cheap!=null?'$'+c.cheap:'—'}</b><span>From</span></div>
+      </div>
+      <div class="amen">${amen.map(a=>`<span class="a">${amIcon}${a[0]}</span>`).join('')||'<span class="a">Walk-ups welcome</span>'}</div>
+      <div class="seclabel">Book a tee time</div>
+      <div class="datebar" id="datebar">${dates.map((d,i)=>`<button data-day="${i}" aria-pressed="${i===0}">${d.dow}<small>${d.day}</small></button>`).join('')}</div>
+      <div class="teegrid" id="teegrid"></div>
+      <p class="demoline">Times, prices and availability are generated for this demo — they are not a live tee sheet. Booking reserves nothing and takes no payment.</p>
+      <div style="margin-top:14px">${navLinks(c)}</div>
+    </div>`);
+  document.getElementById('sheetClose').onclick=closeSheet;
+  drawCourse(document.getElementById('sheetHero'),c);
+  document.getElementById('datebar').addEventListener('click',e=>{ const b=e.target.closest('[data-day]'); if(!b) return;
+    state.dateIdx=+b.dataset.day; document.querySelectorAll('#datebar button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+    renderTees(); });
+  renderTees();
+}
+function renderTees(){
+  const c=state.detail, grid=document.getElementById('teegrid'); if(!grid) return;
+  const sheet=teeSheet(c,state.dateIdx);
+  if(!sheet.length){ grid.innerHTML='<div class="empty" style="grid-column:1/-1;padding:22px"><b>No open times that day</b>Try another date.</div>'; return; }
+  grid.innerHTML=sheet.map((t,i)=>`<button class="tee${t.twi?' twi':''}" data-tee="${i}">
+    <span class="tt">${fmtTime(t.hour,t.min)}</span><span class="tp">$${t.price}</span><span class="ts">${t.slots} left${t.twi?' · twilight':''}</span></button>`).join('');
+  grid.querySelectorAll('[data-tee]').forEach(b=>b.onclick=()=>startBooking(sheet[+b.dataset.tee]));
+}
+function fmtTime(h,m){ const ap=h<12?'am':'pm'; let hh=h%12; if(hh===0) hh=12; return `${hh}:${String(m).padStart(2,'0')}${ap}`; }
+function startBooking(tee){
+  const c=state.detail; state.booking={course:c,tee,day:state.dateIdx,players:2,name:''};
+  renderBookingStep();
+}
+function renderBookingStep(){
+  const b=state.booking, c=b.course, d=dateLabel(b.day);
+  const total=b.tee.price*b.players;
+  openSheet(`<div class="bstep">
+    <button class="close" id="bBack" aria-label="Back" style="position:static;float:right;background:var(--card);color:var(--text)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <h3 id="sheetTitle">Confirm your round</h3><div class="bsub">${esc(c.name)}</div>
+    <div class="demobanner"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      This is a demonstration booking. No tee time is reserved and no payment is taken.</div>
+    <div class="bsummary">
+      <div class="r"><span>Date</span><b>${d.dow==='Today'?'Today':d.dow} ${d.day}</b></div>
+      <div class="r"><span>Tee time</span><b>${fmtTime(b.tee.hour,b.tee.min)}${b.tee.twi?' · twilight':''}</b></div>
+      <div class="r"><span>Green fee</span><b>$${b.tee.price} × ${b.players}</b></div>
+      <div class="r tot"><span>Total (demo)</span><b>$${total}</b></div>
+    </div>
+    <div class="fieldlabel">Players</div>
+    <div class="players" id="players">${[1,2,3,4].map(n=>`<button data-p="${n}" aria-pressed="${n===b.players}">${n}</button>`).join('')}</div>
+    <div class="fieldlabel">Name on the booking</div>
+    <input type="text" id="bName" placeholder="Your name" value="${esc(b.name)}" autocomplete="name" />
+    <div style="margin-top:18px"><button class="btn big" id="bConfirm">Reserve tee time (demo)</button></div>
+  </div>`);
+  document.getElementById('bBack').onclick=()=>openDetail(c);
+  document.getElementById('players').addEventListener('click',e=>{ const p=e.target.closest('[data-p]'); if(!p) return;
+    b.players=+p.dataset.p; document.querySelectorAll('#players button').forEach(x=>x.setAttribute('aria-pressed',x===p));
+    document.querySelector('.bsummary .r:nth-child(3) b').textContent=`$${b.tee.price} × ${b.players}`;
+    document.querySelector('.bsummary .tot b').textContent=`$${b.tee.price*b.players}`; });
+  document.getElementById('bName').addEventListener('input',e=>b.name=e.target.value);
+  document.getElementById('bConfirm').onclick=confirmBooking;
+}
+function confirmBooking(){
+  const b=state.booking, c=b.course, d=dateLabel(b.day);
+  const code='FW-'+(hashId(c.id+b.tee.t+Date.now()).toString(36).toUpperCase().slice(0,6));
+  const rec={code,courseId:c.id,name:c.name,lat:c.lat,lon:c.lon,gem:!!c.gem,holes:c.holes||null,
+    day:b.day,dayLabel:(d.dow==='Today'?'Today':d.dow)+' '+d.day,time:fmtTime(b.tee.hour,b.tee.min),
+    players:b.players,price:b.tee.price,total:b.tee.price*b.players,who:b.name.trim()||'Guest',at:Date.now()};
+  state.bookings.unshift(rec); persistBookings(); refreshCounts();
+  openSheet(`<div class="confirm">
+    <div class="ck"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></div>
+    <h3 id="sheetTitle">You're on the sheet</h3>
+    <p style="color:var(--muted);font-size:13.5px;margin-top:6px">${esc(c.name)} · ${rec.dayLabel} at ${rec.time}<br>${rec.players} player${rec.players>1?'s':''} · $${rec.total} total</p>
+    <div class="code">${code}</div>
+    <p class="demoline" style="text-align:center">Demonstration only — show this screen to no starter; nothing was reserved.</p>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn ghost" id="cDone" style="flex:1;justify-content:center">Done</button>
+      <button class="btn" id="cView" style="flex:1;justify-content:center">My bookings</button>
+    </div>
+  </div>`);
+  document.getElementById('cDone').onclick=closeSheet;
+  document.getElementById('cView').onclick=()=>{ closeSheet(); switchView('bookings'); };
+}
+
+/* course-card / detail delegation */
+document.getElementById('list').addEventListener('click',e=>{
+  const btn=e.target.closest('.view-detail'); const card=e.target.closest('.course');
+  if(btn){ const c=state.courses.find(x=>x.id===btn.dataset.id); if(c){ e.stopPropagation(); openDetail(c);} return; }
+  if(card && !e.target.closest('a,.fav')){ const c=state.courses.find(x=>x.id===card.dataset.id); if(c) openDetail(c); }
+});
+
+/* ================== saved + bookings views ================== */
+function renderSaved(){
+  const list=document.getElementById('savedlist');
+  if(!state.saved.length){ list.innerHTML='<div class="empty"><b>No saved courses yet</b>Tap the star on any course to keep it here — works offline.</div>'; return; }
+  list.innerHTML=state.saved.map(c=>{
+    const km=state.origin?distKm(state.origin,c).toFixed(1)+' km':'saved'+(c.near?' near '+esc(c.near):'');
+    return `<div class="course" data-id="${esc(c.id)}">
+      <div class="chero"><canvas data-hero="sv-${esc(c.id)}"></canvas></div>
+      <div class="cbody"><div class="crow"><span class="cname">${esc(c.name)}</span><span class="cdist">${km}</span></div>
+      <div class="ctags">${c.gem?'<span class="tag gem">⛳ hidden gem</span>':''}${c.holes?`<span class="tag">${esc(c.holes)} holes</span>`:''}${c.access==='private'?'<span class="tag">private</span>':''}</div>
+      <div class="cactions"><button class="btn view-detail" data-id="${esc(c.id)}"><svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg> Preview &amp; book</button>${favBtn(c)}</div>
+      ${navLinks(c)}</div></div>`;
+  }).join('');
+  state.saved.forEach(c=>{ const cv=list.querySelector(`[data-hero="sv-${CSS.escape(c.id)}"]`); if(cv){ c.rating=c.rating||courseRating(c); drawCourse(cv,c);} });
+}
+document.getElementById('savedlist').addEventListener('click',e=>{
+  const btn=e.target.closest('.view-detail'); if(!btn) return; e.stopPropagation();
+  const c=state.saved.find(x=>x.id===btn.dataset.id); if(c){ c.rating=c.rating||courseRating(c); c.km=state.origin?distKm(state.origin,c):0; c.deg=state.origin?bearing(state.origin,c):0; c.cheap=cheapestToday(c); openDetail(c);} });
+
+function renderBookings(){
+  const list=document.getElementById('bookinglist');
+  if(!state.bookings.length){ list.innerHTML='<div class="empty"><b>No bookings yet</b>Preview a course and reserve a tee time — it shows up here.</div>'; return; }
+  list.innerHTML=state.bookings.map((b,i)=>`<div class="booking">
+    <div class="bth"><canvas data-hero="bk-${i}"></canvas></div>
+    <div class="bmeta"><b>${esc(b.name)}</b><span>${esc(b.dayLabel)} · ${esc(b.time)} · ${b.players}p · $${b.total}</span><div class="bcode">${esc(b.code)} · demo</div></div>
+    <button class="del" data-del="${i}" aria-label="Cancel booking"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>
+  </div>`).join('');
+  state.bookings.forEach((b,i)=>{ const cv=list.querySelector(`[data-hero="bk-${i}"]`); if(cv) drawCourse(cv,{id:b.courseId,gem:b.gem}); });
+  list.querySelectorAll('[data-del]').forEach(btn=>btn.onclick=()=>{ state.bookings.splice(+btn.dataset.del,1); persistBookings(); refreshCounts(); renderBookings(); });
+}
+
+/* ================== view switching ================== */
+function switchView(v){
+  state.view=v;
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.view===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on',s.id==='view-'+v));
+  if(v==='saved') renderSaved(); if(v==='bookings') renderBookings();
+}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>switchView(t.dataset.view));
+
+/* filter/sort wiring */
+document.getElementById('filterbar').addEventListener('click',e=>{ const c=e.target.closest('.chip'); if(!c) return;
+  const k=c.dataset.filter; state.filters[k]=!state.filters[k]; c.setAttribute('aria-pressed',state.filters[k]); render(); });
+document.getElementById('sortsel').addEventListener('change',e=>{ state.sort=e.target.value; render(); });
+
+/* controls wiring */
+document.getElementById('locBtn').onclick=useMyLocation;
+document.getElementById('searchBtn').onclick=searchPlace;
+document.getElementById('place').addEventListener('keydown',e=>{ if(e.key==='Enter') searchPlace(); });
+
+/* ================== radar ================== */
+const cv=document.getElementById('radar'), cctx=cv.getContext('2d');
+let sweep=0; const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function drawRadar(){
+  const DPR=Math.min(devicePixelRatio||1,2), r=cv.getBoundingClientRect(); if(!r.width) return;
+  if(cv.width!==r.width*DPR){ cv.width=r.width*DPR; cv.height=r.width*DPR; }
+  const W=cv.width, C=W/2, R=W*0.46;
+  cctx.clearRect(0,0,W,W);
+  cctx.strokeStyle='rgba(94,200,138,.35)';
+  for(let i=1;i<=3;i++){ cctx.globalAlpha=i===3?.5:.25; cctx.beginPath(); cctx.arc(C,C,R*i/3,0,6.29); cctx.stroke(); }
+  cctx.globalAlpha=.3; cctx.beginPath(); cctx.moveTo(C,C-R); cctx.lineTo(C,C+R); cctx.moveTo(C-R,C); cctx.lineTo(C+R,C); cctx.stroke();
+  cctx.globalAlpha=1; cctx.font=`${10*DPR}px 'JetBrains Mono',monospace`; cctx.fillStyle='rgba(143,163,152,.8)'; cctx.textAlign='center';
+  cctx.fillText('N',C,C-R-4*DPR);
+  const maxKm=state.radius/1000;
+  cctx.fillText((maxKm).toFixed(0)+'km',C+R-12*DPR,C-3*DPR);
+  if(!REDUCED&&state.courses.length){ const g=cctx.createConicGradient?cctx.createConicGradient(sweep,C,C):null;
+    if(g){ g.addColorStop(0,'rgba(94,200,138,.22)'); g.addColorStop(.12,'rgba(94,200,138,.03)'); g.addColorStop(.2,'transparent'); g.addColorStop(1,'transparent');
+      cctx.fillStyle=g; cctx.beginPath(); cctx.arc(C,C,R,0,6.29); cctx.fill(); } }
+  cctx.fillStyle='#eaf3ed'; cctx.beginPath(); cctx.arc(C,C,3.5*DPR,0,6.29); cctx.fill();
+  const shown=visibleCourses();
+  shown.forEach(c=>{ const f=Math.min(1,c.km/maxKm), a=rad(c.deg-90);
+    const x=C+Math.cos(a)*R*f, y=C+Math.sin(a)*R*f;
+    cctx.fillStyle=c.gem?'#f0c33c':'#5ec88a'; cctx.globalAlpha=.9;
+    cctx.beginPath(); cctx.arc(x,y,3.4*DPR,0,6.29); cctx.fill(); });
+  cctx.globalAlpha=1;
+  document.getElementById('radarCap').textContent=state.courses.length?`${shown.length} course${shown.length===1?'':'s'} · ${state.placeName||''}`:'radar idle';
+}
+(function loop(){ if(!REDUCED){ sweep+=0.02; if(state.courses.length) drawRadar(); } requestAnimationFrame(loop); })();
+addEventListener('resize',()=>{ drawRadar();
+  if(state.view==='find') render(); else if(state.view==='saved') renderSaved(); else renderBookings(); });
+
+refreshCounts();
+
+/* ================== test hook (§21) — offline-renderable ================== */
+window.Fairway={
+  get state(){ return state; },
+  search:runSearch, switchView, openDetail,
+  _mock(origin,courses){ state.origin=origin; state.placeName='mock'; state.radius=30000;
+    state.courses=courses.map(c=>({gem:false,holes:null,access:null,website:null,id:'node/0',...c,
+      km:distKm(origin,c),deg:bearing(origin,c),rating:0,cheap:0})).map(c=>({...c,rating:courseRating(c),cheap:cheapestToday(c)}));
+    state.courses.sort((a,b)=>a.km-b.km); document.getElementById('filterbar').hidden=false; render();
+    return state.courses.length; },
+  _radarPx(){ drawRadar(); if(!cv.width) return 0; const d=cctx.getImageData(0,0,cv.width,cv.height).data; let n=0; for(let i=3;i<d.length;i+=4) if(d[i]>0) n++; return n; },
+  _heroPx(){ const cvs=document.querySelector('[data-hero]'); if(!cvs||!cvs.width) return 0;
+    const d=cvs.getContext('2d').getImageData(0,0,cvs.width,cvs.height).data; let n=0; for(let i=3;i<d.length;i+=4) if(d[i]>0) n++; return n; },
+  _teeCount(i){ return teeSheet(state.courses[i||0],0).length; },
+  _book(courseIdx,teeIdx,players){ const c=state.courses[courseIdx||0]; const sh=teeSheet(c,0); if(!sh.length) return null;
+    state.detail=c; state.booking={course:c,tee:sh[teeIdx||0],day:0,players:players||2,name:'Test'}; confirmBooking(); return state.bookings.length; },
+  get bookingCount(){ return state.bookings.length; },
+  _bookingsPersisted(){ try{ const d=JSON.parse(localStorage.getItem(BOOK_KEY)); return d&&d.v===1?d.items.length:-1; }catch{ return -1; } },
+  _clearBookings(){ state.bookings=[]; persistBookings(); refreshCounts(); },
+  /* saved probes (harness contract preserved) */
+  get savedCount(){ return state.saved.length; },
+  _toggleSave(i){ if(state.courses[i]) toggleSave(state.courses[i]); return state.saved.length; },
+  _persisted(){ try{ const d=JSON.parse(localStorage.getItem(SAVE_KEY)); return d&&d.v===1?d.items.length:-1; }catch{ return -1; } },
+  _clearSaved(){ state.saved=[]; persistSaved(); refreshCounts(); render(); },
+};
+</script>
+</body>
+</html>

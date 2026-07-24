@@ -1,0 +1,13 @@
+{
+  "name": "brawl-buns-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Brawl Buns — desktop (Electron) wrapper around the HTML5 game.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^31.0.0"
+  }
+}

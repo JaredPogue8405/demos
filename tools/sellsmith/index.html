@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SellSmith Market — buy & sell, with AI listings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0c0e13; --bg2:#111420; --panel:#151926; --panel2:#1b2030; --line:#262c3d; --line2:#333b52;
+    --text:#eef1f8; --muted:#8b93a8; --faint:#646c82;
+    --brand:#6c8cff; --brand2:#8aa2ff; --brand-soft:rgba(108,140,255,.14);
+    --good:#2fc98a; --gold:#ffcf5c; --danger:#ff6b6e;
+    --font:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif;
+    /* display face degrades to Segoe offline — the tool never breaks without network */
+    --display:'Space Grotesk','Segoe UI',system-ui,sans-serif;
+    --mono:'JetBrains Mono','SF Mono','Consolas',ui-monospace,monospace;
+    --r:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1100px 600px at 80% -10%,#161a2b,var(--bg) 60%);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+  /* faint product-grid backdrop — depth without noise */
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:linear-gradient(rgba(108,140,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(108,140,255,.025) 1px,transparent 1px);
+    background-size:48px 48px;
+    -webkit-mask:radial-gradient(ellipse at 70% 0%,#000 0%,transparent 65%);mask:radial-gradient(ellipse at 70% 0%,#000 0%,transparent 65%)}
+  .wrap{position:relative;z-index:1}
+  h1,h2,.tabs button,.btn,.aibtn{font-family:var(--display)}
+  button,input,select,textarea{font-family:inherit}
+  :focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:8px}
+  .icon{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .wrap{max-width:1180px;margin:0 auto;padding:20px 18px 70px}
+
+  /* header */
+  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .logo{display:flex;align-items:center;gap:11px;margin-right:auto}
+  .logo .mk{width:40px;height:40px;border-radius:11px;background:linear-gradient(150deg,var(--brand),#4a68d8);display:grid;place-items:center;box-shadow:0 8px 20px rgba(108,140,255,.32)}
+  .logo h1{font-size:19px;font-weight:800;letter-spacing:-.01em}
+  .logo .sub{font-size:11.5px;color:var(--muted)}
+  .searchbox{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--line2);border-radius:11px;padding:0 12px;min-width:230px;flex:1;max-width:420px}
+  .searchbox input{flex:1;background:none;border:none;color:var(--text);padding:11px 0;font-size:14px}
+  .searchbox input:focus{outline:none}
+  .searchbox svg{color:var(--faint)}
+  select.f{background:var(--bg2);border:1px solid var(--line2);color:var(--text);border-radius:11px;padding:11px;font-size:13.5px;cursor:pointer}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(180deg,var(--brand2),var(--brand));color:#0b0c10;border:none;font-weight:800;font-size:14px;padding:11px 16px;border-radius:11px;cursor:pointer;box-shadow:0 6px 18px rgba(108,140,255,.28);transition:filter .15s,transform .1s}
+  .btn:hover{filter:brightness(1.07);transform:translateY(-1px)} .btn:active{transform:translateY(0)}
+  .btn.ghost{background:var(--panel2);color:var(--text);border:1px solid var(--line2);box-shadow:none}
+  .btn.ghost:hover{border-color:var(--brand)}
+
+  /* tabs */
+  .tabs{display:flex;gap:4px;background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:4px;margin:18px 0 16px;width:fit-content}
+  .tabs button{background:none;border:none;color:var(--muted);border-radius:8px;padding:8px 16px;font-size:13.5px;cursor:pointer;transition:.15s;font-weight:600}
+  .tabs button.on{color:var(--text);background:var(--panel2);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+
+  /* grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+  .card{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s;display:flex;flex-direction:column}
+  .card:hover{transform:translateY(-3px);border-color:var(--line2);box-shadow:0 14px 32px rgba(0,0,0,.45)}
+  .thumb{aspect-ratio:4/3;background:linear-gradient(140deg,#1d2333,#141827);display:grid;place-items:center;position:relative;overflow:hidden}
+  .thumb img{width:100%;height:100%;object-fit:cover}
+  .thumb .ph{color:#3f4a68}
+  .aitag{position:absolute;top:8px;left:8px;background:rgba(108,140,255,.18);border:1px solid rgba(108,140,255,.5);color:var(--brand2);font-size:9.5px;font-weight:800;letter-spacing:.08em;padding:2px 6px;border-radius:5px;font-family:var(--mono);backdrop-filter:blur(2px)}
+  .fav{position:absolute;top:8px;right:8px;background:rgba(10,12,18,.72);border:1px solid var(--line2);border-radius:9px;width:32px;height:32px;display:grid;place-items:center;color:var(--muted);cursor:pointer;transition:.15s}
+  .fav:hover{color:var(--text)} .fav.on{color:var(--danger);border-color:var(--danger)} .fav.on svg{fill:var(--danger)}
+  .cbody{padding:12px 13px;display:flex;flex-direction:column;gap:4px;flex:1}
+  .price{font-size:17px;font-weight:800;color:var(--good);font-family:var(--mono)}
+  .ctitle{font-size:14px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .meta{margin-top:auto;display:flex;gap:6px;align-items:center;font-size:11.5px;color:var(--faint);padding-top:6px}
+  .chip{background:var(--brand-soft);border:1px solid rgba(108,140,255,.3);color:var(--brand2);font-size:10.5px;padding:2px 7px;border-radius:6px;font-family:var(--mono)}
+  .empty{grid-column:1/-1;border:1.5px dashed var(--line2);border-radius:var(--r);padding:46px;text-align:center;color:var(--faint)}
+
+  /* modal */
+  .modal{position:fixed;inset:0;background:rgba(6,8,12,.76);backdrop-filter:blur(4px);display:none;align-items:flex-start;justify-content:center;padding:26px 16px;overflow-y:auto;z-index:20}
+  .modal.show{display:flex}
+  .sheet{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line2);border-radius:18px;max-width:640px;width:100%;padding:22px;position:relative;animation:pop .25s cubic-bezier(.2,.8,.3,1) both}
+  @keyframes pop{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  .sheet h2{font-size:19px;font-weight:800;margin-bottom:4px}
+  .sheet .hint{color:var(--muted);font-size:12.5px;margin-bottom:14px}
+  .x{position:absolute;top:14px;right:14px;background:var(--panel2);border:1px solid var(--line2);color:var(--muted);width:32px;height:32px;border-radius:9px;display:grid;place-items:center;cursor:pointer}
+  .x:hover{color:var(--text)}
+  label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:12px 0 5px}
+  input[type=text],input[type=number],textarea,select.i{width:100%;background:var(--bg2);border:1px solid var(--line2);color:var(--text);border-radius:10px;padding:11px 12px;font-size:14px;transition:border-color .15s,box-shadow .15s}
+  textarea{resize:vertical;min-height:88px;line-height:1.5}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .drop{border:1.5px dashed var(--line2);border-radius:12px;padding:16px;text-align:center;color:var(--faint);cursor:pointer;transition:.15s;font-size:13px}
+  .drop:hover{border-color:var(--brand);color:var(--muted)}
+  .drop img{max-height:150px;border-radius:8px;margin-top:8px}
+  .aibtn{width:100%;margin-top:10px;background:linear-gradient(180deg,#2a3350,#222941);color:var(--brand2);border:1px solid rgba(108,140,255,.4);font-weight:800;padding:11px;border-radius:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s}
+  .aibtn:hover{background:#2f3a5c} .aibtn:disabled{opacity:.55;cursor:default}
+  .status{font-size:12px;color:var(--muted);margin-top:8px;display:flex;align-items:center;gap:8px}
+  .spin{width:14px;height:14px;border:2px solid var(--line2);border-top-color:var(--brand);border-radius:50%;animation:sp .7s linear infinite;flex:none}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--faint)} .dot.live{background:var(--good);box-shadow:0 0 8px var(--good)}
+
+  /* detail */
+  .dimg{width:100%;aspect-ratio:16/10;border-radius:12px;background:linear-gradient(140deg,#1d2333,#141827);display:grid;place-items:center;overflow:hidden;margin-bottom:14px}
+  .dimg img{width:100%;height:100%;object-fit:cover}
+  .dprice{font-size:26px;font-weight:800;color:var(--good);font-family:var(--mono)}
+  .ddesc{color:#dfe4f0;font-size:14px;line-height:1.6;white-space:pre-wrap;margin-top:10px}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .msgbox{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+  .msgs{display:flex;flex-direction:column;gap:8px;max-height:150px;overflow-y:auto;margin-bottom:10px}
+  .bub{padding:9px 12px;border-radius:11px;font-size:13.5px;max-width:80%}
+  .bub.me{align-self:flex-end;background:var(--brand-soft);border:1px solid rgba(108,140,255,.3)}
+  .bub.them{align-self:flex-start;background:var(--panel2);border:1px solid var(--line2)}
+  .row{display:flex;gap:8px}
+  footer{margin-top:34px;text-align:center;color:var(--faint);font-size:12px}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media(max-width:640px){.two{grid-template-columns:1fr}.logo .sub{display:none}}
+
+  /* ===== AGENTS-v09-compliance — adopted from ui-ux-pro-max (P2 Touch & Interaction = CRITICAL) =====
+     Every real control gets a >=44x44 tap area and >=8px separation. Visual language is
+     unchanged: min-height/min-width grow the hit box, they don't restyle anything.
+     Deliberately NOT using a blanket ::after — several demos already use ::after for
+     tooltips and sheen, and overwriting those would be a regression. */
+  html{touch-action:manipulation}                 /* kills the 300ms mobile tap delay */
+  /* NOTE: input[type="text"] misses inputs with NO type attribute — use :not() form. */
+  button, select, textarea,
+  input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  [role="button"], [role="checkbox"], [onclick]{ min-height:44px }
+  button, select, [role="button"], [onclick]{ min-width:44px }
+  /* anchor-based controls (links used as buttons) — text links in prose are exempt */
+  a.back, a.btn, .srow a, .navrow a, .factions a, .dactions a, .samples a, .ric,
+  a.card, a[role="button"]{ min-height:44px; display:inline-flex; align-items:center }
+  /* icon-only controls: keep the glyph small, grow the target */
+  .mic, .iconbtn, .fav, .x, .rf{ min-width:44px; min-height:44px }
+  /* custom toggles keep their visual size; the wrapping label carries the target */
+  .switch, label:has(> input[type="checkbox"]){ min-height:44px; display:inline-flex; align-items:center }
+  /* adjacent controls need >=8px between them */
+  .navrow, .samples, .tabs, .rowb, .controls, .factions, .dactions, .heroactions, .hrow{ gap:8px }
+  /* P6 Typography: tabular figures so live numbers never shift layout */
+  .mono, .telemetry, .stat, .kv, .cdist, .conf, .meta, .pill, .clockbox, .ms{ font-variant-numeric:tabular-nums }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <div class="mk"><svg class="icon" viewBox="0 0 24 24" style="width:20px;height:20px;color:#0b0c10"><path d="M3 9l1.5-5h15L21 9M3 9h18M3 9v10a1 1 0 001 1h16a1 1 0 001-1V9M9 13h6"/></svg></div>
+      <div><h1>SellSmith Market</h1><div class="sub">Buy &amp; sell — AI writes your listing</div></div>
+    </div>
+    <div class="searchbox">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="q" type="text" placeholder="Search items…" aria-label="Search items" />
+    </div>
+    <select class="f" id="cat" aria-label="Category"><option value="">All categories</option></select>
+    <select class="f" id="sort" aria-label="Sort"><option value="new">Newest</option><option value="lo">Price: low → high</option><option value="hi">Price: high → low</option></select>
+    <button class="btn" id="sellBtn"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Sell an item</button>
+  </header>
+
+  <div class="tabs" id="tabs">
+    <button class="on" data-tab="browse">Browse</button>
+    <button data-tab="mine">My listings</button>
+    <button data-tab="saved">Saved</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <footer>SellSmith Market · listings saved on your device · AI copy runs on your local Ollama</footer>
+</div>
+
+<!-- SELL MODAL -->
+<div class="modal" id="sellModal">
+  <div class="sheet">
+    <button class="x" id="sellX" aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <h2>List an item</h2>
+    <div class="hint">Add a photo and a few details — then let AI write the listing for you.</div>
+    <div class="drop" id="drop">
+      <svg class="icon" viewBox="0 0 24 24" style="width:22px;height:22px;margin:0 auto 6px;display:block"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 9l5-5 5 5M12 4v12"/></svg>
+      Click to add a photo
+      <input type="file" id="photo" accept="image/*" hidden />
+      <div id="photoPrev"></div>
+    </div>
+    <div class="two">
+      <div><label for="lTitle">Title</label><input type="text" id="lTitle" placeholder="e.g. Bamboo bathroom organizer" /></div>
+      <div><label for="lPrice">Price ($)</label><input type="number" id="lPrice" placeholder="39" min="0" /></div>
+    </div>
+    <div class="two">
+      <div><label for="lCat">Category</label><select class="i" id="lCat"></select></div>
+      <div><label for="lCond">Condition</label><select class="i" id="lCond"><option>New</option><option>Like new</option><option>Good</option><option>Fair</option></select></div>
+    </div>
+    <label for="lLoc">Location</label><input type="text" id="lLoc" placeholder="e.g. Raleigh, NC" />
+    <label for="lFeat">Key details (one per line — AI uses these)</label>
+    <textarea id="lFeat" placeholder="100% organic bamboo&#10;4 adjustable shelves&#10;Barely used"></textarea>
+    <button class="aibtn" id="aiBtn">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3zM19 15l.9 2.1 2.1.9-2.1.9L19 21l-.9-2.1-2.1-.9 2.1-.9L19 15z"/></svg>
+      Let AI write my listing
+    </button>
+    <label for="lDesc">Description</label><textarea id="lDesc" placeholder="AI will fill this — or write your own"></textarea>
+    <div class="status"><span class="dot" id="dot"></span><span id="aiStatus">checking Ollama…</span></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn" id="postBtn" style="flex:1;justify-content:center">Post listing</button>
+      <button class="btn ghost" id="cancelBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal" id="detModal"><div class="sheet" id="detSheet"></div></div>
+
+<script>
+const OLLAMA='http://localhost:11434';
+const $=id=>document.getElementById(id);
+const CATS=['Furniture','Electronics','Home & Kitchen','Clothing','Sports & Outdoors','Toys & Games','Tools','Vehicles','Other'];
+let LIVE=false, tab='browse', photoData='', detailId=null;
+
+/* ---------- storage ---------- */
+const load=()=>{ try{ return JSON.parse(localStorage.getItem('market.listings')||'null'); }catch(e){ return null; } };
+const save=l=>{ try{ localStorage.setItem('market.listings',JSON.stringify(l)); }catch(e){} };
+const loadSaved=()=>{ try{ return new Set(JSON.parse(localStorage.getItem('market.saved')||'[]')); }catch(e){ return new Set(); } };
+const saveSaved=s=>{ try{ localStorage.setItem('market.saved',JSON.stringify([...s])); }catch(e){} };
+let listings=load(), savedIds=loadSaved();
+if(!listings){ listings=seed(); save(listings); }
+function seed(){ const now=Date.now(); return [
+  {id:'s1',title:'Mid-century walnut desk',price:220,cat:'Furniture',cond:'Good',loc:'Raleigh, NC',desc:'Solid walnut desk with two drawers. Sturdy, gorgeous grain, minor surface wear on the top.\n\nSelling because I switched to a standing desk. Cash and local pickup only — it is heavy, bring a friend.',tags:['walnut','desk','mid-century'],img:'',seller:'Dana',at:now-86400000*2,mine:false,ai:true},
+  {id:'s2',title:'Mechanical keyboard — hot-swap, 75%',price:85,cat:'Electronics',cond:'Like new',loc:'Durham, NC',desc:'Hot-swappable 75% board, tactile switches, PBT caps. Barely used — typed on for about a month before I went back to my old board.\n\nComes with the box, cable, and a spare set of switches.',tags:['keyboard','mechanical','75%','hot-swap'],img:'',seller:'Marcus',at:now-86400000,mine:false,ai:true},
+  {id:'s3',title:'Cast iron skillet, 12"',price:30,cat:'Home & Kitchen',cond:'Good',loc:'Cary, NC',desc:'Pre-seasoned 12-inch cast iron. Slick cooking surface, no cracks or wobble.\n\nHonest note: there is light surface rust on the handle. Wipes off with oil, purely cosmetic.',tags:['cast iron','skillet','cookware'],img:'',seller:'Priya',at:now-3600000*5,mine:false},
+  {id:'s4',title:'Mountain bike — 29er hardtail',price:410,cat:'Sports & Outdoors',cond:'Good',loc:'Raleigh, NC',desc:'29" hardtail, hydraulic discs, recently tuned. Some scuffs on the frame from normal trail use — rides perfectly.\n\nNew chain and cassette last month. Happy to let you test ride it.',tags:['bike','mtb','29er','hardtail'],img:'',seller:'Alex',at:now-86400000*4,mine:false,ai:true},
+  {id:'s5',title:'Cordless drill kit + 2 batteries',price:65,cat:'Tools',cond:'Good',loc:'Apex, NC',desc:'18V cordless drill with two batteries and a charger. Both batteries still hold a full charge.\n\nCase has scuffs, the drill works flawlessly.',tags:['drill','cordless','tools','18v'],img:'',seller:'Ren',at:now-3600000*20,mine:false},
+  {id:'s6',title:'Wooden train set, 60+ pieces',price:25,cat:'Toys & Games',cond:'Good',loc:'Durham, NC',desc:'Big bag of wooden track, bridges, and four engines. Compatible with the usual brands.\n\nKids outgrew it. All cleaned, nothing broken or missing.',tags:['wooden','train','toys','kids'],img:'',seller:'Sam',at:now-86400000*3,mine:false},
+]; }
+
+/* ---------- ollama ---------- */
+async function detect(){
+  try{ const r=await fetch(OLLAMA+'/api/tags'); if(!r.ok) throw 0; const d=await r.json();
+    const names=(d.models||[]).map(m=>m.name); if(!names.length) throw 0;
+    const ok=n=>!/:cloud$|llava|moondream|vision|embed|minilm/i.test(n);
+    window.__model=names.find(n=>ok(n)&&/(llama3|qwen|mistral|gemma|phi)/i.test(n)&&/(:8b|:7b|:3b|mini)/i.test(n))||names.find(n=>ok(n)&&/(llama3|qwen|mistral|gemma|phi)/i.test(n))||names.find(ok)||names[0];
+    LIVE=true; $('dot').classList.add('live'); $('aiStatus').textContent='AI ready · '+window.__model;
+  }catch(e){ $('aiStatus').textContent='Ollama offline — AI uses a built-in writer'; }
+}
+detect();
+// Models routinely emit real newlines inside JSON strings (we ask for "2 paragraphs"),
+// which is invalid JSON. Escape control chars that sit inside string literals before parsing.
+function repairJSON(s){
+  let out='', inStr=false, esc=false;
+  for(const ch of s){
+    if(esc){ out+=ch; esc=false; continue; }
+    if(ch==='\\'){ out+=ch; esc=true; continue; }
+    if(ch==='"'){ inStr=!inStr; out+=ch; continue; }
+    if(inStr){
+      if(ch==='\n'){ out+='\\n'; continue; }
+      if(ch==='\r'){ out+='\\r'; continue; }
+      if(ch==='\t'){ out+='\\t'; continue; }
+    }
+    out+=ch;
+  }
+  return out;
+}
+function extractJSON(t){
+  const f=t.match(/```(?:json)?\s*([\s\S]*?)```/i); const raw=f?f[1]:t;
+  const s=raw.indexOf('{'), e=raw.lastIndexOf('}');
+  if(s<0||e<0) throw new Error('no json');
+  const body=raw.slice(s,e+1);
+  try{ return JSON.parse(body); }catch(_){ return JSON.parse(repairJSON(body)); }
+}
+async function aiWrite(){
+  const item={title:$('lTitle').value.trim(), cat:$('lCat').value, cond:$('lCond').value, price:$('lPrice').value.trim(), feat:$('lFeat').value.trim()};
+  if(!item.title && !item.feat){ $('lTitle').focus(); return; }
+  $('aiBtn').disabled=true; $('aiStatus').innerHTML='<span class="spin"></span>Writing your listing…';
+  try{
+    let d;
+    if(LIVE){
+      const sys="You are a marketplace listing writer. Write honest, appealing second-hand listings that sell. Return ONLY valid JSON, no prose, no code fence.";
+      const user=`Write a marketplace listing.\nItem: ${item.title||'(infer from details)'}\nCategory: ${item.cat}\nCondition: ${item.cond}\n${item.price?('Price: $'+item.price):''}\nDetails:\n${item.feat||'(infer)'}\n\nReturn ONLY:\n{"title":"short catchy listing title (<=70 chars)","description":"2 short honest paragraphs a buyer would trust","tags":["6 short search tags"],"suggestedPrice": number}`;
+      // One retry: a single malformed generation shouldn't demote the user to the offline writer.
+      let lastErr;
+      for(let attempt=0; attempt<2 && !d; attempt++){
+        try{
+          const res=await fetch(OLLAMA+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:window.__model,messages:[{role:'system',content:sys},{role:'user',content:user}],stream:false,options:{temperature:attempt?0.4:0.8}})});
+          if(!res.ok) throw new Error('HTTP '+res.status);
+          d=extractJSON((await res.json()).message.content);
+        }catch(err){ lastErr=err; if(attempt) throw err; $('aiStatus').innerHTML='<span class="spin"></span>Retrying…'; }
+      }
+      if(!d) throw lastErr||new Error('no result');
+    } else { d=fallbackWrite(item); }
+    if(d.title) $('lTitle').value=d.title;
+    if(d.description) $('lDesc').value=d.description;
+    if(!item.price && d.suggestedPrice) $('lPrice').value=d.suggestedPrice;
+    window.__tags=(d.tags||[]).slice(0,6);
+    window.__aiWrote=true;
+    $('aiStatus').innerHTML='<span class="dot live"></span>Listing written ✓';
+  }catch(e){
+    const d=fallbackWrite(item); $('lTitle').value=d.title; $('lDesc').value=d.description; window.__tags=d.tags;
+    window.__aiWrote=true;
+    $('aiStatus').textContent='Used the built-in writer (AI unavailable)';
+  } finally { $('aiBtn').disabled=false; }
+}
+function fallbackWrite(i){
+  const feats=(i.feat||'').split(/\n+/).map(s=>s.trim()).filter(Boolean);
+  const t=i.title||(feats[0]||'Item for sale');
+  return { title:`${t}${i.cond?(' — '+i.cond):''}`.slice(0,70),
+    description:`${t}. ${feats.slice(0,3).join('. ')}${feats.length?'.':''}\n\nCondition: ${i.cond}. ${i.price?('Asking $'+i.price+'. '):''}Happy to answer questions — message me.`,
+    tags:[i.cat, i.cond, ...feats].join(' ').toLowerCase().split(/[^a-z0-9]+/).filter(w=>w.length>2).slice(0,6),
+    suggestedPrice: Number(i.price)||undefined };
+}
+
+/* ---------- render ---------- */
+// Listings without a photo get real per-category artwork instead of one generic gray icon —
+// a grid of identical placeholders is what makes a marketplace demo look empty and fake.
+const CAT_ART={
+  'Furniture':      '<path d="M8 34v-4a4 4 0 014-4h24a4 4 0 014 4v4"/><path d="M6 34h36v10H6z"/><path d="M10 44v4M38 44v4"/><path d="M14 26v-6a3 3 0 013-3h14a3 3 0 013 3v6"/>',
+  'Electronics':    '<rect x="8" y="14" width="32" height="22" rx="2"/><path d="M4 40h40l-3-4H7z"/><path d="M14 20h20v10H14z" opacity=".45"/>',
+  'Home & Kitchen': '<path d="M12 20h24v18a4 4 0 01-4 4H16a4 4 0 01-4-4z"/><path d="M36 24h5a3 3 0 010 6h-5"/><path d="M18 12v5M24 10v7M30 12v5"/>',
+  'Clothing':       '<path d="M18 12l6 4 6-4 8 5-3 7-3-1v18H16V23l-3 1-3-7z"/>',
+  'Sports & Outdoors':'<circle cx="24" cy="26" r="14"/><path d="M24 12v28M10 26h28M15 16c6 5 12 5 18 0M15 36c6-5 12-5 18 0" opacity=".5"/>',
+  'Toys & Games':   '<circle cx="24" cy="20" r="8"/><path d="M12 42c0-7 5-12 12-12s12 5 12 12z"/><circle cx="21" cy="19" r="1.6" fill="currentColor"/><circle cx="27" cy="19" r="1.6" fill="currentColor"/>',
+  'Tools':          '<path d="M30 12a8 8 0 00-8 10L10 34a3 3 0 004 4l12-12a8 8 0 0010-10l-5 5-5-1-1-5z"/><path d="M12 36l2 2" opacity=".5"/>',
+  'Vehicles':       '<path d="M8 32l3-10a4 4 0 014-3h18a4 4 0 014 3l3 10"/><path d="M6 32h36v6H6z"/><circle cx="14" cy="38" r="4"/><circle cx="34" cy="38" r="4"/>',
+  'Other':          '<path d="M24 8l16 8-16 8-16-8z"/><path d="M8 16v16l16 8 16-8V16"/><path d="M24 24v16" opacity=".5"/>'
+};
+function art(cat){
+  const d=CAT_ART[cat]||CAT_ART['Other'];
+  return `<svg class="ph" viewBox="0 0 48 48" aria-hidden="true" style="width:52%;height:52%;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round">${d}</svg>`;
+}
+const money=n=>'$'+Number(n||0).toLocaleString('en-US');
+// User-authored text (and model output) goes into innerHTML in several places — escape it.
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function visible(){
+  const q=$('q').value.trim().toLowerCase(), c=$('cat').value, s=$('sort').value;
+  let l=listings.filter(x=> tab==='mine' ? x.mine : tab==='saved' ? savedIds.has(x.id) : true);
+  if(c) l=l.filter(x=>x.cat===c);
+  if(q) l=l.filter(x=>(x.title+' '+x.desc+' '+(x.tags||[]).join(' ')).toLowerCase().includes(q));
+  if(s==='lo') l=[...l].sort((a,b)=>a.price-b.price); else if(s==='hi') l=[...l].sort((a,b)=>b.price-a.price); else l=[...l].sort((a,b)=>b.at-a.at);
+  return l;
+}
+function ago(t){ const m=Math.floor((Date.now()-t)/60000); if(m<60) return m+'m ago'; const h=Math.floor(m/60); if(h<24) return h+'h ago'; return Math.floor(h/24)+'d ago'; }
+function render(){
+  const l=visible(), g=$('grid');
+  if(!l.length){ g.innerHTML=`<div class="empty">${tab==='mine'?'You haven\'t listed anything yet — hit <b>Sell an item</b>.':tab==='saved'?'Nothing saved yet — tap the heart on a listing.':'No items match that search.'}</div>`; return; }
+  g.innerHTML=l.map(x=>`<article class="card" data-id="${x.id}" tabindex="0" role="button" aria-label="${esc(x.title)}, ${money(x.price)}">
+    <div class="thumb">${x.img?`<img src="${x.img}" alt="${esc(x.title)}" loading="lazy">`:art(x.cat)}
+      ${x.ai?`<span class="aitag" title="Written by AI">AI</span>`:''}
+      <button class="fav ${savedIds.has(x.id)?'on':''}" data-fav="${x.id}" aria-label="${savedIds.has(x.id)?'Remove from saved':'Save listing'}"><svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M20.8 8.6a5 5 0 00-8.8-3.2A5 5 0 003.2 8.6c0 5 8.8 10.4 8.8 10.4s8.8-5.4 8.8-10.4z"/></svg></button>
+    </div>
+    <div class="cbody"><div class="price">${money(x.price)}</div><div class="ctitle">${esc(x.title)}</div>
+      <div class="meta"><span class="chip">${x.cat}</span><span>${esc(x.loc)||'—'}</span><span>·</span><span>${ago(x.at)}</span></div>
+    </div></article>`).join('');
+}
+$('grid').addEventListener('click',e=>{
+  const f=e.target.closest('[data-fav]'); if(f){ e.stopPropagation(); const id=f.dataset.fav; savedIds.has(id)?savedIds.delete(id):savedIds.add(id); saveSaved(savedIds); render(); return; }
+  const c=e.target.closest('.card'); if(c) openDetail(c.dataset.id);
+});
+$('grid').addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('card')){ e.preventDefault(); openDetail(e.target.dataset.id); } });
+['q','cat','sort'].forEach(id=>$(id).addEventListener('input',render));
+$('tabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; document.querySelectorAll('#tabs button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); tab=b.dataset.tab; render(); });
+
+/* ---------- detail ---------- */
+function openDetail(id){
+  const x=listings.find(v=>v.id===id); if(!x) return; detailId=id;
+  const msgs=JSON.parse(localStorage.getItem('market.msgs.'+id)||'[]');
+  $('detSheet').innerHTML=`<button class="x" onclick="closeDetail()" aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <div class="dimg">${x.img?`<img src="${x.img}" alt="${esc(x.title)}">`:art(x.cat)}</div>
+    <div class="dprice">${money(x.price)}</div><h2 style="margin-top:2px">${esc(x.title)}</h2>
+    <div class="hint">${esc(x.cat)} · ${esc(x.cond)} · ${esc(x.loc)||'—'} · listed ${ago(x.at)} by ${esc(x.seller||'you')}
+      ${x.ai?' · <span style="color:var(--brand2)">listing written by AI</span>':''}</div>
+    <div class="ddesc">${esc(x.desc)}</div>
+    <div class="tags">${(x.tags||[]).map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>
+    <div class="msgbox"><div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px">Message ${esc(x.seller||'seller')}</div>
+      <div class="msgs" id="msgs">${msgs.map(m=>`<div class="bub ${m.me?'me':'them'}">${esc(m.t)}</div>`).join('')||'<div style="color:var(--faint);font-size:12.5px">No messages yet.</div>'}</div>
+      <div class="row"><input type="text" id="msgIn" placeholder="Is this still available?" aria-label="Message the seller" /><button class="btn" onclick="sendMsg()">Send</button></div>
+    </div>`;
+  setTimeout(()=>{ const m=$('msgs'); if(m) m.scrollTop=m.scrollHeight; },0);
+  $('detModal').classList.add('show');
+}
+function closeDetail(){ $('detModal').classList.remove('show'); }
+function sendMsg(){
+  const v=$('msgIn').value.trim(); if(!v||!detailId) return;
+  const key='market.msgs.'+detailId; const msgs=JSON.parse(localStorage.getItem(key)||'[]');
+  msgs.push({me:true,t:v});   // stored raw; escaped at render time by openDetail()
+  setTimeout(()=>{ const m2=JSON.parse(localStorage.getItem(key)||'[]'); m2.push({me:false,t:'Yep, still available! When works for you?'}); localStorage.setItem(key,JSON.stringify(m2)); if($('detModal').classList.contains('show')) openDetail(detailId); },700);
+  localStorage.setItem(key,JSON.stringify(msgs)); openDetail(detailId);
+}
+$('detModal').addEventListener('click',e=>{ if(e.target.id==='detModal') closeDetail(); });
+// A dialog you can't dismiss from the keyboard is a broken dialog.
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape') return;
+  if($('detModal').classList.contains('show')) closeDetail();
+  else if($('sellModal').classList.contains('show')) $('sellModal').classList.remove('show');
+});
+// Enter sends the message — nobody reaches for the mouse mid-sentence.
+document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.id==='msgIn'){ e.preventDefault(); sendMsg(); } });
+
+/* ---------- sell ---------- */
+CATS.forEach(c=>{ $('cat').insertAdjacentHTML('beforeend',`<option>${c}</option>`); $('lCat').insertAdjacentHTML('beforeend',`<option>${c}</option>`); });
+$('sellBtn').onclick=()=>{ $('sellModal').classList.add('show'); };
+$('sellX').onclick=$('cancelBtn').onclick=()=>{ $('sellModal').classList.remove('show'); };
+$('sellModal').addEventListener('click',e=>{ if(e.target.id==='sellModal') $('sellModal').classList.remove('show'); });
+$('drop').onclick=()=>$('photo').click();
+$('photo').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ photoData=r.result; $('photoPrev').innerHTML=`<img src="${photoData}" alt="preview">`; }; r.readAsDataURL(f); };
+$('aiBtn').onclick=aiWrite;
+$('postBtn').onclick=()=>{
+  const title=$('lTitle').value.trim(), price=Number($('lPrice').value)||0;
+  if(!title){ $('lTitle').focus(); return; }
+  listings.unshift({ id:'u'+Date.now(), title, price, cat:$('lCat').value, cond:$('lCond').value, loc:$('lLoc').value.trim(),
+    desc:$('lDesc').value.trim(), tags:window.__tags||[], img:photoData, seller:'you', at:Date.now(), mine:true,
+    ai:!!window.__aiWrote });
+  save(listings); photoData=''; $('photoPrev').innerHTML=''; window.__tags=null; window.__aiWrote=false;
+  ['lTitle','lPrice','lLoc','lFeat','lDesc'].forEach(i=>$(i).value='');
+  $('sellModal').classList.remove('show');
+  document.querySelectorAll('#tabs button').forEach(x=>x.classList.remove('on'));
+  document.querySelector('[data-tab="mine"]').classList.add('on'); tab='mine'; render();
+};
+render();
+
+// test hook
+window.Market={ get listings(){return listings;}, get saved(){return [...savedIds];}, render, aiWrite, _fallback:fallbackWrite,
+  _post(o){ listings.unshift(Object.assign({id:'t'+Date.now(),cat:'Other',cond:'Good',loc:'x',desc:'d',tags:[],img:'',seller:'you',at:Date.now(),mine:true},o)); save(listings); render(); return listings.length; },
+  get live(){return LIVE;}, setTab(t){ tab=t; render(); } };
+</script>
+</body>
+</html>

@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en" data-theme="deep">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>SHOWROOM — the collection</title>
+<meta name="description" content="Every build in the workshop — Bee, the Allergy Scanner, tools and games — one collection, one material language." />
+<meta property="og:title" content="SHOWROOM — the collection" />
+<meta property="og:description" content="Local AI that actually does it — and everything built around it." />
+<meta property="og:type" content="website" />
+<meta name="theme-color" content="#04060b" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#e6e9f0" media="(prefers-color-scheme: light)" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='26' height='26' rx='9' fill='%23f5bc55'/%3E%3Cpath d='M16 9l6 3.5v7L16 23l-6-3.5v-7z' fill='none' stroke='%231c1305' stroke-width='2'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     SHOWROOM — the collection, in the locked Fusion language.
+     Deep/bright are the two measured worlds from d-fusion; the
+     showroom's own identity is the editorial left-rail composition
+     and per-build accent tinting — same material, different cut.
+     z-scale: 0 fluid · 1 caustic · 2 grain · 3 content · 100 nav
+     ============================================================ */
+  :root[data-theme="deep"]{
+    --bg:#04060b; --bg2:#080d17;
+    --text:#f4f7fc; --muted:#93a0b8; --faint:#5f6b82;
+    --glass:rgba(255,255,255,.075); --glass2:rgba(255,255,255,.03);
+    --edge:rgba(255,255,255,.16); --edge-hi:rgba(255,255,255,.30);
+    --gold:#f5bc55; --gold-hi:#ffdc9a; --azure:#4e93ff; --violet:#9d7bff; --mint:#57e0b8;
+    --shadow:0 40px 100px -34px rgba(0,0,0,.95);
+    --grain-op:.15; --grain-blend:overlay; --fluid-op:.92; --btn-ink:#1c1305;
+  }
+  :root[data-theme="bright"]{
+    --bg:#e6e9f0; --bg2:#dae0ea;
+    --text:#141a28; --muted:#525c70; --faint:#7d8698;
+    --glass:rgba(255,255,255,.60); --glass2:rgba(255,255,255,.34);
+    --edge:rgba(255,255,255,.72); --edge-hi:rgba(255,255,255,.9);
+    --gold:#c8851a; --gold-hi:#eaa93c; --azure:#3369dd; --violet:#6d4ff0; --mint:#1fa87f;
+    --shadow:0 34px 80px -36px rgba(10,14,24,.38);
+    --grain-op:.17; --grain-blend:multiply; --fluid-op:.98; --btn-ink:#fff;
+  }
+  :root{
+    --font:'Inter',-apple-system,system-ui,sans-serif;
+    --ease:cubic-bezier(.16,1,.3,1);
+    --spring:cubic-bezier(.34,1.4,.64,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;
+    min-height:100dvh;-webkit-font-smoothing:antialiased;
+    transition:background .9s var(--ease),color .9s var(--ease)}
+  :focus-visible{outline:2px solid var(--azure);outline-offset:3px;border-radius:6px}
+
+  /* ---------- the living fluid ---------- */
+  .fluid{position:fixed;inset:-14%;z-index:0;filter:url(#liq);opacity:var(--fluid-op);
+    transition:opacity .9s var(--ease);pointer-events:none}
+  .fluid i{position:absolute;border-radius:50%;mix-blend-mode:screen;will-change:transform}
+  :root[data-theme="bright"] .fluid{filter:url(#liq) saturate(1.45)}
+  :root[data-theme="bright"] .fluid i{mix-blend-mode:multiply;opacity:.92}
+  .f1{width:66vmax;height:66vmax;left:-14%;top:-20%;
+      background:radial-gradient(circle at 38% 38%,rgba(245,188,85,.60),transparent 62%);animation:d1 30s var(--ease) infinite alternate}
+  .f2{width:58vmax;height:58vmax;right:-16%;top:-2%;
+      background:radial-gradient(circle at 58% 42%,rgba(78,147,255,.52),transparent 60%);animation:d2 36s var(--ease) infinite alternate}
+  .f3{width:52vmax;height:52vmax;left:16%;bottom:-26%;
+      background:radial-gradient(circle at 50% 50%,rgba(157,123,255,.42),transparent 60%);animation:d3 42s var(--ease) infinite alternate}
+  .f4{width:44vmax;height:44vmax;right:12%;bottom:-18%;
+      background:radial-gradient(circle at 50% 50%,rgba(87,224,184,.32),transparent 60%);animation:d4 33s var(--ease) infinite alternate}
+  @keyframes d1{to{transform:translate3d(13vw,8vh,0) scale(1.16)}}
+  @keyframes d2{to{transform:translate3d(-11vw,12vh,0) scale(1.2)}}
+  @keyframes d3{to{transform:translate3d(9vw,-11vh,0) scale(1.12)}}
+  @keyframes d4{to{transform:translate3d(-8vw,-8vh,0) scale(1.18)}}
+
+  .caustic{position:fixed;inset:0;z-index:1;pointer-events:none;mix-blend-mode:soft-light;
+    background:radial-gradient(440px 440px at var(--mx,60%) var(--my,30%),rgba(255,255,255,.32),transparent 70%);
+    transition:opacity .9s var(--ease)}
+  :root[data-theme="bright"] .caustic{opacity:.4;mix-blend-mode:overlay}
+  /* explicit width/height REQUIRED — inset:0 alone leaves an SVG at its 300x150 default */
+  .grain{position:fixed;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;
+    opacity:var(--grain-op);mix-blend-mode:var(--grain-blend);transition:opacity .9s var(--ease)}
+
+  /* ---------- shell ---------- */
+  .wrap{position:relative;z-index:3;max-width:1220px;margin:0 auto;
+    padding:0 clamp(18px,3vw,40px) calc(60px + env(safe-area-inset-bottom))}
+  nav.top{display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding:22px 0;position:relative;z-index:100}
+  .wordmark{display:flex;align-items:center;gap:11px;font-weight:600;font-size:16px;letter-spacing:.22em}
+  .wordmark .mk{width:28px;height:28px;border-radius:10px;flex:none;
+    background:linear-gradient(140deg,var(--gold-hi),var(--gold));
+    box-shadow:0 8px 22px -6px rgba(245,188,85,.75),0 1px 0 rgba(255,255,255,.5) inset}
+  /* theme switch — same control as d-fusion so the choice feels like one system */
+  .sw{position:relative;width:78px;height:44px;border-radius:999px;border:1px solid var(--edge);cursor:pointer;
+    background:var(--glass);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);
+    box-shadow:var(--shadow);transition:background .6s var(--ease);touch-action:manipulation;flex:none}
+  .sw .thumb{position:absolute;top:4px;left:4px;width:34px;height:34px;border-radius:50%;
+    display:grid;place-items:center;background:linear-gradient(180deg,var(--gold-hi),var(--gold));
+    box-shadow:0 6px 16px -4px rgba(0,0,0,.45),0 1px 0 rgba(255,255,255,.55) inset;
+    transition:transform .62s var(--spring),background .6s var(--ease)}
+  :root[data-theme="bright"] .sw .thumb{transform:translateX(34px)}
+  .sw svg{width:16px;height:16px;stroke:var(--btn-ink);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .sw .moon{display:none}
+  :root[data-theme="deep"] .sw .moon{display:block}
+  :root[data-theme="deep"] .sw .sun{display:none}
+
+  /* ---------- hero ---------- */
+  .hero{padding:clamp(48px,11vh,120px) 0 clamp(36px,7vh,72px);max-width:900px}
+  .eyebrow{font-size:11.5px;letter-spacing:.4em;text-transform:uppercase;color:var(--muted);
+    display:flex;align-items:center;gap:10px;
+    opacity:0;transform:translateY(12px);animation:rise .9s .1s var(--ease) forwards}
+  .eyebrow b{width:7px;height:7px;border-radius:50%;background:var(--mint);flex:none;
+    box-shadow:0 0 0 4px rgba(87,224,184,.2)}
+  h1{margin-top:26px;font-size:clamp(44px,8.4vw,112px);font-weight:600;letter-spacing:-.05em;line-height:.94}
+  .ln{display:block;overflow:hidden}
+  .ln span{display:block;transform:translateY(110%);transition:transform 1.15s var(--ease)}
+  .ready .ln span{transform:none}
+  .ln:nth-child(2) span{transition-delay:.09s}
+  .grad{background:linear-gradient(100deg,var(--gold-hi),var(--gold) 32%,var(--azure) 66%,var(--violet));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{margin-top:26px;max-width:56ch;font-size:clamp(15px,1.9vw,19px);font-weight:300;color:var(--muted);line-height:1.62;
+    opacity:0;transform:translateY(16px);animation:rise 1s .5s var(--ease) forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+
+  /* ---------- sections ---------- */
+  .sec{margin-top:clamp(40px,7vh,84px)}
+  .sechead{display:flex;align-items:baseline;gap:16px}
+  .sechead h2{font-size:12px;font-weight:600;letter-spacing:.34em;text-transform:uppercase;color:var(--muted);flex:none}
+  .sechead .rule{flex:1;height:1px;background:linear-gradient(90deg,var(--edge),transparent)}
+  .sechead .n{font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums;flex:none}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:18px;margin-top:20px}
+  .card{--ac:var(--gold); --ac2:var(--gold-hi);
+    position:relative;display:flex;flex-direction:column;gap:0;min-height:176px;
+    padding:24px;border-radius:22px;overflow:hidden;text-decoration:none;color:inherit;
+    background:linear-gradient(158deg,var(--glass),var(--glass2));
+    backdrop-filter:blur(28px) saturate(170%);-webkit-backdrop-filter:blur(28px) saturate(170%);
+    border:1px solid var(--edge);
+    box-shadow:var(--shadow),0 1px 0 var(--edge-hi) inset;
+    cursor:pointer;touch-action:manipulation;
+    opacity:0;transform:translateY(44px) scale(.98);
+    transition:opacity .95s var(--ease),transform .95s var(--ease),box-shadow .5s var(--ease)}
+  .card.in{opacity:1;transform:none}
+  .card:hover{transform:translateY(-4px);
+    box-shadow:var(--shadow),0 1px 0 var(--edge-hi) inset,0 26px 70px -28px color-mix(in srgb,var(--ac) 45%,transparent)}
+  /* per-card accent pool — the build's identity leaks through the glass */
+  .card::before{content:'';position:absolute;right:-34%;top:-42%;width:78%;aspect-ratio:1;border-radius:50%;
+    background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--ac) 34%,transparent),transparent 66%);
+    transition:transform .8s var(--ease);pointer-events:none}
+  .card:hover::before{transform:scale(1.25)}
+  .card::after{content:'';position:absolute;inset:0;
+    background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.18) 50%,transparent 70%);
+    transform:translateX(-130%);transition:transform 1s var(--ease);pointer-events:none}
+  .card:hover::after{transform:translateX(130%)}
+  .card .ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;flex:none;
+    background:linear-gradient(140deg,var(--ac2),var(--ac));
+    box-shadow:0 10px 24px -8px color-mix(in srgb,var(--ac) 70%,transparent),0 1px 0 rgba(255,255,255,.45) inset}
+  .card .ic svg{width:20px;height:20px;stroke:var(--btn-ink);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .card h3{margin-top:16px;font-size:17.5px;font-weight:600;letter-spacing:-.02em}
+  .card p{margin-top:6px;font-size:13.5px;font-weight:300;color:var(--muted);line-height:1.55;flex:1}
+  .meta{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+  .chip{font-size:9.5px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;
+    padding:5px 10px;border-radius:999px;border:1px solid var(--edge);color:var(--muted);
+    background:var(--glass2)}
+  .chip.live{color:var(--mint);border-color:color-mix(in srgb,var(--mint) 40%,transparent)}
+  .chip.parked,.chip.retired{color:var(--faint)}
+  .go{font-size:12px;font-weight:500;color:var(--muted);display:flex;align-items:center;gap:6px;
+    transition:color .3s var(--ease),transform .45s var(--spring)}
+  .go svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .card:hover .go{color:var(--text);transform:translateX(3px)}
+  .card.wide{grid-column:span 2}
+  @media(max-width:660px){.card.wide{grid-column:span 1}}
+
+  footer{margin-top:clamp(48px,8vh,90px);display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    font-size:12px;color:var(--faint)}
+  footer .rule{flex:1;height:1px;min-width:60px;background:linear-gradient(90deg,var(--edge),transparent)}
+
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+    .eyebrow,.lede{opacity:1;transform:none}
+    .ln span{transform:none}
+    .card{opacity:1;transform:none}
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="liq" x="-35%" y="-35%" width="170%" height="170%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.009 0.015" numOctaves="3" seed="19" result="n">
+      <animate attributeName="baseFrequency" dur="30s" values="0.009 0.015;0.015 0.009;0.009 0.015" repeatCount="indefinite"/>
+    </feTurbulence>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="62" xChannelSelector="R" yChannelSelector="G"/>
+    <feGaussianBlur stdDeviation="10"/>
+  </filter>
+  <filter id="gr"><feTurbulence type="fractalNoise" baseFrequency="0.88" numOctaves="4"/></filter>
+</svg>
+
+<div class="fluid" aria-hidden="true"><i class="f1"></i><i class="f2"></i><i class="f3"></i><i class="f4"></i></div>
+<div class="caustic" id="caustic" aria-hidden="true"></div>
+<svg class="grain" aria-hidden="true"><rect width="100%" height="100%" filter="url(#gr)"/></svg>
+
+<div class="wrap">
+  <nav class="top" aria-label="Showroom">
+    <div class="wordmark"><span class="mk" aria-hidden="true"></span>SHOWROOM</div>
+    <button class="sw" id="tg" role="switch" aria-checked="false" aria-label="Switch between deep and bright theme">
+      <span class="thumb">
+        <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>
+      </span>
+    </button>
+  </nav>
+
+  <header class="hero" id="hero">
+    <div class="eyebrow"><b aria-hidden="true"></b> The workshop · every build, one language</div>
+    <h1><span class="ln"><span>Built here.</span></span><span class="ln"><span class="grad">Finished here.</span></span></h1>
+    <p class="lede">Bee — a local AI that actually does the work — and the tools, games and experiments
+      built around it. Everything below runs. Pick one.</p>
+  </header>
+
+  <main>
+    <section class="sec" aria-labelledby="s-flag">
+      <div class="sechead"><h2 id="s-flag">Flagship</h2><div class="rule"></div><span class="n" data-count></span></div>
+      <div class="grid" data-sec="flagship"></div>
+    </section>
+    <section class="sec" aria-labelledby="s-tools">
+      <div class="sechead"><h2 id="s-tools">Tools</h2><div class="rule"></div><span class="n" data-count></span></div>
+      <div class="grid" data-sec="tools"></div>
+    </section>
+    <section class="sec" aria-labelledby="s-games">
+      <div class="sechead"><h2 id="s-games">Games</h2><div class="rule"></div><span class="n" data-count></span></div>
+      <div class="grid" data-sec="games"></div>
+    </section>
+    <section class="sec" aria-labelledby="s-lab">
+      <div class="sechead"><h2 id="s-lab">The lab</h2><div class="rule"></div><span class="n" data-count></span></div>
+      <div class="grid" data-sec="lab"></div>
+    </section>
+  </main>
+
+  <footer><span>One material system · two worlds · every build its own cut</span><div class="rule"></div><span id="yr"></span></footer>
+</div>
+
+<script>
+'use strict';
+/* ---------- build registry — links stay dual-layout (repo tree vs Docker box) ---------- */
+const ICONS={
+  hex:'<path d="M12 2.5l8 4.6v9.8l-8 4.6-8-4.6V7.1z"/><path d="M12 8l4 2.3v4.6L12 17.2l-4-2.3v-4.6z"/>',
+  chat:'<path d="M21 12a8 8 0 0 1-8 8H4l2.2-2.6A8 8 0 1 1 21 12z"/><path d="M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01"/>',
+  squad:'<circle cx="12" cy="7" r="3"/><circle cx="5.5" cy="16.5" r="2.5"/><circle cx="18.5" cy="16.5" r="2.5"/><path d="M12 10v3M9.8 14.2l-2.4 1.3M14.2 14.2l2.4 1.3"/>',
+  ops:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/><path d="M12 3.5V7M12 17v3.5M3.5 12H7M17 12h3.5"/>',
+  shield:'<path d="M12 2.5l7.5 3v6c0 5-3.2 8.4-7.5 10-4.3-1.6-7.5-5-7.5-10v-6z"/><path d="M8.5 12l2.4 2.4 4.6-4.8"/>',
+  tag:'<path d="M3 3h8l10 10-8 8L3 11z"/><circle cx="8" cy="8" r="1.6"/>',
+  flag:'<circle cx="12" cy="12" r="8.5"/><path d="M12 12L16.5 8M12 12l-2 4.5"/><circle cx="12" cy="12" r="1.2"/>',
+  target:'<path d="M4 20V6.5A2.5 2.5 0 0 1 6.5 4H20"/><path d="M8 16l3-3 2.5 2.5L18 11"/><path d="M18 14.5V11h-3.5"/>',
+  tree:'<circle cx="12" cy="5" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M12 7.5V12M12 12l-4.5 3.8M12 12l4.5 3.8"/>',
+  cells:'<path d="M8 3.5l4 2.3v4.6L8 12.7l-4-2.3V5.8z"/><path d="M16 11.5l4 2.3v4.6l-4 2.3-4-2.3v-4.6z"/>',
+  snake:'<path d="M4 17c0-3 3-3 6-3s6 0 6-3-3-3-6-3"/><circle cx="18" cy="17" r="2.5"/><path d="M17.5 16.5h.01"/>',
+  arc:'<path d="M4 18c0-6 3.6-11 8-11s8 5 8 11"/><path d="M8 18h8"/>',
+  leaf:'<path d="M6 20c0-8 4-14 12-15-1 8-5 13-12 15z"/><path d="M6 20c3-4 6-7 9-9"/>',
+  box:'<path d="M12 2.8l8 4.2v10l-8 4.2-8-4.2V7z"/><path d="M4 7l8 4.2L20 7M12 11.2V21"/>',
+  spark:'<path d="M12 3v5M12 16v5M3 12h5M16 12h5"/><circle cx="12" cy="12" r="2.6"/>',
+  store:'<path d="M4 9l1.5-4.5h13L20 9M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9M4 9h16M9 20v-6h6v6"/>',
+};
+/* [key, section, name, blurb, accent, accentHi, icon, status, repoHref, boxHref] */
+const BUILDS=[
+ ['super','flagship','Bee Super','Chat, a multi-agent squad and voice in one surface — the whole assistant on one screen.','#f5bc55','#ffdc9a','hex','live','../bee/demo/super.html','../bee/super.html'],
+ ['bee','flagship','Bee','The original chat demo — local model, real tools, memory that survives restarts.','#f5bc55','#ffdc9a','chat','live','../bee/demo/index.html','../bee/index.html'],
+ ['squad','flagship','Bee Squad','Watch a task split across parallel agents and merge back into one answer.','#f5bc55','#ffdc9a','squad','live','../bee/demo/squad.html','../bee/squad.html'],
+ ['ops','flagship','Bee Ops','Mission control — every surface, agent and run on one live board.','#f5bc55','#ffdc9a','ops','live','../bee/demo/ops.html','../bee/ops.html'],
+ ['allergy','flagship','Allergy Scanner','Fail-safe food verdicts from real data. When it is not sure, it says AVOID.','#57e0b8','#9ff0d6','shield','live','../allergy-app/demo/index.html','../allergy/index.html'],
+ ['tracker','tools','Mission Tracker','Projects and tasks with real progress — seeded with an actual car rebuild.','#4e93ff','#9cc3ff','target','live','../tools/tracker/index.html','../tracker/index.html'],
+ ['sell','tools','SellSmith','Marketplace listings plus AI copy that sells the thing for you.','#9d7bff','#c9b4ff','tag','live','../tools/sellsmith/index.html','../sellsmith/index.html'],
+ ['fairway','tools','Fairway','Find a course, preview the holes, book a tee time, get directions — a GolfNow-grade finder.','#57e0b8','#9ff0d6','flag','live','../tools/fairway/index.html','../fairway/index.html'],
+ ['storemap','tools','Store Guide','Mall-style directory for a big store — search a department, get walking directions, QR to your phone.','#2e5e4e','#57e0b8','store','live','../tools/storemap/index.html','../storemap/index.html'],
+ ['skilltree','tools','Skill Tree','Every capability in the system — tracked, sourced and scored.','#4e93ff','#9cc3ff','tree','live','../tools/skilltree/index.html','../skilltree/index.html'],
+ ['hive','games','Hive Royale','A lane battler played on honeycomb. Cards, tempo, sting.','#f5bc55','#ffdc9a','cells','live','../games/hive-royale/index.html','../hive-royale/index.html'],
+ ['snork','games','SNORK','Snake, except it is a pig, and it slaps. Swipe or D-pad.','#9d7bff','#c9b4ff','snake','live','../games/snork/index.html','../snork/index.html'],
+ ['buns','games','Brawl Buns','Slingshot physics duels. Retired 2026-07-22 — still playable, kept for the record.','#5f6b82','#93a0b8','arc','retired','../games/brawl-buns/index.html','../brawl-buns/index.html'],
+ ['herolab','lab','Hero Lab','The taste experiments that locked this language — Fusion won.','#9d7bff','#c9b4ff','spark','lab','../concepts/hero-lab/d-fusion.html','../hero-lab/d-fusion.html'],
+ ['urban','lab','Urban Living','Eco-home concept with a live 30-day simulation.','#57e0b8','#9ff0d6','leaf','concept','../concepts/urban-living/index.html','../urban-living/index.html'],
+ ['sandbox','lab','Sandbox','The launcher — every surface from one grid, any serve context.','#4e93ff','#9cc3ff','box','live','../sandbox/index.html','../index.html'],
+];
+let container=false;
+const linkFor=b=>container?b[9]:b[8];
+
+/* ---------- render ---------- */
+const grids={};
+document.querySelectorAll('[data-sec]').forEach(g=>grids[g.dataset.sec]=g);
+const cards=[];
+BUILDS.forEach((b,i)=>{
+  const [key,sec,name,blurb,ac,ac2,icon,status]=b;
+  const a=document.createElement('a');
+  a.className='card'+(key==='super'?' wide':'');
+  a.dataset.key=key;
+  a.href=linkFor(b);
+  a.style.setProperty('--ac',ac); a.style.setProperty('--ac2',ac2);
+  a.setAttribute('aria-label',`${name} — open build`);
+  a.innerHTML=`<span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24">${ICONS[icon]}</svg></span>
+    <h3>${name}</h3><p>${blurb}</p>
+    <span class="meta"><span class="chip ${status}">${status}</span>
+    <span class="go">Open <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>`;
+  grids[sec].appendChild(a);
+  cards.push(a);
+});
+document.querySelectorAll('.sec').forEach(s=>{
+  const n=s.querySelectorAll('.card').length;
+  s.querySelector('[data-count]').textContent=String(n).padStart(2,'0');
+});
+document.getElementById('yr').textContent=new Date().getFullYear();
+
+/* container layout? probe a container-root file; swap all hrefs if present. */
+fetch('../snork/index.html',{method:'HEAD'}).then(r=>{
+  if(r.ok){ container=true; cards.forEach(c=>{ const b=BUILDS.find(x=>x[0]===c.dataset.key); c.href=b[9]; }); }
+}).catch(()=>{});
+
+/* ---------- choreography ---------- */
+document.getElementById('hero').classList.add('ready');   /* mask-up title */
+
+const io=new IntersectionObserver((es,obs)=>es.forEach(e=>{
+  if(e.isIntersecting){ const i=cards.indexOf(e.target);
+    setTimeout(()=>e.target.classList.add('in'),(i%6)*70); obs.unobserve(e.target); }
+}),{threshold:.15});
+cards.forEach(c=>io.observe(c));
+/* fail-safes — an observer that never fires must not leave content invisible */
+const showNow=el=>{el.classList.add('in'); io.unobserve(el);};
+cards.forEach((c,i)=>{ const r=c.getBoundingClientRect();
+  if(r.top<innerHeight&&r.bottom>0) setTimeout(()=>showNow(c),(i%6)*70); });
+setTimeout(()=>cards.forEach(showNow),1200);
+
+/* pointer caustic */
+const caustic=document.getElementById('caustic');
+addEventListener('pointermove',e=>{
+  caustic.style.setProperty('--mx',(e.clientX/innerWidth*100)+'%');
+  caustic.style.setProperty('--my',(e.clientY/innerHeight*100)+'%');
+},{passive:true});
+
+/* ---------- theme — shared key with d-fusion so the whole system feels like one choice ---------- */
+const KEY='bee.theme', root=document.documentElement, sw=document.getElementById('tg');
+function setTheme(t,persist){
+  root.dataset.theme=t;
+  sw.setAttribute('aria-checked',String(t==='bright'));
+  if(persist){ try{ localStorage.setItem(KEY,t); }catch{} }
+}
+let saved=null; try{ saved=localStorage.getItem(KEY); }catch{}
+setTheme(saved||(matchMedia('(prefers-color-scheme: light)').matches?'bright':'deep'),false);
+sw.addEventListener('click',()=>setTheme(root.dataset.theme==='deep'?'bright':'deep',true));
+
+/* ---------- test hook (§6.7 / §21) ---------- */
+window.Showroom={
+  variant:'collection',
+  get cards(){ return cards.length; },
+  get revealed(){ return cards.filter(c=>c.classList.contains('in')).length; },
+  get theme(){ return root.dataset.theme; },
+  setTheme:t=>setTheme(t,false),
+  toggle:()=>sw.click(),
+  linkFor:key=>{ const b=BUILDS.find(x=>x[0]===key); return b?(container?b[9]:b[8]):null; },
+  get links(){ return cards.map(c=>c.getAttribute('href')); },
+  _tick(){ cards.forEach(showNow); },   /* force-reveal for throttled/hidden tabs */
+  _grain(){ const g=document.querySelector('.grain').getBoundingClientRect();
+    /* clientWidth, not innerWidth — innerWidth counts the scrollbar, which no
+       fixed layer can cover; the honest claim is "covers the visible page". */
+    const vw=document.documentElement.clientWidth, vh=document.documentElement.clientHeight;
+    return {w:Math.round(g.width),h:Math.round(g.height),covers:g.width>=vw-1&&g.height>=vh-1}; },
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Demo Sandbox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{--display:'Space Grotesk','Segoe UI',system-ui,sans-serif;--mono:'JetBrains Mono','Consolas',ui-monospace,monospace}
+  body{margin:0;background:radial-gradient(900px 500px at 50% -10%,#141826,#0b0c10 60%);color:#eef1f6;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;
+    background-image:linear-gradient(rgba(108,140,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(108,140,255,.03) 1px,transparent 1px);
+    background-size:46px 46px;
+    -webkit-mask:radial-gradient(ellipse at 50% 0%,#000 0%,transparent 70%);mask:radial-gradient(ellipse at 50% 0%,#000 0%,transparent 70%)}
+  .w{position:relative;max-width:820px;margin:0 auto;padding:54px 20px}
+  h1{font-family:var(--display);font-size:40px;font-weight:700} h1 span{color:#6c8cff}
+  p.s{color:#9aa2b1;margin-top:6px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:28px}
+  a{display:block;text-decoration:none;color:inherit;background:#151926;border:1px solid #262c3d;border-radius:14px;padding:20px;transition:transform .18s,border-color .18s,box-shadow .18s;cursor:pointer}
+  a:hover{transform:translateY(-3px);border-color:#3a4150;box-shadow:0 12px 30px rgba(0,0,0,.4)}
+  a:focus-visible{outline:2px solid #6c8cff;outline-offset:2px}
+  .e{font-size:30px} h2{font-family:var(--display);margin-top:10px;font-size:18px} .d{color:#9aa2b1;font-size:13px;margin-top:4px}
+  footer{font-family:var(--mono);margin-top:34px;color:#5b616e;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+<div class="w">
+  <h1>Demo <span>Sandbox</span></h1>
+  <p class="s">All demos, served from an isolated Linux container. For local play + stress testing.</p>
+  <div class="grid">
+    <a href="snork/" data-repo="../games/snork/index.html"><div class="e">🐷</div><h2>SNORK</h2><div class="d">Pig Snake — arcade</div></a>
+    <a href="hive-royale/" data-repo="../games/hive-royale/index.html"><div class="e">🍯</div><h2>Hive Royale</h2><div class="d">Real-time lane battler</div></a>
+    <a href="brawl-buns/" data-repo="../games/brawl-buns/index.html"><div class="e">🥐</div><h2>Brawl Buns</h2><div class="d">Slingshot physics</div></a>
+    <a href="allergy/" data-repo="../allergy-app/demo/index.html"><div class="e">🛡️</div><h2>Allergy Scanner</h2><div class="d">Fail-safe verdicts</div></a>
+    <a href="bee/" data-repo="../bee/demo/index.html"><div class="e">🐝</div><h2>Bee</h2><div class="d">Local AI agent demo</div></a>
+    <a href="sellsmith/" data-repo="../tools/sellsmith/index.html"><div class="e">💸</div><h2>SellSmith</h2><div class="d">AI copy generator</div></a>
+    <a href="bee/squad.html" data-repo="../bee/demo/squad.html"><div class="e">🤖</div><h2>Bee Squad</h2><div class="d">Multi-agent</div></a>
+    <a href="urban-living/" data-repo="../concepts/urban-living/index.html"><div class="e">🌱</div><h2>Urban Living</h2><div class="d">Eco-home concept + live sim</div></a>
+    <a href="bee/ops.html" data-repo="../bee/demo/ops.html"><div class="e">📡</div><h2>Bee Ops</h2><div class="d">Mission control — live status</div></a>
+    <a href="bee/super.html" data-repo="../bee/demo/super.html"><div class="e">⚡</div><h2>Bee Super</h2><div class="d">Chat + squad — one Bee</div></a>
+    <a href="showroom/" data-repo="../showroom/index.html"><div class="e">🧊</div><h2>Showroom</h2><div class="d">The collection — every build, one language</div></a>
+    <a href="fairway/" data-repo="../tools/fairway/index.html"><div class="e">⛳</div><h2>Fairway Radar</h2><div class="d">Golf courses + hidden gems, live</div></a>
+    <a href="tracker/" data-repo="../tools/tracker/index.html"><div class="e">📊</div><h2>Mission Tracker</h2><div class="d">Every project + task, live %</div></a>
+  </div>
+  <footer id="foot">Isolated sandbox · nginx:alpine · port 8088</footer>
+</div>
+<script>
+// The default hrefs match the Docker container's root layout (nginx copies demos to /snork/, /bee/, …).
+// Served from the repo tree instead (python http.server, file://, GitHub), the page lives at …/sandbox/,
+// where those paths don't exist — so detect that and point every tile at the real repo files.
+(function(){
+  var inRepo=/\/sandbox\/(index\.html)?$/i.test(location.pathname);
+  if(!inRepo) return;
+  document.querySelectorAll('a[data-repo]').forEach(function(a){ a.href=a.dataset.repo; });
+  document.getElementById('foot').textContent='Serving straight from the repo tree · container layout at port 8088';
+})();
+</script>
+</body></html>

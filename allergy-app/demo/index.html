@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Allergy Scanner — SAFE / CAUTION / AVOID</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0c0f; --bg-2:#0e1116; --panel:#14181e; --panel-2:#191e25; --line:#252b34; --line-2:#2f3742;
+    --text:#e9edf3; --muted:#8b93a1; --faint:#6b7280;
+    --brand:#4f92e6; --brand-soft:rgba(79,146,230,.14);
+    --safe:#2fc07a; --safe-bg:#0d241a; --safe-fg:#7ff0bc; --safe-line:rgba(47,192,122,.4);
+    --caution:#f5b301; --caution-bg:#241d06; --caution-fg:#ffd766; --caution-line:rgba(245,179,1,.4);
+    --avoid:#ff5a5c; --avoid-bg:#26100f; --avoid-fg:#ff9a9b; --avoid-line:rgba(255,90,92,.45);
+    --font:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif;
+    /* display face degrades to Segoe offline — the demo never breaks without network */
+    --display:'Space Grotesk','Segoe UI',system-ui,sans-serif;
+    --mono:'JetBrains Mono','SF Mono','Consolas',ui-monospace,'Roboto Mono',monospace;
+    --r:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(900px 500px at 50% -10%,#141821,var(--bg) 55%) fixed;color:var(--text);
+    font-family:var(--font);line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  /* faint blueprint grid — calm, instrument-like; no neon */
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:linear-gradient(rgba(79,146,230,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(79,146,230,.028) 1px,transparent 1px);
+    background-size:44px 44px;
+    -webkit-mask:radial-gradient(ellipse at 50% 0%,#000 0%,transparent 70%);mask:radial-gradient(ellipse at 50% 0%,#000 0%,transparent 70%)}
+  .wrap{position:relative;z-index:1;max-width:560px;margin:0 auto;padding:26px 18px 64px}
+  h1,h2,.vword,.tabs button,button.go{font-family:var(--display)}
+  :focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:8px}
+
+  /* header */
+  header{display:flex;flex-direction:column;gap:4px;padding-bottom:18px;border-bottom:1px solid var(--line);margin-bottom:6px}
+  .brandrow{display:flex;align-items:center;gap:13px}
+  .logo{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
+    background:linear-gradient(160deg,#1d2531,#131820);border:1px solid var(--line-2);box-shadow:0 6px 20px rgba(0,0,0,.4)}
+  .logo svg{width:24px;height:24px}
+  .engine-facts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .engine-facts span{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);
+    border:1px solid var(--line);border-radius:6px;padding:3px 8px;background:rgba(255,255,255,.02)}
+  header h1{font-size:20px;font-weight:700;letter-spacing:-.01em}
+  header h1 .tag{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);
+    border:1px solid var(--brand-soft);background:var(--brand-soft);padding:2px 7px;border-radius:6px;vertical-align:middle;margin-left:8px}
+  header p{color:var(--muted);font-size:13px}
+  header p b{color:var(--text)}
+
+  /* cards */
+  .card{background:linear-gradient(180deg,var(--panel),var(--bg-2));border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-top:16px;box-shadow:0 1px 0 rgba(255,255,255,.02) inset}
+  .card h2{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .card h2::before{content:"";width:12px;height:2px;background:var(--brand);border-radius:2px}
+
+  /* allergen chips */
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border-radius:999px;border:1px solid var(--line-2);
+    background:var(--panel-2);color:var(--text);font-size:13px;cursor:pointer;user-select:none;transition:border-color .18s,background .18s,color .18s}
+  .chip::before{content:"";width:14px;height:14px;border-radius:50%;border:1.5px solid var(--faint);flex:none;transition:all .18s}
+  .chip:hover{border-color:var(--line-2);background:#1e242c}
+  .chip.on{border-color:var(--safe-line);background:var(--safe-bg);color:var(--safe-fg)}
+  .chip.on::before{background:var(--safe);border-color:var(--safe);box-shadow:0 0 0 2px var(--safe-bg) inset}
+  .switch{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:13px;color:var(--muted);cursor:pointer}
+  .switch input{width:36px;height:21px;appearance:none;background:var(--line-2);border-radius:999px;position:relative;cursor:pointer;transition:background .2s;flex:none}
+  .switch input:checked{background:var(--caution)}
+  .switch input::after{content:"";position:absolute;top:2.5px;left:2.5px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s}
+  .switch input:checked::after{left:17px}
+
+  /* scan controls */
+  .tabs{display:flex;gap:4px;margin-bottom:12px;background:var(--bg-2);border:1px solid var(--line);border-radius:11px;padding:4px}
+  .tabs button{flex:1;background:transparent;border:none;color:var(--muted);border-radius:8px;padding:9px;font-size:12.5px;cursor:pointer;font-family:var(--font);transition:background .18s,color .18s}
+  .tabs button.on{color:var(--text);background:var(--panel-2);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  .row{display:flex;gap:8px}
+  input[type=text],textarea{flex:1;background:var(--bg-2);border:1px solid var(--line-2);color:var(--text);border-radius:11px;
+    padding:12px 14px;font-family:var(--font);font-size:14px;transition:border-color .18s,box-shadow .18s}
+  input[type=text]{font-family:var(--mono);letter-spacing:.04em}
+  textarea{width:100%;resize:vertical;min-height:74px;margin-top:8px}
+  input:focus,textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+  button.go{background:linear-gradient(180deg,var(--brand),#3f7fd0);color:#fff;border:none;border-radius:11px;padding:0 20px;font-weight:700;cursor:pointer;letter-spacing:.02em;transition:filter .15s,transform .12s}
+  button.go:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  button.go:disabled{opacity:.5;cursor:default;transform:none}
+  .samples-label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:14px 0 8px}
+  .samples{display:flex;flex-wrap:wrap;gap:8px}
+  .samples button{background:var(--panel-2);border:1px solid var(--line);color:var(--muted);border-radius:9px;padding:8px 12px;font-size:12px;cursor:pointer;transition:all .15s}
+  .samples button:hover{color:var(--text);border-color:var(--brand);background:var(--brand-soft)}
+
+  /* verdict */
+  #verdict{margin-top:16px}
+  .vcard{position:relative;border-radius:var(--r);padding:20px;border:1px solid;overflow:hidden;animation:pop .32s cubic-bezier(.2,.7,.3,1) both}
+  @keyframes pop{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:none}}
+  .vcard::before{content:"";position:absolute;top:0;left:0;right:0;height:3px}
+  .vcard.SAFE{background:var(--safe-bg);border-color:var(--safe-line)}.vcard.SAFE::before{background:var(--safe)}
+  .vcard.CAUTION{background:var(--caution-bg);border-color:var(--caution-line)}.vcard.CAUTION::before{background:var(--caution)}
+  .vcard.AVOID{background:var(--avoid-bg);border-color:var(--avoid-line)}.vcard.AVOID::before{background:var(--avoid)}
+  .vhead{display:flex;align-items:center;gap:14px}
+  .vicon{width:50px;height:50px;border-radius:14px;display:grid;place-items:center;flex:none}
+  .vicon svg{width:27px;height:27px;stroke:#0a0c0f;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+  .SAFE .vicon{background:var(--safe);box-shadow:0 0 24px var(--safe-line)}
+  .CAUTION .vicon{background:var(--caution);box-shadow:0 0 24px var(--caution-line)}
+  .AVOID .vicon{background:var(--avoid);box-shadow:0 0 24px var(--avoid-line)}
+  .vword{font-size:26px;font-weight:800;letter-spacing:.02em;line-height:1.1}
+  .SAFE .vword{color:var(--safe-fg)}.CAUTION .vword{color:var(--caution-fg)}.AVOID .vword{color:var(--avoid-fg)}
+  .vsub{color:var(--muted);font-size:13px;margin-top:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .conf{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:6px;border:1px solid var(--line-2);color:var(--muted)}
+  .conf.high{color:var(--safe-fg);border-color:var(--safe-line)}.conf.medium{color:var(--caution-fg);border-color:var(--caution-line)}.conf.low{color:var(--avoid-fg);border-color:var(--avoid-line)}
+  .prod{margin-top:14px;font-weight:650;font-size:15px}
+  .triggers{margin-top:12px;display:flex;flex-direction:column;gap:7px}
+  .trig{font-size:13px;padding:10px 12px;background:rgba(0,0,0,.28);border-radius:10px;border-left:3px solid;display:flex;gap:8px}
+  .trig::before{content:"";width:7px;height:7px;border-radius:50%;flex:none;margin-top:6px}
+  .trig.AVOID{border-color:var(--avoid)}.trig.AVOID::before{background:var(--avoid)}
+  .trig.CAUTION{border-color:var(--caution)}.trig.CAUTION::before{background:var(--caution)}
+  .trig b{font-family:var(--mono);font-size:11px;letter-spacing:.06em}
+  .notes{margin-top:13px;font-size:12.5px;color:var(--muted);list-style:none}
+  .notes li{position:relative;padding-left:16px;margin-top:5px}
+  .notes li::before{content:"›";position:absolute;left:2px;color:var(--faint)}
+  .meta{margin-top:14px;display:flex;flex-wrap:wrap;gap:7px}
+  .meta span{font-family:var(--mono);font-size:10.5px;letter-spacing:.03em;color:var(--muted);background:rgba(255,255,255,.045);border:1px solid var(--line);padding:4px 9px;border-radius:7px}
+
+  .disclaimer{margin-top:22px;font-size:11.5px;color:var(--faint);line-height:1.6;background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:14px 15px}
+  .disclaimer b{color:var(--muted)}
+  .err{color:var(--avoid-fg);font-size:13px;margin-top:10px}
+  .spin{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:13px;margin-top:12px}
+  .spin::before{content:"";width:14px;height:14px;border:2px solid var(--line-2);border-top-color:var(--brand);border-radius:50%;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+
+  /* ===== AGENTS-v09-compliance — adopted from ui-ux-pro-max (P2 Touch & Interaction = CRITICAL) =====
+     Every real control gets a >=44x44 tap area and >=8px separation. Visual language is
+     unchanged: min-height/min-width grow the hit box, they don't restyle anything.
+     Deliberately NOT using a blanket ::after — several demos already use ::after for
+     tooltips and sheen, and overwriting those would be a regression. */
+  html{touch-action:manipulation}                 /* kills the 300ms mobile tap delay */
+  /* NOTE: input[type="text"] misses inputs with NO type attribute — use :not() form. */
+  button, select, textarea,
+  input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  [role="button"], [role="checkbox"], [onclick]{ min-height:44px }
+  button, select, [role="button"], [onclick]{ min-width:44px }
+  /* anchor-based controls (links used as buttons) — text links in prose are exempt */
+  a.back, a.btn, .srow a, .navrow a, .factions a, .dactions a, .samples a, .ric,
+  a.card, a[role="button"]{ min-height:44px; display:inline-flex; align-items:center }
+  /* icon-only controls: keep the glyph small, grow the target */
+  .mic, .iconbtn, .fav, .x, .rf{ min-width:44px; min-height:44px }
+  /* custom toggles keep their visual size; the wrapping label carries the target */
+  .switch, label:has(> input[type="checkbox"]){ min-height:44px; display:inline-flex; align-items:center }
+  /* adjacent controls need >=8px between them */
+  .navrow, .samples, .tabs, .rowb, .controls, .factions, .dactions, .heroactions, .hrow{ gap:8px }
+  /* P6 Typography: tabular figures so live numbers never shift layout */
+  .mono, .telemetry, .stat, .kv, .cdist, .conf, .meta, .pill, .clockbox, .ms{ font-variant-numeric:tabular-nums }
+  /* final pass: sliders, and anchor-controls that were tall enough but too narrow */
+  input[type="range"]{ min-height:44px }
+  a.back, .back{ min-width:44px; justify-content:center }
+  .switch{ min-height:44px; display:inline-flex; align-items:center; gap:10px }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brandrow">
+      <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#4f92e6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l7.5 3v5.5c0 4.8-3.2 8.6-7.5 10.5-4.3-1.9-7.5-5.7-7.5-10.5V5.5l7.5-3z"/><path d="M8.8 12.2l2.2 2.2 4.2-4.6" stroke="#2fc07a"/></svg></div>
+      <div>
+        <h1>Allergy Scanner<span class="tag">demo</span></h1>
+        <p>Scan food → <b>SAFE / CAUTION / AVOID</b> for <i>your</i> allergens, from real cited data. Never a false green.</p>
+      </div>
+    </div>
+    <div class="engine-facts">
+      <span>10 allergens · Big-9 + alpha-gal</span>
+      <span>Data: Open Food Facts + OpenFDA</span>
+      <span>Fail-safe · never a false green</span>
+    </div>
+  </header>
+
+  <div class="card">
+    <h2>Your allergen profile</h2>
+    <div class="chips" id="allergens"></div>
+    <label class="switch"><input type="checkbox" id="trace"> Trace-sensitive (react to "may contain")</label>
+  </div>
+
+  <div class="card">
+    <h2>Scan a product</h2>
+    <div class="tabs">
+      <button class="on" data-tab="barcode" onclick="tab('barcode')">By barcode</button>
+      <button data-tab="text" onclick="tab('text')">Paste ingredients</button>
+    </div>
+    <div id="tab-barcode">
+      <div class="row">
+        <input type="text" id="barcode" placeholder="e.g. 3017620422003" inputmode="numeric" />
+        <button class="go" id="lookupBtn" onclick="lookup()">Scan</button>
+      </div>
+      <div class="samples-label">Try a sample</div>
+      <div class="samples" id="samples"></div>
+    </div>
+    <div id="tab-text" style="display:none">
+      <textarea id="ingredients" placeholder="sugar, gelatin, natural flavors, beef broth"></textarea>
+      <div class="row" style="margin-top:8px"><button class="go" style="flex:1;padding:11px" onclick="evalText()">Check ingredients</button></div>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <div id="verdict"></div>
+
+  <div class="card">
+    <h2>Reaction log</h2>
+    <p style="color:var(--muted);font-size:12.5px;margin-bottom:10px">Log a real reaction — alpha-gal can hit 2–8h later, so note the food. Saved on your device. Pattern-spotting, not diagnosis.</p>
+    <input type="text" id="rxFood" placeholder="Food (e.g. gummy bears)" />
+    <input type="text" id="rxSym" placeholder="Symptoms (e.g. hives, stomach pain)" style="margin-top:8px" />
+    <div class="tabs" id="rxSev" style="margin-top:8px"><button class="on" data-sev="mild">Mild</button><button data-sev="moderate">Moderate</button><button data-sev="severe">Severe</button></div>
+    <button class="go" style="width:100%;padding:11px" onclick="addReaction()">Log reaction</button>
+    <div id="rxList" style="margin-top:12px"></div>
+  </div>
+
+  <div class="disclaimer">
+    <b>Decision-support, not a doctor.</b> Always read the physical label, ask restaurant staff, consult your allergist, and carry your prescribed epinephrine. This demo reports only real cited data (Open Food Facts) and says "unknown" when data is missing — it never guarantees safety. Reformulations happen; verify the label every time.
+  </div>
+</div>
+
+<script>
+/* ============ verdict engine (browser port of allergy-app/app/src) ============ */
+// Mirror of allergy-app/app/src/derivedIngredients.ts + verdictEngine matching.
+// Plain meat words FIRST — the class of miss that returned "steak = safe".
+const MAMMAL_MEAT=[['meat','','mammalian meat contains alpha-gal'],['steak'],['beef'],['veal'],['pork'],['ham'],['bacon'],
+  ['lamb'],['mutton'],['goat'],['venison'],['bison'],['buffalo'],['rabbit'],['horse'],['boar'],['elk'],['deer'],
+  ['mince'],['burger'],['hamburger'],['meatball'],['sausage'],['salami'],['pepperoni'],['prosciutto'],['chorizo'],
+  ['pancetta'],['jerky'],['liver',1,'organ meat if mammalian — verify'],['offal'],['tripe']];
+const MAMMAL_BYPRODUCT=[['gelatin'],['gelatine'],['collagen'],['lard'],['tallow'],['suet'],
+  ['schmaltz',1,'usually poultry but verify'],['broth',1,'confirm not beef/pork'],['stock',1,'confirm not beef/pork'],
+  ['bouillon',1,'confirm meat source'],['gravy',1,'often meat-based'],['rennet',1,'may be animal-derived'],
+  ['carrageenan',1,'murky for alpha-gal'],['magnesium stearate',1,'can be bovine'],['stearic acid',1,'can be animal'],
+  ['glycerin',1],['glycerol',1],['mono- and diglycerides',1,'can be animal'],['natural flavor',1,'may hide mammalian byproducts']];
+const MAMMAL_DAIRY=[['milk',1,'mammalian dairy — many with AGS react, some tolerate; verify'],['cream',1,'mammalian dairy — verify'],
+  ['butter',1,'mammalian dairy — verify'],['cheese',1,'mammalian dairy — verify'],['ghee',1,'clarified butter — verify'],
+  ['yogurt',1,'mammalian dairy — verify'],['whey',1,'milk derivative — verify'],['casein',1,'milk derivative — verify'],['lactose',1,'milk derivative — verify']];
+const MILK=[['milk'],['cream'],['butter'],['cheese'],['ghee'],['yogurt'],['yoghurt'],['whey'],['casein'],['caseinate'],['lactalbumin'],['lactoglobulin'],['lactoferrin'],['curd'],['custard'],['buttermilk'],['half-and-half'],['milkfat'],['nougat',1,'often contains milk'],['lactose',1,'milk-derived'],['rennet',1,'cheese-making'],['diacetyl',1,'artificial butter flavor'],['natural flavor',1,'may be dairy']];
+const EGG=[['egg'],['albumin'],['albumen'],['ovalbumin'],['ovomucoid'],['ovovitellin'],['ovoglobulin'],['globulin'],['livetin'],['lysozyme'],['vitellin'],['meringue'],['mayonnaise'],['aioli'],['eggnog'],['surimi',1,'imitation seafood may contain egg'],['lecithin',1,'usually soy but can be egg'],['natural flavor',1]];
+const PEANUT=[['peanut'],['groundnut'],['arachis','','arachis oil = peanut oil'],['goober'],['monkey nut'],['beer nut'],['mandelona',1],['mixed nuts',1,'may contain peanut'],['natural flavor',1,'may contain peanut']];
+const TREE_NUT=[['almond'],['walnut'],['cashew'],['pecan'],['pistachio'],['hazelnut'],['filbert'],['macadamia'],['brazil nut'],['pine nut'],['pignoli'],['pili nut'],['beechnut'],['praline'],['marzipan'],['gianduja'],['nougat',1,'often contains tree nuts'],['chestnut',1,'water chestnut is safe — verify'],['coconut',1,'FDA lists coconut as a tree nut; most tolerate it — verify'],['natural flavor',1]];
+const SOY=[['soy'],['soya'],['soybean'],['edamame'],['tofu'],['tempeh'],['miso'],['natto'],['tamari'],['shoyu'],['okara'],['textured vegetable protein'],['tvp'],['lecithin',1,'usually soy — verify'],['vegetable protein',1,'may be soy'],['hydrolyzed',1,'may be soy'],['natural flavor',1]];
+const WHEAT=[['wheat'],['gluten'],['semolina'],['durum'],['spelt'],['farro'],['kamut'],['khorasan'],['bulgur'],['couscous'],['seitan'],['einkorn'],['emmer'],['farina'],['triticale'],['freekeh'],['graham'],['matzo'],['matzah'],['barley',1,'gluten grain (not wheat)'],['rye',1,'gluten grain (not wheat)'],['malt',1,'usually barley — gluten'],['oats',1,'often cross-contaminated'],['flour',1,'verify the grain'],['starch',1,'verify source'],['dextrin',1,'can be wheat'],['bran',1,'verify the grain'],['natural flavor',1]];
+const FISH=[['fish'],['cod'],['salmon'],['tuna'],['tilapia'],['halibut'],['trout'],['bass'],['catfish'],['anchovy'],['anchovies'],['sardine'],['herring'],['mackerel'],['snapper'],['flounder'],['pollock'],['haddock'],['mahi'],['swordfish'],['caviar'],['roe'],['surimi',1,'imitation seafood'],['worcestershire',1,'usually anchovies'],['caesar',1,'often anchovies'],['omega-3',1,'may be fish'],['gelatin',1,'can be fish gelatin'],['natural flavor',1]];
+const SHELLFISH=[['shrimp'],['prawn'],['crab'],['lobster'],['crawfish'],['crayfish'],['crawdad'],['langoustine'],['scampi'],['krill'],['barnacle'],['clam'],['mussel'],['oyster'],['scallop'],['squid'],['calamari'],['octopus'],['snail'],['escargot'],['abalone'],['cockle'],['whelk'],['periwinkle'],['cuttlefish'],['surimi',1,'imitation crab'],['glucosamine',1,'often shellfish-derived'],['seafood',1,'may include shellfish'],['natural flavor',1]];
+const SESAME=[['sesame'],['tahini'],['tahina'],['tehina'],['benne'],['benniseed'],['gingelly'],['gomasio'],['halvah'],['halva'],['sesamol'],['sim sim'],['hummus',1,'usually contains tahini'],['natural flavor',1],['spices',1]];
+const DERIVED = {
+  'alpha-gal':[...MAMMAL_MEAT,...MAMMAL_BYPRODUCT,...MAMMAL_DAIRY],
+  'milk':MILK,'egg':EGG,'peanut':PEANUT,'tree-nut':TREE_NUT,'soy':SOY,'wheat':WHEAT,'fish':FISH,'shellfish':SHELLFISH,'sesame':SESAME
+};
+const ALLERGEN_LABELS={'alpha-gal':'Alpha-gal (red meat)','milk':'Milk / dairy','egg':'Egg','peanut':'Peanut','tree-nut':'Tree nuts','soy':'Soy','wheat':'Wheat / gluten','fish':'Fish','shellfish':'Shellfish','sesame':'Sesame'};
+const DECLARED_ALIASES={milk:['milk','milk-proteins'],egg:['eggs','egg'],peanut:['peanuts','peanut'],'tree-nut':['nuts','tree-nuts','tree nuts'],soy:['soybeans','soybean','soy'],wheat:['gluten','wheat'],fish:['fish'],shellfish:['crustaceans','molluscs','mollusks','shellfish'],sesame:['sesame-seeds','sesame','sesame-seed'],'alpha-gal':[]};
+const FALSE_FRIENDS={egg:['eggplant','egg replacer','egg-free','egg free'],chestnut:['water chestnut'],crab:['crabapple','crab apple','crabgrass'],flour:['almond flour','coconut flour','rice flour','corn flour','cornflour','oat flour','chickpea flour','tapioca flour','potato flour','cassava flour','buckwheat flour','soy flour','almond meal','nut flour'],starch:['corn starch','cornstarch','potato starch','tapioca starch','rice starch','arrowroot'],bran:['rice bran','oat bran','corn bran'],meat:['meatless','meat-free','meat free','plant-based meat','nutmeat']};
+const ALWAYS_AMBIGUOUS=['natural flavor','natural flavour','spices','flavoring','flavouring'];
+const RANK={SAFE:0,CAUTION:1,AVOID:2};
+const norm=s=>String(s).toLowerCase().trim();
+const hasLetter=c=>/[a-z]/.test(c);
+// keyword must begin a word (catches "peanuts","beefsteak"; rejects "graham","buckwheat")
+function wordHit(token,keyword){ let i=token.indexOf(keyword);
+  while(i!==-1){ if(!hasLetter(i===0?' ':token[i-1])) return true; i=token.indexOf(keyword,i+1);} return false; }
+const PLANT_SIGNAL=/(coconut|almond|soy|soya|oat|rice milk|hemp|cashew|peanut|cocoa|shea|hazelnut|walnut|olive|sunflower|avocado|butternut|cream of tartar|veggie|garden|vegan|vegetarian|plant[- ]?based|meat[- ]?free|meatless|beyond|impossible|tofu|seitan)/;
+const SOFT_MAMMAL=new Set(['meat','burger','hamburger','sausage','meatball','mince','patty','milk','cream','butter','cheese','ghee','yogurt','curd','custard','whey','casein','lactose']);
+const clearedByPlant=(token,kw)=>SOFT_MAMMAL.has(kw)&&PLANT_SIGNAL.test(token);
+const falseFriend=(token,kw)=>(FALSE_FRIENDS[kw]||[]).some(x=>token.includes(x));
+
+function freshness(ms){ if(ms==null)return null; const d=Math.floor((Date.now()-ms)/86400000);
+  if(d<=0)return'updated today'; if(d<30)return`updated ${d}d ago`;
+  const m=Math.floor(d/30); if(m<12)return`updated ~${m}mo ago (verify label)`; return'over a year old — stale, verify label'; }
+
+function evaluate(profile, product){
+  const sources=product.source?[product.source]:[]; const fresh=freshness(product.lastUpdated);
+  const triggers=[], notes=[];
+  if(!product.found) return {level:'CAUTION',confidence:'low',triggers:[{allergen:'—',ingredient:'product not in database',kind:'unknown',level:'CAUTION'}],
+    sources,freshness:fresh,notes:['Not found in our data — this is NOT a safety confirmation.','Read the physical label before deciding.']};
+  if(product.activeRecall){ triggers.push({allergen:'—',ingredient:'active recall',kind:'recall',level:'AVOID'}); notes.push('⚠ This product is under an active recall.'); }
+  const ingredients=(product.ingredients||[]).map(norm);
+  const declared=(product.declaredAllergens||[]).map(norm);
+  const traces=(product.traces||[]).map(norm);
+  if(ingredients.length===0 && declared.length===0){ triggers.push({allergen:'—',ingredient:'no ingredient data',kind:'unknown',level:'CAUTION'}); notes.push('No ingredient data for this product — read the physical label.'); }
+  for(const entry of profile.allergens){
+    const id=norm(entry.id);
+    const aliases=DECLARED_ALIASES[id]||[id];
+    if(declared.some(d=>aliases.includes(d))||ingredients.some(i=>wordHit(i,id)&&!clearedByPlant(i,id)&&!falseFriend(i,id))) triggers.push({allergen:entry.id,ingredient:id,kind:'direct',level:'AVOID'});
+    const derived=DERIVED[id]||[];
+    for(const ing of ingredients) for(const d of derived){ if(!wordHit(ing,d[0])) continue; if(clearedByPlant(ing,d[0])) continue; if(falseFriend(ing,d[0])) continue;
+      triggers.push({allergen:entry.id,ingredient:ing,kind:d[1]?'ambiguous':'derived',level:d[1]?'CAUTION':'AVOID',note:d[2]}); }
+    const traceHit=traces.some(t=>t.includes(id))||traces.some(t=>derived.some(d=>t.includes(d[0])));
+    if(traceHit) triggers.push({allergen:entry.id,ingredient:'may contain / shared facility',kind:'trace',level:entry.severity==='trace-sensitive'?'AVOID':'CAUTION'});
+  }
+  const wantsAlphaGal=profile.allergens.some(a=>norm(a.id)==='alpha-gal');
+  const tags=(product.analysisTags||[]).map(norm);
+  if(wantsAlphaGal&&tags.includes('en:non-vegetarian')&&!triggers.some(t=>t.allergen==='alpha-gal'&&t.level==='AVOID'))
+    triggers.push({allergen:'alpha-gal',ingredient:'animal ingredients (Open Food Facts analysis)',kind:'ambiguous',level:'CAUTION',note:'OFF flags this non-vegetarian — verify none is mammalian.'});
+  if(wantsAlphaGal&&tags.includes('en:vegan')) notes.push('Open Food Facts analysis: vegan — supports no-mammalian, but egg/fish/honey are AGS-safe yet non-vegan, so a signal, not a guarantee.');
+  for(const ing of ingredients) if(ALWAYS_AMBIGUOUS.some(a=>ing.includes(a)))
+    triggers.push({allergen:'—',ingredient:ing,kind:'ambiguous',level:'CAUTION',note:'Vague ingredient — verify with the manufacturer.'});
+  const prepCap=product.prep==='restaurant'?'CAUTION':'SAFE';
+  if(product.prep==='restaurant') notes.push('Restaurant/unpackaged — confirm preparation with staff.');
+  let level='SAFE'; for(const t of triggers) if(RANK[t.level]>RANK[level]) level=t.level; if(RANK[prepCap]>RANK[level]) level=prepCap;
+  const worst=triggers.filter(t=>t.level===level&&t.allergen!=='—').map(t=>t.allergen)[0];
+  let confidence;
+  if(level==='AVOID'){ const hard=triggers.some(t=>t.level==='AVOID'&&['direct','derived','recall'].includes(t.kind)); confidence=hard?'high':'medium'; }
+  else if(level==='CAUTION') confidence='medium';
+  else { confidence='medium'; notes.push('No known allergen found in the data available — not a guarantee. Labels change; read the physical label.'); }
+  return {level,confidence,triggers,worstAllergen:worst,sources,freshness:fresh,notes};
+}
+// Real SVG verdict icons (§21: icon + word + color, never color alone — and never text glyphs as icons)
+const BADGE={
+  SAFE:['<svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></svg>','SAFE'],
+  CAUTION:['<svg viewBox="0 0 24 24"><path d="M12 3L2.5 20h19L12 3z"/><path d="M12 9.5v4.5"/><path d="M12 17.2v.1"/></svg>','CAUTION'],
+  AVOID:['<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>','AVOID']
+};
+
+/* ============ UI ============ */
+// Build allergen chips from the label map so the UI always matches the engine.
+(function(){ const ac=document.getElementById('allergens');
+  Object.keys(ALLERGEN_LABELS).forEach(id=>{ const c=document.createElement('div'); c.className='chip'; c.dataset.id=id; c.textContent=ALLERGEN_LABELS[id]; ac.appendChild(c); }); })();
+const state={allergens:new Set(),trace:false};
+function saveProfile(){ try{ localStorage.setItem('allergy.profile', JSON.stringify({allergens:[...state.allergens], trace:state.trace})); }catch(e){} }
+document.querySelectorAll('#allergens .chip').forEach(c=>c.onclick=()=>{
+  const id=c.dataset.id; c.classList.toggle('on');
+  c.classList.contains('on')?state.allergens.add(id):state.allergens.delete(id); saveProfile();
+});
+document.getElementById('trace').onchange=e=>{ state.trace=e.target.checked; saveProfile(); };
+// restore saved profile so you don't re-pick every visit
+(function(){ try{ const s=JSON.parse(localStorage.getItem('allergy.profile')||'{}');
+  (s.allergens||[]).forEach(id=>state.allergens.add(id)); state.trace=!!s.trace;
+  document.getElementById('trace').checked=state.trace;
+  document.querySelectorAll('#allergens .chip').forEach(c=>{ if(state.allergens.has(c.dataset.id)) c.classList.add('on'); });
+}catch(e){} })();
+function profile(){ return {allergens:[...state.allergens].map(id=>({id,severity:state.trace?'trace-sensitive':'avoid'}))}; }
+function guardProfile(){ if(state.allergens.size===0){ status('<span class="err">Pick at least one allergen in your profile first.</span>'); return false;} return true; }
+function status(html){ document.getElementById('status').innerHTML=html; }
+function tab(which){ document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===which));
+  document.getElementById('tab-barcode').style.display=which==='barcode'?'':'none';
+  document.getElementById('tab-text').style.display=which==='text'?'':'none'; status(''); }
+
+/* Bundled sample products (work offline; live lookup also available). */
+const SAMPLES={
+  '3017620422003':{found:true,name:'Nutella (hazelnut spread)',ingredients:['sugar','palm oil','hazelnuts','skim milk powder','cocoa','lecithin','vanillin'],declaredAllergens:['milk','nuts'],traces:['peanut'],source:'sample',lastUpdated:Date.now()-40*86400000,prep:'packaged'},
+  'gummy-bears':{found:true,name:'Gummy Bears',ingredients:['glucose syrup','sugar','gelatin','citric acid','natural flavors'],declaredAllergens:[],traces:[],source:'sample',lastUpdated:Date.now()-10*86400000,prep:'packaged'},
+  'plain-rice':{found:true,name:'Plain White Rice',ingredients:['long grain white rice'],declaredAllergens:[],traces:[],source:'sample',lastUpdated:Date.now()-5*86400000,prep:'packaged'},
+  'beef-broth':{found:true,name:'Restaurant Soup (unpackaged)',ingredients:['water','carrots','onion','beef broth','natural flavors'],declaredAllergens:[],traces:[],source:'sample',lastUpdated:Date.now(),prep:'restaurant'},
+  'beef-jerky':{found:true,name:'Beef Jerky',ingredients:['beef','sugar','salt','natural flavors'],declaredAllergens:[],traces:[],analysisTags:['en:non-vegetarian'],source:'sample',lastUpdated:Date.now()-20*86400000,prep:'packaged'},
+  'oat-bar':{found:true,name:'Oat & Almond Bar (vegan)',ingredients:['oats','coconut oil','almonds','maple syrup'],declaredAllergens:['nuts'],traces:['peanut'],analysisTags:['en:vegan'],source:'sample',lastUpdated:Date.now()-8*86400000,prep:'packaged'},
+  '0000000000000':{found:false,source:'sample'}
+};
+const SAMPLE_LABELS={'3017620422003':'Nutella','gummy-bears':'Gummy bears (gelatin)','plain-rice':'Plain rice','beef-broth':'Restaurant soup','beef-jerky':'Beef jerky','oat-bar':'Vegan oat bar','0000000000000':'Unknown product'};
+const sc=document.getElementById('samples');
+Object.keys(SAMPLES).forEach(k=>{ const b=document.createElement('button'); b.textContent=SAMPLE_LABELS[k]; b.onclick=()=>{ if(!guardProfile())return; render(evaluate(profile(),SAMPLES[k]),SAMPLES[k]); }; sc.appendChild(b); });
+
+// OpenFDA recall check (free, no key) — a matching ongoing recall → AVOID.
+async function checkRecall(name){
+  if(!name) return false;
+  const terms=name.toLowerCase().split(/[^a-z0-9]+/).filter(w=>w.length>3).slice(0,3).join('+');
+  if(!terms) return false;
+  try{ const r=await fetch(`https://api.fda.gov/food/enforcement.json?search=status:%22Ongoing%22+AND+product_description:(${encodeURIComponent(terms)})&limit=1`);
+    if(!r.ok) return false; const d=await r.json(); return !!(d.results&&d.results[0]); }
+  catch(e){ return false; }
+}
+async function lookup(){
+  if(!guardProfile())return;
+  const code=document.getElementById('barcode').value.trim(); if(!code)return;
+  if(SAMPLES[code]){ render(evaluate(profile(),SAMPLES[code]),SAMPLES[code]); return; }
+  status('<div class="spin">Looking up Open Food Facts…</div>'); document.getElementById('lookupBtn').disabled=true;
+  try{
+    const url=`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,ingredients,ingredients_text,allergens_tags,traces_tags,ingredients_analysis_tags,last_modified_t`;
+    const r=await fetch(url); const d=await r.json();
+    let product;
+    if(d.status!==1||!d.product){ product={found:false,source:'Open Food Facts'}; }
+    else{ const p=d.product; const detag=t=>t.split(':').pop();
+      const ings=(p.ingredients&&p.ingredients.length)?p.ingredients.map(i=>i.text||i.id||'').filter(Boolean):(p.ingredients_text?p.ingredients_text.split(',').map(s=>s.trim()):[]);
+      product={found:true,name:p.product_name,ingredients:ings,declaredAllergens:(p.allergens_tags||[]).map(detag),traces:(p.traces_tags||[]).map(detag),analysisTags:p.ingredients_analysis_tags||[],source:'Open Food Facts',lastUpdated:p.last_modified_t?p.last_modified_t*1000:null,prep:'packaged'}; }
+    if(product.found){ status('<div class="spin">Checking FDA recalls…</div>'); if(await checkRecall(product.name)) product.activeRecall=true; }
+    status(''); render(evaluate(profile(),product),product);
+  }catch(e){ status('<span class="err">Network error reaching Open Food Facts. Try a sample above, or the "Paste ingredients" tab.</span>'); }
+  finally{ document.getElementById('lookupBtn').disabled=false; }
+}
+function evalText(){
+  if(!guardProfile())return;
+  const raw=document.getElementById('ingredients').value.trim(); if(!raw)return;
+  const product={found:true,name:'Pasted ingredients',ingredients:raw.split(/[,;\n]/).map(s=>s.trim()).filter(Boolean),declaredAllergens:[],traces:[],source:'manual entry',lastUpdated:Date.now(),prep:'packaged'};
+  render(evaluate(profile(),product),product);
+}
+
+function render(v,product){
+  const [icon,word]=BADGE[v.level];
+  const trigs=v.triggers.filter(t=>t.level!=='SAFE');
+  let html=`<div class="vcard ${v.level}">
+    <div class="vhead"><div class="vicon">${icon}</div>
+      <div><div class="vword">${word}</div>
+      <div class="vsub">${v.worstAllergen?('for your <b>'+v.worstAllergen+'</b>'):'no allergen matched in data'}<span class="conf ${v.confidence}">${v.confidence} confidence</span></div></div></div>
+    ${product&&product.name?`<div class="prod">${product.name}</div>`:''}`;
+  if(trigs.length){ html+='<div class="triggers">';
+    trigs.forEach(t=>{ html+=`<div class="trig ${t.level}"><b>${t.level}</b> — ${t.ingredient}${t.allergen!=='—'?' ('+t.allergen+')':''}${t.note?' · '+t.note:''}</div>`; });
+    html+='</div>'; }
+  if(v.notes.length){ html+='<ul class="notes">'+v.notes.map(n=>`<li>${n}</li>`).join('')+'</ul>'; }
+  html+='<div class="meta">';
+  if(v.sources.length) html+=`<span>Source: ${v.sources.join(', ')}</span>`;
+  if(v.freshness) html+=`<span>${v.freshness}</span>`;
+  html+='</div></div>';
+  document.getElementById('verdict').innerHTML=html;
+  document.getElementById('verdict').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+/* ===== Reaction log (saved locally) ===== */
+let rxSev='mild';
+document.querySelectorAll('#rxSev button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('#rxSev button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); rxSev=b.dataset.sev; });
+function loadRx(){ try{ return JSON.parse(localStorage.getItem('allergy.reactions')||'[]'); }catch(e){ return []; } }
+function renderRx(){ const list=loadRx(); const el=document.getElementById('rxList');
+  el.innerHTML = list.length ? list.map(r=>{ const col=r.sev==='severe'?'var(--avoid)':r.sev==='moderate'?'var(--caution)':'var(--safe)';
+    return `<div class="trig" style="margin-top:7px;border-left-color:${col}"><span><b>${r.food}</b> · ${r.sev}${r.sym?(' · '+r.sym):''} <span style="color:var(--faint);font-size:11px">${new Date(r.at).toLocaleDateString()}</span></span></div>`; }).join('')
+    : '<div style="color:var(--faint);font-size:12.5px">No reactions logged yet.</div>'; }
+function addReaction(){ const food=document.getElementById('rxFood').value.trim(); if(!food) return;
+  const sym=document.getElementById('rxSym').value.trim(); const list=loadRx();
+  list.unshift({food, sym, sev:rxSev, at:Date.now()}); try{ localStorage.setItem('allergy.reactions', JSON.stringify(list)); }catch(e){}
+  document.getElementById('rxFood').value=''; document.getElementById('rxSym').value=''; renderRx(); }
+renderRx();
+</script>
+</body>
+</html>

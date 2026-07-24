@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>BEE — B · AURORA GLASS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f7f8fb; --ink:#0b0f1a; --muted:#6b7488;
+    --a1:#7c5cff; --a2:#31c8ff; --a3:#ff7ab8; --a4:#5ce6b5;
+    --font:'Inter',-apple-system,system-ui,sans-serif;
+    --ease:cubic-bezier(.16,1,.3,1);
+    --spring:cubic-bezier(.34,1.56,.64,1);   /* slight overshoot = "alive" */
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:var(--font);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+  /* ---------- breathing aurora mesh (always alive, never static) ---------- */
+  .aurora{position:fixed;inset:-20%;z-index:0;filter:blur(70px) saturate(160%);opacity:.62;pointer-events:none}
+  .aurora i{position:absolute;border-radius:50%;will-change:transform}
+  .b1{width:62vmax;height:62vmax;left:-8%;top:-18%;background:radial-gradient(circle,var(--a1),transparent 62%);animation:f1 24s var(--ease) infinite alternate}
+  .b2{width:54vmax;height:54vmax;right:-10%;top:2%;background:radial-gradient(circle,var(--a2),transparent 60%);animation:f2 29s var(--ease) infinite alternate}
+  .b3{width:48vmax;height:48vmax;left:18%;bottom:-22%;background:radial-gradient(circle,var(--a3),transparent 60%);animation:f3 34s var(--ease) infinite alternate}
+  .b4{width:44vmax;height:44vmax;right:12%;bottom:-16%;background:radial-gradient(circle,var(--a4),transparent 60%);animation:f4 27s var(--ease) infinite alternate}
+  @keyframes f1{to{transform:translate3d(16vw,10vh,0) scale(1.18)}}
+  @keyframes f2{to{transform:translate3d(-14vw,14vh,0) scale(1.22)}}
+  @keyframes f3{to{transform:translate3d(12vw,-12vh,0) scale(1.15)}}
+  @keyframes f4{to{transform:translate3d(-10vw,-8vh,0) scale(1.2)}}
+  .grain{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;opacity:.28;mix-blend-mode:multiply}
+
+  .wrap{position:relative;z-index:2;max-width:1120px;margin:0 auto;padding:0 28px}
+  nav{display:flex;align-items:center;justify-content:space-between;padding:26px 0}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:-.02em;font-size:17px}
+  .logo .dot{width:26px;height:26px;border-radius:9px;background:linear-gradient(140deg,var(--a1),var(--a2));
+    box-shadow:0 6px 18px -4px rgba(124,92,255,.6)}
+  .navbtn{font:inherit;font-size:14px;font-weight:500;padding:11px 20px;min-height:44px;border-radius:999px;cursor:pointer;
+    background:rgba(255,255,255,.6);border:1px solid rgba(11,15,26,.09);backdrop-filter:blur(20px);
+    transition:transform .45s var(--spring),background .45s var(--ease)}
+  .navbtn:hover{transform:translateY(-2px);background:#fff}
+
+  .hero{padding:11vh 0 8vh;text-align:center}
+  .pill{display:inline-flex;align-items:center;gap:9px;font-size:13px;font-weight:500;color:#4a5468;
+    background:rgba(255,255,255,.7);backdrop-filter:blur(20px);border:1px solid rgba(11,15,26,.08);
+    padding:9px 17px;min-height:44px;border-radius:999px;box-shadow:0 8px 26px -12px rgba(11,15,26,.28);
+    opacity:0;transform:translateY(12px);animation:rise .9s .1s var(--ease) forwards}
+  .pill em{font-style:normal;width:7px;height:7px;border-radius:50%;background:var(--a4);box-shadow:0 0 0 4px rgba(92,230,181,.22)}
+  h1{margin-top:28px;font-size:clamp(46px,8.2vw,104px);font-weight:600;letter-spacing:-.05em;line-height:.95}
+  h1 span{display:block;opacity:0;transform:translateY(40px);animation:rise 1.15s var(--ease) forwards}
+  h1 .s2{animation-delay:.12s;
+    background:linear-gradient(100deg,var(--a1),var(--a2) 45%,var(--a4));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{margin:26px auto 0;max-width:56ch;font-size:clamp(16px,2vw,20px);font-weight:300;color:var(--muted);line-height:1.6;
+    opacity:0;transform:translateY(16px);animation:rise 1s .42s var(--ease) forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .cta{margin-top:38px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;opacity:0;animation:rise .9s .6s var(--ease) forwards}
+  .btn{font:inherit;font-size:15px;font-weight:500;padding:16px 32px;min-height:44px;border-radius:999px;cursor:pointer;border:none;
+    background:linear-gradient(135deg,var(--a1),#5b6cff);color:#fff;
+    box-shadow:0 16px 40px -14px rgba(124,92,255,.85),0 1px 0 rgba(255,255,255,.4) inset;
+    transition:transform .5s var(--spring),box-shadow .5s var(--ease)}
+  .btn:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 26px 60px -16px rgba(124,92,255,.95)}
+  .btn.g{background:rgba(255,255,255,.72);color:var(--ink);border:1px solid rgba(11,15,26,.1);backdrop-filter:blur(20px);box-shadow:0 10px 30px -14px rgba(11,15,26,.3)}
+
+  /* ---------- glass cards, revealed with stagger ---------- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;padding:6vh 0 14vh}
+  .glass{position:relative;padding:30px;border-radius:24px;overflow:hidden;
+    background:linear-gradient(160deg,rgba(255,255,255,.86),rgba(255,255,255,.58));
+    backdrop-filter:blur(30px) saturate(170%);border:1px solid rgba(255,255,255,.9);
+    box-shadow:0 30px 70px -34px rgba(11,15,26,.42),0 1px 0 rgba(255,255,255,1) inset;
+    opacity:0;transform:translateY(46px) scale(.97);
+    transition:opacity .95s var(--ease),transform .95s var(--ease),box-shadow .5s var(--ease)}
+  .glass.in{opacity:1;transform:none}
+  .glass:hover{box-shadow:0 44px 90px -36px rgba(11,15,26,.5)}
+  .glass .ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;
+    background:linear-gradient(140deg,var(--a1),var(--a2));box-shadow:0 10px 24px -8px rgba(124,92,255,.7)}
+  .glass .ic svg{width:21px;height:21px;stroke:#fff;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .glass h3{margin-top:18px;font-size:19px;font-weight:600;letter-spacing:-.02em}
+  .glass p{margin-top:9px;color:var(--muted);font-size:14.5px;font-weight:300;line-height:1.6}
+  .tag{position:fixed;left:16px;top:16px;z-index:9;font-size:11px;letter-spacing:.3em;text-transform:uppercase;
+    color:#4a5468;background:rgba(255,255,255,.75);backdrop-filter:blur(14px);padding:8px 14px;border-radius:999px;
+    border:1px solid rgba(11,15,26,.08)}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}
+    h1 span,.pill,.sub,.cta{opacity:1;transform:none}.glass{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="tag">B · Aurora Glass</div>
+<div class="aurora"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="g"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4"/></filter>
+</svg>
+<svg class="grain" aria-hidden="true"><rect width="100%" height="100%" filter="url(#g)"/></svg>
+
+<div class="wrap">
+  <nav>
+    <div class="logo"><span class="dot"></span>Bee</div>
+    <button class="navbtn">Get Bee</button>
+  </nav>
+
+  <section class="hero">
+    <div class="pill"><em></em> Running locally on your machine</div>
+    <h1><span class="s1">The assistant</span><span class="s2">that actually does it.</span></h1>
+    <p class="sub">Not another chat window. Bee plans, works in parallel, uses real tools, remembers everything about you — and never sends a byte to the cloud.</p>
+    <div class="cta">
+      <button class="btn">Start free</button>
+      <button class="btn g">See it work</button>
+    </div>
+  </section>
+
+  <section class="grid" id="grid">
+    <div class="glass">
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3v18M5 8l7-5 7 5M5 16l7 5 7-5"/></svg></div>
+      <h3>Parallel minds</h3><p>Splits your task across agents that work at the same time, then merges one clean answer.</p>
+    </div>
+    <div class="glass">
+      <div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></div>
+      <h3>Real memory</h3><p>Plain files you can read and edit. It knows your projects, your rules, your allergies — across restarts.</p>
+    </div>
+    <div class="glass">
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 6"/></svg></div>
+      <h3>Verifies itself</h3><p>Runs the thing before claiming it works. If it fails, it says so instead of pretending.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+  // staggered reveal (30-50ms per item, the motion-craft rule)
+  const cards=[...document.querySelectorAll('.glass')];
+  const io=new IntersectionObserver((es,obs)=>es.forEach(e=>{
+    if(e.isIntersecting){ const i=cards.indexOf(e.target);
+      setTimeout(()=>e.target.classList.add('in'), i*70); obs.unobserve(e.target); }
+  }),{threshold:.2});
+  cards.forEach(c=>io.observe(c));
+  // FAIL-SAFE: a reveal that depends only on IntersectionObserver can leave content
+  // invisible forever if the observer never fires. Anything already on screen reveals
+  // immediately, and everything reveals no matter what after 1.2s.
+  const showNow=el=>{el.classList.add('in'); io.unobserve(el);};
+  cards.forEach((c,i)=>{ const b=c.getBoundingClientRect();
+    if(b.top < innerHeight && b.bottom > 0) setTimeout(()=>showNow(c), i*70); });
+  setTimeout(()=>cards.forEach(showNow),1200);
+  window.HeroB={variant:'aurora',get revealed(){return cards.filter(c=>c.classList.contains('in')).length}};
+</script>
+</body>
+</html>

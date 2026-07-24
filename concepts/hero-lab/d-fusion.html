@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en" data-theme="deep">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>BEE — D · FUSION (liquid × aurora)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============ FUSION: A's colour + living fluid, B's glass + airiness ============ */
+  :root[data-theme="deep"]{
+    --bg:#04060b; --bg2:#080d17;
+    --text:#f4f7fc; --muted:#93a0b8; --faint:#5f6b82;
+    --glass:rgba(255,255,255,.075); --glass2:rgba(255,255,255,.03);
+    --edge:rgba(255,255,255,.16); --edge-hi:rgba(255,255,255,.30);
+    --gold:#f5bc55; --gold-hi:#ffdc9a; --azure:#4e93ff; --violet:#9d7bff; --mint:#57e0b8;
+    --shadow:0 40px 100px -34px rgba(0,0,0,.95);
+    --grain-op:.15; --grain-blend:overlay; --fluid-op:.92;
+  }
+  /* BRIGHT = dimmed warm paper, not screen-white. Glare on a light theme is cumulative:
+     background + glass fills + edge highlights + the caustic all stack on top of each
+     other, so every one of them comes down together. Target is "paper under a lamp",
+     around 87% luminance, not the 98% of #f6f7fb. */
+  :root[data-theme="bright"]{
+    --bg:#e6e9f0; --bg2:#dae0ea;
+    --text:#141a28; --muted:#525c70; --faint:#7d8698;
+    --glass:rgba(255,255,255,.60); --glass2:rgba(255,255,255,.34);
+    --edge:rgba(255,255,255,.72); --edge-hi:rgba(255,255,255,.9);
+    --gold:#c8851a; --gold-hi:#eaa93c; --azure:#3369dd; --violet:#6d4ff0; --mint:#1fa87f;
+    --shadow:0 34px 80px -36px rgba(10,14,24,.38);
+    /* grain is far more visible over light pixels — the .26 that reads as texture on
+       black reads as grey haze on white. On the dimmed base it can come back up a
+       little, and multiply blend actually helps take the edge off the glare. */
+    --grain-op:.17; --grain-blend:multiply; --fluid-op:.98;
+  }
+  :root{
+    --font:'Inter',-apple-system,system-ui,sans-serif;
+    --ease:cubic-bezier(.16,1,.3,1);            /* the premium curve: long tail, no bounce */
+    --spring:cubic-bezier(.34,1.4,.64,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;transition:background .9s var(--ease),color .9s var(--ease)}
+
+  /* ---------- living fluid: aurora colour pushed through real turbulence ---------- */
+  .fluid{position:fixed;inset:-14%;z-index:0;filter:url(#liq);opacity:var(--fluid-op);
+    transition:opacity .9s var(--ease);pointer-events:none}
+  .fluid i{position:absolute;border-radius:50%;mix-blend-mode:screen;will-change:transform}
+  /* multiply keeps hue on a light base (screen would blow out to white), but the blob
+     gradients are low-alpha, so bright needs the opacity + saturation back or the
+     whole liquid layer disappears into the paper. */
+  :root[data-theme="bright"] .fluid{filter:url(#liq) saturate(1.45)}
+  :root[data-theme="bright"] .fluid i{mix-blend-mode:multiply;opacity:.92}
+  .f1{width:68vmax;height:68vmax;left:-12%;top:-18%;
+      background:radial-gradient(circle at 38% 38%,rgba(245,188,85,.62),transparent 62%);animation:d1 28s var(--ease) infinite alternate}
+  .f2{width:62vmax;height:62vmax;right:-14%;top:-4%;
+      background:radial-gradient(circle at 58% 42%,rgba(78,147,255,.55),transparent 60%);animation:d2 34s var(--ease) infinite alternate}
+  .f3{width:56vmax;height:56vmax;left:20%;bottom:-26%;
+      background:radial-gradient(circle at 50% 50%,rgba(157,123,255,.45),transparent 60%);animation:d3 40s var(--ease) infinite alternate}
+  .f4{width:46vmax;height:46vmax;right:14%;bottom:-18%;
+      background:radial-gradient(circle at 50% 50%,rgba(87,224,184,.34),transparent 60%);animation:d4 31s var(--ease) infinite alternate}
+  @keyframes d1{to{transform:translate3d(15vw,9vh,0) scale(1.18)}}
+  @keyframes d2{to{transform:translate3d(-13vw,13vh,0) scale(1.22)}}
+  @keyframes d3{to{transform:translate3d(10vw,-13vh,0) scale(1.14)}}
+  @keyframes d4{to{transform:translate3d(-9vw,-9vh,0) scale(1.2)}}
+
+  /* cursor-tracked caustic — "it's reacting to me" */
+  .caustic{position:fixed;inset:0;z-index:1;pointer-events:none;mix-blend-mode:soft-light;
+    background:radial-gradient(460px 460px at var(--mx,50%) var(--my,42%),rgba(255,255,255,.34),transparent 70%);
+    transition:opacity .9s var(--ease)}
+  /* on a light base a white soft-light sheet is pure added glare — halve it, and let
+     the pointer highlight read as a warm sheen instead of a torch. */
+  :root[data-theme="bright"] .caustic{opacity:.4;mix-blend-mode:overlay}
+  .grain{position:fixed;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;
+    opacity:var(--grain-op);mix-blend-mode:var(--grain-blend);transition:opacity .9s var(--ease)}
+
+  .wrap{position:relative;z-index:3;max-width:1140px;margin:0 auto;padding:0 28px}
+  nav{display:flex;align-items:center;justify-content:space-between;padding:26px 0}
+  .logo{display:flex;align-items:center;gap:11px;font-weight:600;font-size:17px;letter-spacing:-.02em}
+  .logo .mk{width:28px;height:28px;border-radius:10px;background:linear-gradient(140deg,var(--gold-hi),var(--gold));
+    box-shadow:0 8px 22px -6px rgba(245,188,85,.75),0 1px 0 rgba(255,255,255,.5) inset}
+  .toggle{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:500;color:var(--muted);
+    background:var(--glass);border:1px solid var(--edge);backdrop-filter:blur(22px) saturate(160%);
+    padding:10px 16px;min-height:44px;border-radius:999px;cursor:pointer;font-family:inherit;
+    transition:transform .45s var(--spring),background .5s var(--ease),color .5s var(--ease)}
+  .toggle:hover{transform:translateY(-2px);color:var(--text)}
+
+  .hero{padding:9vh 0 7vh;text-align:center}
+  .pill{display:inline-flex;align-items:center;gap:9px;font-size:12.5px;font-weight:500;color:var(--muted);
+    background:var(--glass);backdrop-filter:blur(22px) saturate(160%);border:1px solid var(--edge);
+    padding:10px 18px;min-height:44px;border-radius:999px;box-shadow:var(--shadow);
+    opacity:0;transform:translateY(12px);animation:rise 1s .1s var(--ease) forwards}
+  .pill em{font-style:normal;width:7px;height:7px;border-radius:50%;background:var(--mint);
+    box-shadow:0 0 0 4px rgba(87,224,184,.2)}
+  h1{margin-top:30px;font-size:clamp(48px,9vw,126px);font-weight:600;letter-spacing:-.052em;line-height:.93}
+  .ln{display:block;overflow:hidden}
+  .ln span{display:block;transform:translateY(110%);transition:transform 1.2s var(--ease)}
+  .ready .ln span{transform:none}
+  .ln:nth-child(2) span{transition-delay:.1s}
+  .grad{background:linear-gradient(100deg,var(--gold-hi),var(--gold) 30%,var(--azure) 68%,var(--violet));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{margin:28px auto 0;max-width:56ch;font-size:clamp(16px,2vw,20px);font-weight:300;color:var(--muted);line-height:1.62;
+    opacity:0;transform:translateY(18px);animation:rise 1s .5s var(--ease) forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .cta{margin-top:40px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;
+    opacity:0;animation:rise .95s .68s var(--ease) forwards}
+  .btn{position:relative;overflow:hidden;font:inherit;font-size:15px;font-weight:500;padding:17px 36px;min-height:44px;
+    border-radius:999px;cursor:pointer;border:none;background:linear-gradient(180deg,var(--gold-hi),var(--gold));color:#1c1305;
+    box-shadow:0 1px 0 rgba(255,255,255,.55) inset,0 18px 46px -14px rgba(245,188,85,.8);
+    transition:transform .5s var(--spring),box-shadow .5s var(--ease)}
+  .btn:hover{transform:translateY(-3px) scale(1.025);box-shadow:0 1px 0 rgba(255,255,255,.65) inset,0 30px 68px -16px rgba(245,188,85,.95)}
+  .btn::after{content:'';position:absolute;inset:0;background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.6) 50%,transparent 75%);
+    transform:translateX(-130%);transition:transform 1s var(--ease)}
+  .btn:hover::after{transform:translateX(130%)}
+  .btn.g{background:var(--glass);color:var(--text);border:1px solid var(--edge);backdrop-filter:blur(22px);box-shadow:var(--shadow)}
+
+  /* ---------- glass surface: Aurora's look, Liquid's world behind it ---------- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(265px,1fr));gap:20px;padding:4vh 0 13vh}
+  .card{position:relative;padding:32px;border-radius:24px;overflow:hidden;
+    background:linear-gradient(158deg,var(--glass),var(--glass2));
+    backdrop-filter:blur(30px) saturate(170%);border:1px solid var(--edge);
+    box-shadow:var(--shadow),0 1px 0 var(--edge-hi) inset;
+    opacity:0;transform:translateY(48px) scale(.975);
+    transition:opacity 1s var(--ease),transform 1s var(--ease),box-shadow .5s var(--ease)}
+  .card.in{opacity:1;transform:none}
+  .card:hover{box-shadow:var(--shadow),0 1px 0 var(--edge-hi) inset,0 0 60px -20px rgba(245,188,85,.4)}
+  .ic{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;
+    background:linear-gradient(140deg,var(--gold-hi),var(--azure));
+    box-shadow:0 12px 28px -10px rgba(78,147,255,.7),0 1px 0 rgba(255,255,255,.5) inset}
+  .ic svg{width:21px;height:21px;stroke:#0a0e18;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .card h3{margin-top:20px;font-size:19.5px;font-weight:600;letter-spacing:-.022em}
+  .card p{margin-top:10px;color:var(--muted);font-size:14.5px;font-weight:300;line-height:1.62}
+  /* ---------- Cinema's gift: full-viewport acts + one shared element ---------- */
+  .act{position:relative;min-height:100dvh;display:grid;place-items:center;padding:0 26px;text-align:center}
+  .kicker{font-size:12px;letter-spacing:.45em;text-transform:uppercase;color:var(--gold);margin-bottom:24px;
+    opacity:0;transform:translateY(12px);transition:opacity 1s .1s var(--ease),transform 1s .1s var(--ease)}
+  .act.on .kicker{opacity:1;transform:none}
+  .act h2{font-size:clamp(42px,8.5vw,118px);font-weight:600;letter-spacing:-.052em;line-height:.92}
+  .act .ln span{transition:transform 1.15s var(--ease)}
+  .act.on .ln span{transform:none}
+  .act .ln:nth-child(2) span{transition-delay:.09s}
+  .said{margin:26px auto 0;max-width:54ch;font-size:clamp(15px,1.9vw,19px);font-weight:300;color:var(--muted);line-height:1.62;
+    opacity:0;transform:translateY(16px);transition:opacity 1s .4s var(--ease),transform 1s .4s var(--ease)}
+  .act.on .said{opacity:1;transform:none}
+  .stat{display:flex;gap:clamp(26px,5vw,54px);justify-content:center;margin-top:42px;flex-wrap:wrap}
+  .stat div{opacity:0;transform:translateY(20px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+  .act.on .stat div{opacity:1;transform:none}
+  .act.on .stat div:nth-child(2){transition-delay:.09s}
+  .act.on .stat div:nth-child(3){transition-delay:.18s}
+  .stat b{display:block;font-size:clamp(30px,4vw,44px);font-weight:500;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+  .stat span{font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+  .act .cta2{margin-top:42px;opacity:0;transform:translateY(18px);transition:opacity .9s .5s var(--ease),transform .9s .5s var(--ease)}
+  .act.on .cta2{opacity:1;transform:none}
+  /* the shared element — one molten orb repositioned per act, never duplicated props */
+  .orb{position:fixed;z-index:2;width:120px;height:120px;border-radius:50%;pointer-events:none;
+    left:50%;top:50%;transform:translate(-50%,-50%) scale(.5);opacity:0;will-change:transform;
+    background:radial-gradient(circle at 34% 32%,#fff,var(--gold-hi) 26%,var(--gold) 58%,transparent 72%);
+    box-shadow:0 0 90px 20px color-mix(in srgb,var(--gold) 42%,transparent);
+    transition:transform 1.25s var(--ease),opacity .8s var(--ease)}
+  .scrollhint{position:fixed;bottom:calc(14px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:9;
+    font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--faint);
+    animation:bob 2.6s ease-in-out infinite;transition:opacity .6s var(--ease)}
+  .scrollhint.gone{opacity:0}
+  @keyframes bob{50%{transform:translateX(-50%) translateY(7px);opacity:.5}}
+
+  /* dev label — moved to the BOTTOM so it stops colliding with the logo (was overlapping) */
+  .tag{position:fixed;left:16px;bottom:16px;z-index:9;font-size:10px;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--faint);background:var(--glass);backdrop-filter:blur(14px);padding:7px 12px;border-radius:999px;
+    border:1px solid var(--edge);opacity:.7}
+
+  /* ---------- the theme switch (iOS-style, the bit he loves on his phone) ---------- */
+  .sw{position:relative;display:inline-flex;align-items:center;gap:0;width:78px;height:44px;flex:none;
+    border-radius:999px;cursor:pointer;border:1px solid var(--edge);padding:0;
+    background:var(--glass);backdrop-filter:blur(22px) saturate(160%);
+    box-shadow:var(--shadow),0 1px 0 var(--edge-hi) inset;
+    transition:background .7s var(--ease),border-color .7s var(--ease)}
+  .sw .thumb{position:absolute;top:4px;left:4px;width:34px;height:34px;border-radius:50%;
+    background:linear-gradient(160deg,var(--gold-hi),var(--gold));
+    box-shadow:0 6px 18px -4px rgba(245,188,85,.8),0 1px 0 rgba(255,255,255,.6) inset;
+    display:grid;place-items:center;
+    transition:transform .62s var(--spring),background .7s var(--ease),box-shadow .7s var(--ease)}
+  :root[data-theme="bright"] .sw .thumb{transform:translateX(34px);
+    background:linear-gradient(160deg,#fff,#dfe7f5);box-shadow:0 6px 18px -4px rgba(10,14,24,.4),0 1px 0 #fff inset}
+  .sw svg{width:18px;height:18px;stroke:#1c1305;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  :root[data-theme="bright"] .sw svg{stroke:#0a0e18}
+  .sw .sun,.sw .moon{position:absolute;transition:opacity .5s var(--ease),transform .62s var(--spring)}
+  .sw .moon{opacity:0;transform:rotate(-70deg) scale(.5)}
+  :root[data-theme="bright"] .sw .sun{opacity:0;transform:rotate(70deg) scale(.5)}
+  :root[data-theme="bright"] .sw .moon{opacity:1;transform:none}
+  /* the ambient colour of the whole page eases between themes — the "feel" switch */
+  .fluid,.grain,.card,.btn,.pill,.toggle{transition:opacity .9s var(--ease),background .9s var(--ease),
+    border-color .9s var(--ease),box-shadow .9s var(--ease),color .9s var(--ease)}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}
+    .ln span{transform:none}.pill,.sub,.cta{opacity:1;transform:none}.card{opacity:1;transform:none}
+    .kicker,.said,.stat div,.cta2{opacity:1!important;transform:none!important}
+    .orb{opacity:.5!important}.scrollhint{display:none}}
+</style>
+</head>
+<body>
+<div class="tag">D · Fusion</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!-- explicit oversized filter region: the default (-10%/120%) clips the blurred,
+       displaced output and leaves a hard rectangular edge on light backgrounds -->
+  <filter id="liq" x="-35%" y="-35%" width="170%" height="170%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.009 0.015" numOctaves="3" seed="11" result="n">
+      <animate attributeName="baseFrequency" dur="28s" values="0.009 0.015;0.015 0.009;0.009 0.015" repeatCount="indefinite"/>
+    </feTurbulence>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="62" xChannelSelector="R" yChannelSelector="G"/>
+    <feGaussianBlur stdDeviation="10"/>
+  </filter>
+  <filter id="gr"><feTurbulence type="fractalNoise" baseFrequency="0.88" numOctaves="4"/></filter>
+</svg>
+
+<div class="fluid"><i class="f1"></i><i class="f2"></i><i class="f3"></i><i class="f4"></i></div>
+<div class="caustic" id="caustic"></div>
+<svg class="grain" aria-hidden="true"><rect width="100%" height="100%" filter="url(#gr)"/></svg>
+<div class="orb" id="orb" aria-hidden="true"></div>
+<div class="scrollhint" id="hint">Scroll</div>
+
+<div class="wrap">
+  <nav>
+    <div class="logo"><span class="mk"></span>Bee</div>
+    <button class="sw" id="tg" role="switch" aria-checked="false" aria-label="Switch between dark and light">
+      <span class="thumb">
+        <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.6M12 18.8v2.6M2.6 12h2.6M18.8 12h2.6M5.4 5.4l1.9 1.9M16.7 16.7l1.9 1.9M18.6 5.4l-1.9 1.9M7.3 16.7l-1.9 1.9"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.2A8.2 8.2 0 019.8 4a8.4 8.4 0 108.4 10.2z"/></svg>
+      </span>
+    </button>
+  </nav>
+
+  <section class="hero" id="hero">
+    <div class="pill"><em></em> Running locally · nothing leaves your machine</div>
+    <h1><span class="ln"><span>Your mind,</span></span><span class="ln"><span class="grad">amplified.</span></span></h1>
+    <p class="sub">Bee plans, works in parallel, uses real tools on your files, and verifies its own output — then tells you the truth about what happened.</p>
+    <div class="cta">
+      <button class="btn">Wake Bee</button>
+      <button class="btn g">Watch it think</button>
+    </div>
+  </section>
+
+  <section class="grid" id="grid">
+    <div class="card">
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3v18M5 8l7-5 7 5M5 16l7 5 7-5"/></svg></div>
+      <h3>Parallel minds</h3><p>Splits the work across agents running at once, then merges one clean answer instead of a wall of text.</p>
+    </div>
+    <div class="card">
+      <div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></div>
+      <h3>Memory that's yours</h3><p>Plain files you can open and edit. It remembers your projects, your rules, your constraints — across restarts.</p>
+    </div>
+    <div class="card">
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 6"/></svg></div>
+      <h3>Proves it worked</h3><p>Runs the thing before claiming success. When it fails, it says so — instead of quietly pretending.</p>
+    </div>
+  </section>
+</div>
+
+<section class="act" id="act2" data-act>
+  <div>
+    <div class="kicker">Not a chatbot</div>
+    <h2><span class="ln"><span>It uses</span></span><span class="ln"><span class="grad">real tools.</span></span></h2>
+    <p class="said">Reads and writes your files. Runs commands. Deletes reversibly. Verifies the result before it ever says "done".</p>
+    <div class="stat">
+      <div><b>8</b><span>Live tools</span></div>
+      <div><b>0</b><span>Cloud calls</span></div>
+      <div><b>&#8734;</b><span>Memory</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="act" id="act3" data-act>
+  <div>
+    <div class="kicker">Yours alone</div>
+    <h2><span class="ln"><span>Nothing</span></span><span class="ln"><span class="grad">leaves.</span></span></h2>
+    <p class="said">No subscription. No telemetry. No company holding your keys. Bee is a program you own, on hardware you own.</p>
+    <div class="cta2"><button class="btn">Wake Bee</button></div>
+  </div>
+</section>
+
+<script>
+  const root=document.documentElement;
+  // headline mask-up on load
+  requestAnimationFrame(()=>document.getElementById('hero').classList.add('ready'));
+  setTimeout(()=>document.getElementById('hero').classList.add('ready'),120);   // fail-safe if rAF is throttled
+
+  // cursor-tracked caustic light
+  const c=document.getElementById('caustic');
+  addEventListener('pointermove',e=>{
+    c.style.setProperty('--mx',(e.clientX/innerWidth*100)+'%');
+    c.style.setProperty('--my',(e.clientY/innerHeight*100)+'%');
+  },{passive:true});
+
+  // staggered glass reveal — with a fail-safe, because an observer that never fires
+  // would leave the cards invisible forever (learned the hard way on the aurora build)
+  const cards=[...document.querySelectorAll('.card')];
+  const show=el=>el.classList.add('in');
+  const io=new IntersectionObserver((es,o)=>es.forEach(e=>{
+    if(e.isIntersecting){ setTimeout(()=>show(e.target),cards.indexOf(e.target)*80); o.unobserve(e.target); }
+  }),{threshold:.15});
+  cards.forEach(el=>io.observe(el));
+  cards.forEach((el,i)=>{const b=el.getBoundingClientRect();
+    if(b.top<innerHeight&&b.bottom>0) setTimeout(()=>show(el),i*80);});
+  setTimeout(()=>cards.forEach(show),1400);
+
+  // ---- theme switch: remembers your choice, follows your system by default ----
+  const KEY='bee.theme', sw=document.getElementById('tg');
+  function setTheme(t,persist){
+    root.dataset.theme=t;
+    sw.setAttribute('aria-checked', t==='bright');
+    sw.setAttribute('aria-label', t==='deep' ? 'Switch to light' : 'Switch to dark');
+    if(persist){ try{ localStorage.setItem(KEY,t); }catch{} }
+  }
+  // saved choice wins; otherwise follow the OS — same as your phone
+  let saved=null; try{ saved=localStorage.getItem(KEY); }catch{}
+  const prefersLight = matchMedia('(prefers-color-scheme: light)').matches;
+  setTheme(saved || (prefersLight?'bright':'deep'), false);
+  sw.onclick=()=>setTheme(root.dataset.theme==='deep'?'bright':'deep', true);
+  // if the OS flips and you've never chosen manually, follow it
+  matchMedia('(prefers-color-scheme: light)').addEventListener?.('change',e=>{
+    let s=null; try{ s=localStorage.getItem(KEY); }catch{}
+    if(!s) setTheme(e.matches?'bright':'deep', false);
+  });
+
+  // ---- act choreography: continuous rAF loop, not events. Scroll listeners and
+  // IntersectionObserver both silently failed to fire in one measured browser;
+  // a loop that reads real geometry every frame cannot miss (Cinema's lesson).
+  const sections=[document.getElementById('hero'),document.getElementById('grid'),
+                  document.getElementById('act2'),document.getElementById('act3')];
+  const acts=[...document.querySelectorAll('[data-act]')];
+  const orb=document.getElementById('orb'), hint=document.getElementById('hint');
+  // one shared element, four poses — x/y in vw/vh offsets from centre
+  const POSE=[{x:0,y:-60,s:.5,o:0},{x:36,y:-26,s:.55,o:.35},{x:-32,y:5,s:1.1,o:.85},{x:0,y:-4,s:2.1,o:.9}];
+  let current=-1;
+  function step(){
+    let i=0,best=1e9;
+    sections.forEach((s,n)=>{const d=Math.abs(s.getBoundingClientRect().top); if(d<best){best=d;i=n;}});
+    if(i!==current){
+      current=i;
+      acts.forEach(a=>a.classList.toggle('on', sections.indexOf(a)===i));
+      const p=POSE[i];
+      orb.style.transform=`translate(calc(-50% + ${p.x}vw), calc(-50% + ${p.y}vh)) scale(${p.s})`;
+      orb.style.opacity=p.o;
+      hint.classList.toggle('gone', i>0);
+    }
+  }
+  (function frame(){ step(); requestAnimationFrame(frame); })();
+
+  window.HeroD={variant:'fusion', setTheme,
+    get theme(){return root.dataset.theme},
+    get revealed(){return cards.filter(c=>c.classList.contains('in')).length},
+    get headlineIn(){return document.getElementById('hero').classList.contains('ready')},
+    // choreography probes — _tick runs one frame by hand (rAF pauses in hidden tabs)
+    _tick:step,
+    get activeAct(){return current},
+    get actsOn(){return acts.filter(a=>a.classList.contains('on')).length},
+    get orbTransform(){return orb.style.transform}};
+</script>
+</body>
+</html>

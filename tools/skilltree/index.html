@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SKILL TREE — every capability, tracked &amp; traced</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07080c; --panel:#10131c; --panel-2:#161b26; --line:#232a38; --edge:rgba(143,208,255,.28);
+    --holo:#8fd0ff; --holo-bright:#c4e7ff; --holo-deep:#4f92e6;
+    --installed:#3fd08a; --studied:#f5c518; --available:#8fd0ff; --planned:#5a6172;
+    --text:#eaf0f8; --muted:#8b93a8; --faint:#5b6172;
+    --font:'Segoe UI',system-ui,sans-serif;
+    --display:'Chakra Petch','Segoe UI',system-ui,sans-serif;
+    --mono:'JetBrains Mono','Consolas',ui-monospace,monospace;
+    /* z-index scale (AGENTS §21 v0.9): 0 bg · 1 fx · 2 chrome · 3 content · 40 panel · 100 toast */
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{touch-action:manipulation}
+  body{background:radial-gradient(1100px 620px at 50% -8%,#0e1524,var(--bg) 60%);color:var(--text);font-family:var(--font);min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:linear-gradient(rgba(143,208,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(143,208,255,.03) 1px,transparent 1px);
+    background-size:46px 46px;-webkit-mask:radial-gradient(circle at 50% 10%,#000,transparent 78%);mask:radial-gradient(circle at 50% 10%,#000,transparent 78%)}
+  .corner{position:fixed;width:26px;height:26px;z-index:2;pointer-events:none;border:2px solid var(--edge)}
+  .corner.tl{top:14px;left:14px;border-right:0;border-bottom:0}.corner.tr{top:14px;right:14px;border-left:0;border-bottom:0}
+  .corner.bl{bottom:14px;left:14px;border-right:0;border-top:0}.corner.br{bottom:14px;right:14px;border-left:0;border-top:0}
+  :focus-visible{outline:2px solid var(--holo);outline-offset:2px}
+  .wrap{position:relative;z-index:3;max-width:1180px;margin:0 auto;padding:26px 18px 90px}
+  header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  h1{font-family:var(--display);font-size:clamp(22px,4vw,34px);font-weight:700;letter-spacing:.12em;
+    background:linear-gradient(180deg,#fff,#bfe0ff 65%,#7ba9d6);-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 22px rgba(143,208,255,.25))}
+  .sub{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+
+  /* trunk */
+  .trunk{margin-top:18px;background:linear-gradient(180deg,#111726,var(--panel));border:1px solid var(--line);border-radius:16px;padding:16px 18px;
+    display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .trunk .core{width:74px;height:74px;flex:none;position:relative}
+  .trunk canvas{width:100%;height:100%;display:block}
+  .tstats{display:flex;gap:10px;flex-wrap:wrap;flex:1}
+  .stat{background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:9px 13px;min-width:96px}
+  .stat .n{font-family:var(--mono);font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
+  .stat .k{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:2px}
+  .stat.i .n{color:var(--installed)} .stat.s .n{color:var(--studied)} .stat.a .n{color:var(--available)}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+
+  /* branches */
+  /* padding-top gives the connector wires room to run from the trunk into each card */
+  .branches{position:relative;display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));gap:16px;margin-top:10px;padding-top:38px}
+  #wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:visible}
+  .branch{position:relative;z-index:1;background:linear-gradient(180deg,#131824,var(--panel));border:1px solid var(--line);border-radius:15px;padding:14px}
+  .bhead{display:flex;align-items:center;gap:10px}
+  .bicon{width:34px;height:34px;flex:none;border-radius:10px;display:grid;place-items:center;background:var(--panel-2);border:1px solid var(--line)}
+  .bicon svg{width:18px;height:18px;stroke:var(--holo);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .bname{font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:.1em;text-transform:uppercase}
+  .bmeta{font-family:var(--mono);font-size:10px;color:var(--faint);margin-top:2px;font-variant-numeric:tabular-nums}
+  .bbar{height:4px;border-radius:99px;background:#0b0f16;margin-top:10px;overflow:hidden}
+  .bbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--holo-deep),var(--installed));transition:width .35s}
+  .nodes{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
+  .node{position:relative;display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:7px 11px;border-radius:9px;
+    background:var(--panel-2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:11px;cursor:pointer;
+    transition:border-color .2s,background .2s,transform .15s;text-align:left}
+  .node::after{content:'';position:absolute;inset:-6px}         /* ≥44px tap area, visuals unchanged */
+  .node:hover{border-color:var(--edge);background:#1b2231;transform:translateY(-1px)}
+  .node .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .node.installed .dot{background:var(--installed);box-shadow:0 0 7px var(--installed)}
+  .node.studied .dot{background:var(--studied);box-shadow:0 0 7px var(--studied)}
+  .node.available .dot{background:var(--available)}
+  .node.planned .dot{background:var(--planned)}
+  .node.planned{opacity:.65}
+
+  /* detail panel */
+  .detail{position:fixed;inset:0;z-index:40;background:rgba(5,7,11,.84);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px}
+  .detail.show{display:flex}
+  .dcard{background:linear-gradient(180deg,#121826,#0d1119);border:1px solid var(--edge);border-radius:17px;padding:20px;max-width:540px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.6);max-height:86dvh;overflow-y:auto}
+  .dtop{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+  .dname{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:.05em}
+  .badge{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;border-radius:6px;padding:3px 8px;border:1px solid}
+  .badge.installed{color:var(--installed);border-color:rgba(63,208,138,.45)}
+  .badge.studied{color:var(--studied);border-color:rgba(245,197,24,.45)}
+  .badge.available{color:var(--available);border-color:rgba(143,208,255,.4)}
+  .badge.planned{color:var(--planned);border-color:var(--line)}
+  .drow{display:flex;gap:10px;font-family:var(--mono);font-size:11.5px;padding:8px 0;border-bottom:1px dotted #212836;color:var(--muted)}
+  .drow:last-of-type{border-bottom:0}
+  .drow b{color:var(--text);font-weight:600;min-width:74px;flex:none}
+  .drow span{word-break:break-word}
+  .depth{display:flex;gap:4px;margin-top:3px}
+  .depth i{width:26px;height:5px;border-radius:99px;background:#1d2430}
+  .depth i.on{background:var(--holo)}
+  .dactions{display:flex;gap:9px;margin-top:16px}
+  .dactions button,.dactions a{flex:1;min-height:44px;text-align:center;font-family:var(--display);font-weight:700;letter-spacing:.07em;
+    border-radius:11px;font-size:12.5px;cursor:pointer;border:none;display:grid;place-items:center;text-decoration:none}
+  .dopen{background:linear-gradient(180deg,var(--holo),var(--holo-deep));color:#06101c}
+  .dclose{background:var(--panel);color:var(--text);border:1px solid var(--line)}
+  footer{margin-top:26px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--faint);text-transform:uppercase;line-height:1.9}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media(max-width:620px){.corner{display:none}}
+</style>
+</head>
+<body>
+<div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+<div class="wrap">
+  <header>
+    <h1>SKILL TREE</h1>
+    <span class="sub">Every capability · tracked, traced, deep-dived</span>
+  </header>
+
+  <div class="trunk">
+    <div class="core"><canvas id="core"></canvas></div>
+    <div class="tstats">
+      <div class="stat"><div class="n" id="sTotal">0</div><div class="k">skills</div></div>
+      <div class="stat i"><div class="n" id="sInst">0</div><div class="k">installed</div></div>
+      <div class="stat s"><div class="n" id="sStud">0</div><div class="k">deep-dived</div></div>
+      <div class="stat a"><div class="n" id="sAvail">0</div><div class="k">available</div></div>
+      <div class="stat"><div class="n" id="sMastery">0%</div><div class="k">mastery</div></div>
+    </div>
+  </div>
+  <div class="legend">
+    <span><i style="background:#3fd08a"></i>Installed — vendored &amp; runnable here</span>
+    <span><i style="background:#f5c518"></i>Deep-dived — studied at source, distilled</span>
+    <span><i style="background:#8fd0ff"></i>Available — usable, not yet deep-dived</span>
+    <span><i style="background:#5a6172"></i>Planned</span>
+  </div>
+
+  <div class="branches" id="branches"><svg id="wires"></svg></div>
+
+  <footer>
+    Mastery = (installed×3 + deep-dived×2 + available×1) ÷ (total×3) ·
+    New skills follow the AGENTS §23 protocol: clone → license → read source → distil gaps → add here → apply ·
+    Click any node to trace its source, license, what it gives, and where it's applied
+  </footer>
+</div>
+
+<div class="detail" id="detail" role="dialog" aria-modal="true" aria-labelledby="dname">
+  <div class="dcard">
+    <div class="dtop"><span class="dname" id="dname">—</span><span class="badge" id="dbadge">—</span></div>
+    <div style="margin-top:12px">
+      <div class="drow"><b>Gives</b><span id="dgives">—</span></div>
+      <div class="drow"><b>Source</b><span id="dsource">—</span></div>
+      <div class="drow"><b>License</b><span id="dlicense">—</span></div>
+      <div class="drow"><b>Applied to</b><span id="dapplied">—</span></div>
+      <div class="drow"><b>Depth</b><span><span id="ddepthtxt">—</span><span class="depth" id="ddepth"></span></span></div>
+    </div>
+    <div class="dactions">
+      <a class="dopen" id="dopen" href="#" target="_blank" rel="noopener">OPEN SOURCE ▸</a>
+      <button class="dclose" onclick="SkillTree.close()">CLOSE</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ============ the tree data — every capability, traceable ============
+   status: installed | studied | available | planned
+   depth:  1 used · 2 deep-dived · 3 applied to our builds                     */
+const ICONS={
+  design:'<path d="M12 3l2.6 5.6 6.4.8-4.6 4.4 1.2 6.2L12 17l-5.6 3 1.2-6.2L3 9.4l6.4-.8z"/>',
+  build:'<path d="M4 20h16M6 20V9l6-5 6 5v11"/><path d="M10 20v-6h4v6"/>',
+  verify:'<path d="M4 12l5 5L20 6"/><circle cx="12" cy="12" r="9" opacity=".35"/>',
+  docs:'<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>',
+  agent:'<circle cx="12" cy="12" r="3.4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M18 6l-2 2M6 18l2-2"/>',
+  research:'<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.5-4.5"/>',
+  env:'<rect x="3" y="5" width="18" height="13" rx="2"/><path d="M8 20h8M12 18v2"/>',
+};
+const BRANCHES=[
+  {id:'design',name:'Design',icon:'design',skills:[
+    {n:'ui-ux-pro-max',s:'installed',d:3,g:'84 styles · 192 palettes · 74 font pairings · 98 UX rules · 22 stacks. Impact-priority review order.',src:'https://github.com/nextlevelbuilder/ui-ux-pro-max-skill',lic:'MIT',ap:'AGENTS §21 v0.9 · Mission Tracker (110→0 touch-target fixes)'},
+    {n:'dataviz',s:'available',d:1,g:'Chart/dashboard design system — palettes, mark specs, legend & axis rules.',src:'built-in skill',lic:'Anthropic',ap:'Urban Living sim readouts, OPS tiles'},
+    {n:'canvas-design',s:'available',d:1,g:'Poster/static art composition in PNG/PDF.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+    {n:'brand-guidelines',s:'available',d:1,g:'Anthropic brand colors/typography for artifacts.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+    {n:'theme-factory',s:'available',d:1,g:'10 preset themes + on-the-fly theme generation.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+    {n:'artifact-design',s:'available',d:1,g:'Design fundamentals for published artifacts.',src:'built-in skill',lic:'Anthropic',ap:'Allergy + BEE artifacts'},
+    {n:'algorithmic-art',s:'available',d:1,g:'p5.js generative art, seeded randomness.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+  ]},
+  {id:'build',name:'Build',icon:'build',skills:[
+    {n:'web-artifacts-builder',s:'available',d:1,g:'Multi-component React/Tailwind/shadcn artifacts.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+    {n:'mcp-builder',s:'available',d:1,g:'Build MCP servers (Python FastMCP / TS SDK).',src:'built-in skill',lic:'Anthropic',ap:'—'},
+    {n:'artifact-capabilities',s:'available',d:1,g:'Runtime capabilities for published pages (MCP from the page).',src:'built-in skill',lic:'Anthropic',ap:'—'},
+    {n:'run',s:'available',d:2,g:'Launch and drive the project app to prove a change works.',src:'built-in skill',lic:'Anthropic',ap:'Bee Electron first hardware run'},
+    {n:'init',s:'available',d:1,g:'Generate CLAUDE.md codebase docs.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+  ]},
+  {id:'verify',name:'Verify',icon:'verify',skills:[
+    {n:'verify',s:'available',d:2,g:'Exercise a change end-to-end and observe real behavior.',src:'built-in skill',lic:'Anthropic',ap:'Every build this session (§6.7)'},
+    {n:'code-review',s:'available',d:1,g:'Diff review for correctness + simplification; ultra = cloud multi-agent.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+    {n:'simplify',s:'available',d:1,g:'Reuse/simplification/efficiency cleanup pass.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+    {n:'security-review',s:'available',d:1,g:'Security review of pending changes.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+    {n:'fewer-permission-prompts',s:'available',d:1,g:'Allowlist common safe calls to cut prompts.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+  ]},
+  {id:'docs',name:'Documents',icon:'docs',skills:[
+    {n:'docx',s:'available',d:1,g:'Word documents/templates — create, edit, extract.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+    {n:'pdf',s:'available',d:1,g:'PDF read/merge/split/forms/OCR.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+    {n:'pptx',s:'available',d:1,g:'Slide decks — create, read, edit.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+    {n:'xlsx',s:'available',d:1,g:'Spreadsheets — formulas, formatting, cleaning.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+    {n:'doc-coauthoring',s:'available',d:1,g:'Structured doc/spec/proposal workflow.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+    {n:'internal-comms',s:'available',d:1,g:'Status reports, FAQs, incident reports.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+  ]},
+  {id:'agent',name:'Agent & System',icon:'agent',skills:[
+    {n:'skill-creator',s:'available',d:1,g:'Create/modify/eval skills — the meta-skill.',src:'built-in skill',lic:'Anthropic',ap:'Next: convert Bee tools to SKILL.md'},
+    {n:'claude-api',s:'available',d:2,g:'Model IDs, pricing, tool use, caching, agents SDK.',src:'built-in skill',lic:'Anthropic',ap:'Bee agent loop design'},
+    {n:'update-config',s:'available',d:1,g:'settings.json, hooks, permissions, env.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+    {n:'loop',s:'available',d:1,g:'Recurring/self-paced task loops.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+    {n:'schedule',s:'available',d:1,g:'Cron/scheduled cloud agents.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+    {n:'consolidate-memory',s:'available',d:1,g:'Merge/prune the persistent memory store.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+    {n:'keybindings-help',s:'available',d:1,g:'Custom keybindings.',src:'built-in skill',lic:'Anthropic',ap:'—'},
+  ]},
+  {id:'discipline',name:'Discipline (superpowers)',icon:'verify',skills:[
+    {n:'verification-before-completion',s:'installed',d:3,g:'THE IRON LAW: no completion claims without FRESH evidence — "if you haven\'t run it in this message you can\'t claim it passes" + the 5-step gate function.',src:'https://github.com/obra/superpowers',lic:'MIT',ap:'AGENTS §6.7 — superseded our softer wording'},
+    {n:'systematic-debugging',s:'installed',d:3,g:'No fixes without root-cause investigation first. Symptom fixes are failure.',src:'https://github.com/obra/superpowers',lic:'MIT',ap:'AGENTS §6.8 (new law)'},
+    {n:'writing-skills',s:'installed',d:3,g:'Skill authoring as TDD: watch an agent fail without the skill first, then close loopholes.',src:'https://github.com/obra/superpowers',lic:'MIT',ap:'AGENTS §23.8'},
+    {n:'test-driven-development',s:'installed',d:1,g:'RED-GREEN-REFACTOR discipline underpinning the skill-writing method.',src:'https://github.com/obra/superpowers',lic:'MIT',ap:'—'},
+    {n:'subagent-driven-development',s:'installed',d:1,g:'Delegating work to subagents with clean briefs.',src:'https://github.com/obra/superpowers',lic:'MIT',ap:'Maps onto Bee Squad'},
+    {n:'dispatching-parallel-agents',s:'installed',d:1,g:'Fan-out patterns for independent parallel work.',src:'https://github.com/obra/superpowers',lic:'MIT',ap:'Maps onto Bee Squad'},
+    {n:'writing-plans',s:'installed',d:1,g:'Plan documents that survive handoff.',src:'https://github.com/obra/superpowers',lic:'MIT',ap:'—'},
+    {n:'executing-plans',s:'installed',d:1,g:'Working a plan without drift.',src:'https://github.com/obra/superpowers',lic:'MIT',ap:'—'},
+    {n:'brainstorming',s:'installed',d:1,g:'Structured idea generation before building.',src:'https://github.com/obra/superpowers',lic:'MIT',ap:'—'},
+    {n:'requesting-code-review',s:'installed',d:1,g:'Asking for review usefully.',src:'https://github.com/obra/superpowers',lic:'MIT',ap:'—'},
+    {n:'receiving-code-review',s:'installed',d:1,g:'Acting on review without ego.',src:'https://github.com/obra/superpowers',lic:'MIT',ap:'—'},
+    {n:'using-git-worktrees',s:'installed',d:1,g:'Parallel branches without stashing.',src:'https://github.com/obra/superpowers',lic:'MIT',ap:'—'},
+    {n:'finishing-a-development-branch',s:'installed',d:1,g:'Clean branch close-out.',src:'https://github.com/obra/superpowers',lic:'MIT',ap:'—'},
+    {n:'using-superpowers',s:'installed',d:1,g:'How to invoke the rest of the set.',src:'https://github.com/obra/superpowers',lic:'MIT',ap:'—'},
+  ]},
+  {id:'research',name:'Researched (external)',icon:'research',skills:[
+    {n:'hermes-agent',s:'studied',d:2,g:'NousResearch agent stack: gateway/providers/ACP adapter split, 19 domain skill packs, optional-mcps, plugins. Confirms the thin-control-plane + declarative-skills shape.',src:'https://github.com/NousResearch/hermes-agent',lic:'MIT',ap:'docs/SKILLS-SYNTHESIS.md — Bee architecture'},
+    {n:'open-webui',s:'studied',d:2,g:'Self-hosted LLM web UI over pluggable backends. NOTE: custom licence with branding-protection clauses — reference-only, nothing copied.',src:'https://github.com/open-webui/open-webui',lic:'Open WebUI Licence (restrictive)',ap:'docs/SKILLS-SYNTHESIS.md — UI shell pattern only'},
+    {n:'openclaw',s:'studied',d:2,g:'Self-hosted personal AI assistant: 22+ channels, gateway/assistant split, declarative SKILL.md bundles, bundle-vs-code plugins, memory as single slot, doctor --fix migrations.',src:'https://github.com/openclaw/openclaw',lic:'MIT',ap:'docs/OPENCLAW.md — Bee roadmap: skills format, channel adapter, memory slot'},
+    {n:'radix-primitives',s:'studied',d:3,g:'Behaviour primitives (focus-scope, dismissable-layer, roving-focus). The focus-trap contract: remember focus → focus first tabbable → wrap at edges → pull back escapes → restore on close.',src:'https://github.com/radix-ui/primitives',lic:'MIT',ap:'docs/RADIX-THREEJS.md — focus traps now in Showroom + Skill Tree modals (was a P1 a11y gap)'},
+    {n:'shadcn-ui',s:'studied',d:2,g:'Composition over Radix + Tailwind; copy-paste-able components rather than a dependency.',src:'https://github.com/shadcn-ui/ui',lic:'MIT',ap:'Reference-only — MASTER tokens already cover our vanilla builds'},
+    {n:'three.js',s:'studied',d:2,g:'PerspectiveCamera = fov/aspect/near/far → projection matrix. Would add depth-sort, materials, glTF, OrbitControls.',src:'https://github.com/mrdoob/three.js',lic:'MIT',ap:'Deliberately NOT adopted — would break self-contained/offline rule for capabilities no build needs'},
+  ]},
+  {id:'env',name:'Environment',icon:'env',skills:[
+    {n:'browser-automation',s:'installed',d:3,g:'Drive + screenshot + pixel-probe real UIs.',src:'Claude Browser tools',lic:'—',ap:'§6.7 proof standard — every build verified'},
+    {n:'git + GitHub',s:'installed',d:3,g:'Version control, push, atomic reversible commits.',src:'a secure env var / HTTPS',lic:'—',ap:'Every work unit'},
+    {n:'Ollama (local LLMs)',s:'installed',d:3,g:'llama3.1:8b/70b, qwen2.5:14b, llava, nomic-embed.',src:'localhost:11434',lic:'—',ap:'Bee chat, squad, memory embeddings'},
+    {n:'Obsidian Brain',s:'installed',d:3,g:'Second brain, mirrored to /brain (§14.7).',src:'Downloads/Obsidian/Jared_P',lic:'—',ap:'Every idea + changelog'},
+    {n:'PowerShell / Bash',s:'installed',d:3,g:'Shell, Node, Python, npm.',src:'Windows local dev',lic:'—',ap:'Tests, builds, harness'},
+  ]},
+];
+
+/* ============ render ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const W={installed:3,studied:2,available:1,planned:0};
+let flat=[];
+function render(){
+  const box=$('branches');
+  [...box.querySelectorAll('.branch')].forEach(e=>e.remove());
+  flat=[];
+  BRANCHES.forEach(b=>{
+    b.skills.forEach(s=>flat.push({...s,branch:b.name}));
+    const done=b.skills.filter(s=>s.s==='installed'||s.s==='studied').length;
+    const pct=Math.round(b.skills.reduce((a,s)=>a+W[s.s],0)/(b.skills.length*3)*100);
+    const el=document.createElement('div'); el.className='branch'; el.dataset.b=b.id;
+    el.innerHTML=`<div class="bhead">
+        <div class="bicon"><svg viewBox="0 0 24 24">${ICONS[b.icon]}</svg></div>
+        <div><div class="bname">${esc(b.name)}</div><div class="bmeta">${b.skills.length} skills · ${done} mastered · ${pct}%</div></div>
+      </div>
+      <div class="bbar"><i style="width:${pct}%"></i></div>
+      <div class="nodes">${b.skills.map(s=>
+        `<button class="node ${s.s}" data-n="${esc(s.n)}"><span class="dot"></span>${esc(s.n)}</button>`).join('')}</div>`;
+    box.appendChild(el);
+  });
+  const tot=flat.length;
+  $('sTotal').textContent=tot;
+  $('sInst').textContent=flat.filter(s=>s.s==='installed').length;
+  $('sStud').textContent=flat.filter(s=>s.s==='studied').length;
+  $('sAvail').textContent=flat.filter(s=>s.s==='available').length;
+  const mastery=Math.round(flat.reduce((a,s)=>a+W[s.s],0)/(tot*3)*100);
+  $('sMastery').textContent=mastery+'%';
+  window.__mastery=mastery/100;
+  requestAnimationFrame(wires);
+}
+/* connector wires: trunk → each branch card */
+function wires(){
+  const svg=$('wires'), box=$('branches'); if(!svg) return;
+  const br=box.getBoundingClientRect();
+  svg.setAttribute('viewBox',`0 0 ${br.width} ${br.height}`);
+  const trunkR=document.querySelector('.trunk').getBoundingClientRect();
+  const ox=trunkR.left-br.left+trunkR.width/2, oy=-14;
+  let p='';
+  box.querySelectorAll('.branch').forEach(el=>{
+    const r=el.getBoundingClientRect();
+    const x=r.left-br.left+r.width/2, y=r.top-br.top;
+    p+=`<path d="M${ox} ${oy} C ${ox} ${(oy+y)/2}, ${x} ${(oy+y)/2}, ${x} ${y}" fill="none" stroke="rgba(143,208,255,.22)" stroke-width="1.5"/>`;
+    p+=`<circle cx="${x}" cy="${y}" r="3" fill="#8fd0ff" opacity=".55"/>`;
+  });
+  svg.innerHTML=p;
+}
+addEventListener('resize',()=>requestAnimationFrame(wires));
+// layout settles late (web fonts, grid reflow) — redraw on load + after fonts + a short beat
+addEventListener('load',()=>requestAnimationFrame(wires));
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>requestAnimationFrame(wires));
+setTimeout(wires,350);
+
+/* detail panel */
+$('branches').addEventListener('click',e=>{
+  const b=e.target.closest('.node'); if(!b) return; open(b.dataset.n);
+});
+function open(name){
+  const s=flat.find(x=>x.n===name); if(!s) return;
+  $('dname').textContent=s.n;
+  const badge=$('dbadge'); badge.textContent=s.s; badge.className='badge '+s.s;
+  $('dgives').textContent=s.g; $('dsource').textContent=s.src;
+  $('dlicense').textContent=s.lic; $('dapplied').textContent=s.ap;
+  $('ddepthtxt').textContent=['not started','used','deep-dived','applied'][s.d]+' ';
+  $('ddepth').innerHTML=[1,2,3].map(i=>`<i class="${i<=s.d?'on':''}"></i>`).join('');
+  const a=$('dopen');
+  if(/^https?:/.test(s.src)){ a.href=s.src; a.style.display=''; } else { a.style.display='none'; }
+  $('detail').classList.add('show');
+  trapOn();
+  const t=tabbables(); if(t.length) t[0].focus();     // focus first tabbable on open
+}
+/* ---- focus trap (pattern read from radix-ui/primitives focus-scope, MIT) ----
+   A dialog that doesn't trap focus lets keyboard/screen-reader users tab into the
+   page behind it — P1 Accessibility. Contract: remember what was focused, focus the
+   first tabbable inside, wrap at the edges, pull focus back if it escapes, restore on close. */
+const TABBABLE='a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])';
+let lastFocused=null;
+function tabbables(){ return [...$('detail').querySelectorAll(TABBABLE)].filter(e=>e.offsetParent!==null); }
+function onTrapKey(e){
+  if(e.key!=='Tab') return;
+  const t=tabbables(); if(!t.length) return;
+  const first=t[0], last=t[t.length-1];
+  if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
+  else if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
+}
+function onTrapFocusIn(e){                       // focus moved outside programmatically
+  const d=$('detail'); if(d.classList.contains('show') && !d.contains(e.target)){
+    const t=tabbables(); if(t.length) t[0].focus();
+  }
+}
+function trapOn(){ lastFocused=document.activeElement;
+  document.addEventListener('keydown',onTrapKey,true);
+  document.addEventListener('focusin',onTrapFocusIn,true); }
+function trapOff(){ document.removeEventListener('keydown',onTrapKey,true);
+  document.removeEventListener('focusin',onTrapFocusIn,true);
+  if(lastFocused&&lastFocused.focus) lastFocused.focus(); lastFocused=null; }
+
+function close(){ if(!$('detail').classList.contains('show')) return;
+  $('detail').classList.remove('show'); trapOff(); }
+$('detail').addEventListener('click',e=>{ if(e.target.id==='detail') close(); });
+addEventListener('keydown',e=>{ if(e.key==='Escape') close(); });
+
+/* trunk 3D core — fills with mastery */
+(function(){
+  const cv=$('core'); if(!cv) return; const cx=cv.getContext('2d');
+  const RED=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const V=[[0,1,0],[0,-1,0],[1,0,0],[-1,0,0],[0,0,1],[0,0,-1],[.7,.7,0],[-.7,.7,0],[.7,-.7,0],[-.7,-.7,0],[.7,0,.7],[-.7,0,.7],[.7,0,-.7],[-.7,0,-.7]];
+  const E=[[0,6],[0,7],[1,8],[1,9],[2,6],[2,8],[2,10],[2,12],[3,7],[3,9],[3,11],[3,13],[4,10],[4,11],[5,12],[5,13],[6,7],[8,9],[10,11],[12,13]];
+  let rot=0, fill=0;
+  (function loop(){
+    const DPR=Math.min(devicePixelRatio||1,2), r=cv.getBoundingClientRect();
+    if(r.width){ if(cv.width!==Math.round(r.width*DPR)){cv.width=r.width*DPR;cv.height=r.height*DPR;}
+      const Wd=cv.width,H=cv.height,S=Math.min(Wd,H)*0.34,CX=Wd/2,CY=H/2;
+      cx.clearRect(0,0,Wd,H);
+      fill+=((window.__mastery||0)-fill)*0.05; if(!RED) rot+=0.004;
+      const cy=Math.cos(rot),sy=Math.sin(rot),bx=0.32,c2=Math.cos(bx),s2=Math.sin(bx);
+      const P=V.map(([x,y,z])=>{let X=x*cy+z*sy,Z=-x*sy+z*cy,Y=y*c2-Z*s2,Z2=y*s2+Z*c2;
+        const d=1/(1+Z2*0.3);return[CX+X*S*d,CY+Y*S*d,Z2];});
+      const fy=CY+S-(2*S*fill);
+      cx.save(); cx.beginPath(); cx.arc(CX,CY,S*0.97,0,6.29); cx.clip();
+      const g=cx.createLinearGradient(0,fy,0,CY+S); g.addColorStop(0,'rgba(63,208,138,.3)'); g.addColorStop(1,'rgba(79,146,230,.05)');
+      cx.fillStyle=g; cx.fillRect(0,fy,Wd,H); cx.restore();
+      for(const[a,b] of E){const za=(P[a][2]+P[b][2])/2;
+        cx.strokeStyle='#8fd0ff'; cx.globalAlpha=Math.max(.15,.8-(za+1.1)*.3); cx.lineWidth=(za<0?1.6:1)*DPR;
+        cx.beginPath();cx.moveTo(P[a][0],P[a][1]);cx.lineTo(P[b][0],P[b][1]);cx.stroke();}
+      cx.globalAlpha=1;
+    }
+    requestAnimationFrame(loop);
+  })();
+})();
+
+render();
+
+/* test hook (§21) */
+window.SkillTree={ get skills(){return flat;}, get branches(){return BRANCHES.length;},
+  get mastery(){return Math.round(flat.reduce((a,s)=>a+W[s.s],0)/(flat.length*3)*100);},
+  open, close, get open_(){return $('detail').classList.contains('show');},
+  _wirePaths(){ return $('wires').querySelectorAll('path').length; } };
+</script>
+</body>
+</html>

@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SNORK — a hungry little pig</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --grass1:#8ed06a; --grass2:#6bb84f; --grass-dark:#4f9a3a;
+    --fence:#a9743f; --fence-dark:#7c4f26; --pig:#f2a1c0; --pig-d:#d97fa6;
+    --cream:#fff7ea; --ink:#3a2b1c; --gold:#ffcf3f; --sky:#bfe8ff;
+    --font:'Baloo 2','Segoe UI',system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  /* night-arcade backdrop: the pen glows under the lights; the farm art stays the star */
+  body{background:radial-gradient(720px 480px at 50% 42%,#2c4220,#1a2812 55%,#101a0b 100%);
+    font-family:var(--font);color:var(--ink);user-select:none;-webkit-user-select:none;display:flex;align-items:center;justify-content:center}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;
+    background-image:radial-gradient(rgba(255,247,234,.06) 1px,transparent 1.5px);background-size:26px 26px;
+    -webkit-mask:radial-gradient(circle at 50% 40%,transparent 30%,#000 80%);mask:radial-gradient(circle at 50% 40%,transparent 30%,#000 80%)}
+  #wrap{position:relative}
+  canvas{display:block;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.55),0 0 0 8px var(--fence),0 0 0 12px var(--fence-dark),0 0 70px rgba(255,207,63,.14)}
+
+  #hud{position:absolute;top:-4px;left:0;right:0;transform:translateY(-100%);display:flex;align-items:center;gap:12px;padding:0 4px 10px}
+  .pill{background:var(--cream);border:3px solid var(--fence-dark);border-radius:14px;padding:7px 14px;font-weight:800;box-shadow:0 4px 0 rgba(124,79,38,.5);display:flex;gap:8px;align-items:center}
+  .pill small{font-weight:800;opacity:.55;text-transform:uppercase;font-size:11px;letter-spacing:.06em}
+  .brand{margin-right:auto;font-size:26px;font-weight:900;color:#fff;letter-spacing:.04em;text-shadow:0 3px 0 #b85f86,0 0 18px rgba(0,0,0,.4)}
+  .brand span{font-size:14px;opacity:.85;font-weight:800}
+
+  .overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(34,51,26,.72);backdrop-filter:blur(3px);border-radius:18px;z-index:5}
+  .overlay.show{display:flex}
+  .card{background:var(--cream);border:5px solid var(--fence);border-radius:24px;padding:26px 30px;text-align:center;max-width:90%;box-shadow:0 12px 0 rgba(124,79,38,.5)}
+  .card h1{font-size:clamp(40px,9vw,68px);color:var(--pig-d);text-shadow:0 4px 0 #fff,0 5px 0 var(--fence);line-height:.9}
+  .card .tag{font-weight:800;color:var(--fence-dark);margin-top:2px}
+  .card p{margin-top:14px;font-weight:700;line-height:1.5;font-size:14px;color:#6a533b}
+  .keys{display:inline-flex;gap:6px;margin:10px 0 2px}
+  .key{background:#fff;border:2px solid var(--fence-dark);border-bottom-width:4px;border-radius:8px;padding:5px 10px;font-weight:900;min-width:34px}
+  .btn{margin-top:18px;background:var(--pig-d);color:#fff;border:none;font-family:var(--font);font-weight:900;font-size:20px;padding:13px 34px;border-radius:16px;cursor:pointer;box-shadow:0 6px 0 #b85f86;transition:transform .08s}
+  .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #b85f86}
+  .final{display:flex;gap:18px;justify-content:center;margin-top:14px}
+  .final .b{background:#fff;border:3px solid #eBD9c2;border-radius:14px;padding:10px 16px;min-width:110px}
+  .final .b .n{font-size:11px;font-weight:800;text-transform:uppercase;opacity:.55}
+  .final .b .v{font-size:32px;font-weight:900;color:var(--pig-d)}
+  .final .b.best .v{color:var(--gold);-webkit-text-stroke:1px var(--fence-dark)}
+
+  /* ===== AGENTS-v09-compliance (ui-ux-pro-max P2 Touch & Interaction = CRITICAL) ===== */
+  html{touch-action:manipulation}
+  button,[onclick]{min-height:44px;min-width:44px}
+  /* the wrap-around checkbox keeps its 18px look; the label carries the 44px target */
+  label:has(> #wrapToggle){min-height:44px;display:inline-flex;align-items:center}
+  .final .v,#score,#best{font-variant-numeric:tabular-nums}
+
+  /* on-screen D-pad — shown on touch/coarse pointers, hidden on mouse-only desktops */
+  #dpad{display:none;position:fixed;left:0;right:0;bottom:calc(12px + env(safe-area-inset-bottom));
+    z-index:20;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+  #dpad .row{display:flex;gap:64px}
+  #dpad button{pointer-events:auto;width:60px;height:60px;border-radius:16px;
+    background:rgba(255,247,234,.92);border:3px solid var(--fence-dark);border-bottom-width:5px;
+    display:grid;place-items:center;cursor:pointer;touch-action:none;
+    box-shadow:0 4px 0 rgba(124,79,38,.45)}
+  #dpad button:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(124,79,38,.45)}
+  #dpad svg{width:26px;height:26px;fill:var(--fence-dark)}
+  @media (pointer:coarse){ #dpad{display:flex} }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="hud">
+    <div class="brand">SNORK <span>🐷</span></div>
+    <div class="pill"><small>Score</small><span id="score">0</span></div>
+    <div class="pill"><small>Best</small><span id="best">0</span></div>
+  </div>
+  <canvas id="c"></canvas>
+
+  <div class="overlay show" id="menu">
+    <div class="card">
+      <h1>SNORK</h1>
+      <div class="tag">🐷 a hungry little pig 🌽</div>
+      <p>Guide your pig around the pen and gobble the <b>corn</b>.<br>Every cob makes you longer. Don't hit the fence or yourself!</p>
+      <div class="keys"><span class="key">↑</span><span class="key">↓</span><span class="key">←</span><span class="key">→</span></div>
+      <p style="margin-top:6px;font-size:12.5px">Arrow keys or <b>WASD</b> to steer · <b>P</b> to pause · ✨ <b>golden corn = 30 pts</b></p>
+      <label style="display:inline-flex;align-items:center;gap:8px;margin:6px 0 2px;font-weight:800;color:var(--fence-dark);cursor:pointer;font-size:13.5px"><input type="checkbox" id="wrapToggle" style="width:18px;height:18px"> Wrap-around walls (pass through the edges)</label>
+      <br><button class="btn" id="startBtn">START 🐽</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="over">
+    <div class="card">
+      <h1 id="overTitle">Oink! 💥</h1>
+      <div class="tag" id="overSub">The pig got out of the pen…</div>
+      <div class="final">
+        <div class="b"><div class="n">Score</div><div class="v" id="finalScore">0</div></div>
+        <div class="b" id="bestBox"><div class="n">Best</div><div class="v" id="finalBest">0</div></div>
+      </div>
+      <button class="btn" id="againBtn">PLAY AGAIN 🔁</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="pause"><div class="card"><h1>Paused</h1><p>Press <b>P</b> to keep going.</p></div></div>
+
+  <!-- on-screen D-pad: the visible alternative to swiping (gesture-alternative rule) -->
+  <div id="dpad" aria-label="Steer the pig">
+    <button data-d="u" aria-label="Up"><svg viewBox="0 0 24 24"><path d="M12 5l7 8H5z"/></svg></button>
+    <div class="row">
+      <button data-d="l" aria-label="Left"><svg viewBox="0 0 24 24"><path d="M5 12l8-7v14z"/></svg></button>
+      <button data-d="r" aria-label="Right"><svg viewBox="0 0 24 24"><path d="M19 12l-8 7V5z"/></svg></button>
+    </div>
+    <button data-d="d" aria-label="Down"><svg viewBox="0 0 24 24"><path d="M12 19l-7-8h14z"/></svg></button>
+  </div>
+</div>
+
+<script>
+(() => {
+  const COLS = 21, ROWS = 15, CELL = 34;
+  const W = COLS * CELL, H = ROWS * CELL;
+  const canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
+  canvas.width = W; canvas.height = H;
+  function fit() { const pad = 90; const s = Math.min((window.innerWidth - 40) / W, (window.innerHeight - pad) / H, 1.15); canvas.style.width = W * s + 'px'; canvas.style.height = H * s + 'px'; }
+  fit(); addEventListener('resize', fit);
+
+  // ---- audio (tiny synth, safe) ----
+  let ac; function beep(freq, dur, type, vol) { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); const o = ac.createOscillator(), g = ac.createGain(); o.type = type || 'sine'; o.frequency.value = freq; g.gain.value = vol || 0.06; o.connect(g); g.connect(ac.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + dur); o.stop(ac.currentTime + dur); } catch (e) {} }
+  const sNom = () => { beep(520, 0.08, 'square', 0.05); setTimeout(() => beep(700, 0.09, 'square', 0.05), 60); };
+  const sHit = () => { beep(200, 0.25, 'sawtooth', 0.08); };
+
+  // ---- state ----
+  let snake, dir, nextDir, food, score, best = +(localStorage.getItem('snork.best') || 0), alive = false, paused = false;
+  let acc = 0, interval = 150, prevCells = [], shake = 0, particles = [], eatPop = 0, foodBob = 0;
+  let wrap = false, foodGold = false;
+  document.getElementById('best').textContent = best;
+
+  function reset() {
+    snake = [{ x: 6, y: 7 }, { x: 5, y: 7 }, { x: 4, y: 7 }];
+    dir = { x: 1, y: 0 }; nextDir = { x: 1, y: 0 };
+    score = 0; interval = 150; alive = true; paused = false; particles = [];
+    prevCells = snake.map((s) => ({ ...s }));
+    placeFood(); updateHud();
+  }
+  function placeFood() {
+    let p; do { p = { x: (Math.random() * COLS) | 0, y: (Math.random() * ROWS) | 0 }; } while (snake.some((s) => s.x === p.x && s.y === p.y));
+    food = p; foodGold = Math.random() < 0.18; // golden corn = bonus points
+  }
+  function updateHud() { document.getElementById('score').textContent = score; }
+
+  function tick() {
+    if (!alive || paused) return;
+    // apply buffered direction — must be a valid orthogonal unit and not a reversal.
+    // (Guards against a malformed direction corrupting the snake into a headless state.)
+    const nd = nextDir;
+    if (nd && Math.abs(nd.x) + Math.abs(nd.y) === 1 && (nd.x !== -dir.x || nd.y !== -dir.y)) dir = nd;
+    prevCells = snake.map((s) => ({ ...s }));
+    const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+    if (wrap) { head.x = (head.x + COLS) % COLS; head.y = (head.y + ROWS) % ROWS; }
+    // collisions: fence (unless wrap) or self
+    if ((!wrap && (head.x < 0 || head.y < 0 || head.x >= COLS || head.y >= ROWS)) || snake.some((s, i) => i < snake.length - 1 && s.x === head.x && s.y === head.y)) {
+      return die();
+    }
+    snake.unshift(head);
+    if (head.x === food.x && head.y === food.y) {
+      score += foodGold ? 30 : 10; if (score > best) { best = score; localStorage.setItem('snork.best', best); document.getElementById('best').textContent = best; }
+      interval = Math.max(70, 150 - score * 0.6); eatPop = 1; burst(food.x, food.y);
+      sNom(); placeFood(); updateHud();
+      prevCells.push({ ...prevCells[prevCells.length - 1] }); // keep interp aligned on growth
+    } else {
+      snake.pop();
+    }
+  }
+  function die() { alive = false; shake = 16; sHit();
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('finalBest').textContent = best;
+    document.getElementById('bestBox').classList.toggle('best', score >= best && score > 0);
+    document.getElementById('overSub').textContent = score >= best && score > 0 ? 'New best! That pig is stuffed. 🏆' : 'The pig got out of the pen…';
+    setTimeout(() => show('over'), 500);
+  }
+  function burst(cx, cy) { const x = cx * CELL + CELL / 2, y = cy * CELL + CELL / 2; for (let i = 0; i < 12; i++) { const a = Math.random() * 6.28, sp = 1 + Math.random() * 4; particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 1, life: 1, c: Math.random() < 0.5 ? '#ffcf3f' : '#fff0a8' }); } }
+
+  // ---- loop ----
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(50, now - last); last = now;
+    if (alive && !paused) { acc += dt; while (acc >= interval) { acc -= interval; tick(); } }
+    // effects
+    if (shake > 0) shake = Math.max(0, shake - dt * 0.06);
+    if (eatPop > 0) eatPop = Math.max(0, eatPop - dt * 0.005);
+    foodBob += dt * 0.005;
+    particles = particles.filter((p) => (p.life -= dt * 0.0022) > 0);
+    particles.forEach((p) => { p.vy += 0.15; p.x += p.vx; p.y += p.vy; });
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  // ---- drawing ----
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.save();
+    if (shake > 0) ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+    drawField();
+    drawFood();
+    drawPig();
+    // particles
+    for (const p of particles) { ctx.globalAlpha = Math.max(0, p.life); ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, 6.28); ctx.fill(); }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function drawField() {
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+      ctx.fillStyle = (x + y) % 2 ? 'var(--grass2)' : 'var(--grass1)';
+      ctx.fillStyle = (x + y) % 2 ? '#6bb84f' : '#7cc45c';
+      ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+    }
+    // subtle vignette
+    const g = ctx.createRadialGradient(W / 2, H / 2, H * 0.2, W / 2, H / 2, H * 0.75);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.10)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+
+  const lerp = (a, b, t) => a + (b - a) * t;
+  function segPos(i) {
+    const t = alive && !paused ? Math.min(1, acc / interval) : 1;
+    const cur = snake[i], prev = prevCells[Math.min(i, prevCells.length - 1)] || cur;
+    return { x: lerp(prev.x, cur.x, t) * CELL + CELL / 2, y: lerp(prev.y, cur.y, t) * CELL + CELL / 2 };
+  }
+
+  function drawPig() {
+    if (!snake) return;
+    // body segments (back to front so head is on top)
+    for (let i = snake.length - 1; i >= 1; i--) {
+      const p = segPos(i); const r = CELL * 0.42 * (1 - i / (snake.length * 3));
+      ctx.fillStyle = i % 2 ? '#e88fb2' : '#f2a1c0';
+      roundDot(p.x, p.y, Math.max(CELL * 0.30, r));
+      ctx.fill(); ctx.strokeStyle = '#d97fa6'; ctx.lineWidth = 2; ctx.stroke();
+    }
+    // curly tail on the last segment
+    const tail = segPos(snake.length - 1), pre = segPos(Math.max(0, snake.length - 2));
+    drawTail(tail, { x: tail.x - pre.x, y: tail.y - pre.y });
+    // head
+    const h = segPos(0), h2 = segPos(Math.min(1, snake.length - 1));
+    let a = Math.atan2(h.y - h2.y, h.x - h2.x); if (snake.length < 2) a = Math.atan2(dir.y, dir.x);
+    drawHead(h.x, h.y, a);
+  }
+  function roundDot(x, y, r) { ctx.beginPath(); ctx.arc(x, y, r, 0, 6.28); }
+  function drawTail(p, d) {
+    const len = Math.hypot(d.x, d.y) || 1; const a = Math.atan2(d.y, d.x);
+    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(a);
+    ctx.strokeStyle = '#d97fa6'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.beginPath();
+    for (let t = 0; t <= 1; t += 0.1) { const cx = -6 - t * 12, cy = Math.sin(t * 9) * 6; t ? ctx.lineTo(cx, cy) : ctx.moveTo(cx, cy); }
+    ctx.stroke(); ctx.restore();
+  }
+  function drawHead(x, y, a) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(a);
+    const R = CELL * 0.5;
+    // ears
+    ctx.fillStyle = '#e88fb2';
+    for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(-R * 0.2, s * R * 0.5); ctx.lineTo(R * 0.2, s * R * 0.95); ctx.lineTo(R * 0.45, s * R * 0.35); ctx.closePath(); ctx.fill(); }
+    // face
+    ctx.fillStyle = '#f4a9c6'; roundDot(0, 0, R * 0.92); ctx.fill(); ctx.strokeStyle = '#d97fa6'; ctx.lineWidth = 2.5; ctx.stroke();
+    // snout
+    ctx.fillStyle = '#ffc4dd'; ctx.beginPath(); ctx.ellipse(R * 0.55, 0, R * 0.34, R * 0.42, 0, 0, 6.28); ctx.fill(); ctx.strokeStyle = '#e08cae'; ctx.stroke();
+    ctx.fillStyle = '#b05f83'; ctx.beginPath(); ctx.ellipse(R * 0.55, -R * 0.14, R * 0.06, R * 0.11, 0, 0, 6.28); ctx.ellipse(R * 0.55, R * 0.14, R * 0.06, R * 0.11, 0, 0, 6.28); ctx.fill();
+    // eyes
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(R * 0.08, -R * 0.4, R * 0.17, 0, 6.28); ctx.arc(R * 0.08, R * 0.4, R * 0.17, 0, 6.28); ctx.fill();
+    ctx.fillStyle = '#2a1a12'; ctx.beginPath(); ctx.arc(R * 0.16, -R * 0.4, R * 0.08, 0, 6.28); ctx.arc(R * 0.16, R * 0.4, R * 0.08, 0, 6.28); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawFood() {
+    const bob = Math.sin(foodBob) * 3, pop = 1 + eatPop * 0.4;
+    const x = food.x * CELL + CELL / 2, y = food.y * CELL + CELL / 2 + bob;
+    ctx.save(); ctx.translate(x, y); ctx.scale(pop, pop);
+    // husk leaves
+    ctx.fillStyle = '#5fae4f'; for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(0, -CELL * 0.34); ctx.quadraticCurveTo(s * CELL * 0.22, -CELL * 0.3, s * CELL * 0.12, 0); ctx.quadraticCurveTo(0, -CELL * 0.1, 0, -CELL * 0.3); ctx.fill(); }
+    if (foodGold) { ctx.shadowColor = '#fff2a0'; ctx.shadowBlur = 16; } // golden corn glows
+    // cob
+    ctx.fillStyle = foodGold ? '#fff0a0' : '#ffd23e'; ctx.beginPath(); ctx.ellipse(0, CELL * 0.04, CELL * 0.2, CELL * 0.32, 0, 0, 6.28); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = foodGold ? '#ffcf3f' : '#e8a91f'; for (let ky = -3; ky <= 3; ky++) for (let kx = -1; kx <= 1; kx++) { ctx.beginPath(); ctx.arc(kx * CELL * 0.1, CELL * 0.04 + ky * CELL * 0.09, CELL * 0.035, 0, 6.28); ctx.fill(); }
+    if (foodGold) { ctx.fillStyle = '#fff'; ctx.font = (CELL * 0.4) + 'px serif'; ctx.textAlign = 'center'; ctx.fillText('✨', CELL * 0.28, -CELL * 0.18); }
+    ctx.restore();
+  }
+
+  // ---- input ----
+  const DIRS = { ArrowUp: { x: 0, y: -1 }, ArrowDown: { x: 0, y: 1 }, ArrowLeft: { x: -1, y: 0 }, ArrowRight: { x: 1, y: 0 }, w: { x: 0, y: -1 }, s: { x: 0, y: 1 }, a: { x: -1, y: 0 }, d: { x: 1, y: 0 } };
+  addEventListener('keydown', (e) => {
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (DIRS[k]) { nextDir = DIRS[k]; e.preventDefault(); }
+    if (k === 'p' && alive) { paused = !paused; document.getElementById('pause').classList.toggle('show', paused); }
+    if ((k === ' ' || k === 'Enter') && !alive) startGame();
+  });
+
+  // ---- TOUCH: swipe anywhere on the pen + an on-screen D-pad ----
+  // SNORK was keyboard-only, i.e. unplayable on a phone. Swipe is the primary
+  // control; the D-pad is the visible fallback (ui-ux-pro-max `gesture-alternative`:
+  // never rely on a gesture alone for a critical action).
+  const SWIPE_MIN = 24;                       // px before a drag counts as a swipe
+  let tsx = 0, tsy = 0, swiping = false;
+  const pen = document.getElementById('wrap');
+  pen.addEventListener('touchstart', (e) => {
+    const t = e.changedTouches[0]; tsx = t.clientX; tsy = t.clientY; swiping = true;
+  }, { passive: true });
+  pen.addEventListener('touchmove', (e) => {
+    if (!swiping) return;
+    const t = e.changedTouches[0], dx = t.clientX - tsx, dy = t.clientY - tsy;
+    if (Math.abs(dx) < SWIPE_MIN && Math.abs(dy) < SWIPE_MIN) return;
+    // dominant axis wins; fire once per swipe so a diagonal can't double-turn
+    steer(Math.abs(dx) > Math.abs(dy) ? { x: Math.sign(dx), y: 0 } : { x: 0, y: Math.sign(dy) });
+    swiping = false; e.preventDefault();
+  }, { passive: false });
+  pen.addEventListener('touchend', () => { swiping = false; }, { passive: true });
+
+  function steer(d) { if (!alive) { startGame(); return; } nextDir = d; }
+  document.querySelectorAll('#dpad button').forEach((b) => {
+    const d = { u: { x: 0, y: -1 }, d: { x: 0, y: 1 }, l: { x: -1, y: 0 }, r: { x: 1, y: 0 } }[b.dataset.d];
+    // pointerdown (not click) so the turn lands immediately — <100ms feedback rule
+    b.addEventListener('pointerdown', (e) => { e.preventDefault(); steer(d); });
+  });
+
+  function show(id) { document.querySelectorAll('.overlay').forEach((o) => o.classList.remove('show')); if (id) document.getElementById(id).classList.add('show'); }
+  function startGame() { wrap = document.getElementById('wrapToggle').checked; show(null); reset(); }
+  document.getElementById('startBtn').onclick = startGame;
+  document.getElementById('againBtn').onclick = startGame;
+
+  // test hook (rAF is throttled when tab hidden)
+  window.Snork = {
+    start: startGame, setDir: (d) => { nextDir = d; },
+    _tick: (n = 1) => { for (let i = 0; i < n; i++) tick(); return { score, alive, len: snake.length, head: { ...snake[0] } }; },
+    get score() { return score; }, get alive() { return alive; }, get len() { return snake ? snake.length : 0; },
+    get food() { return { ...food }; }, get head() { return { ...snake[0] }; }, get dir() { return { ...dir }; },
+  };
+
+  reset(); alive = false; // draw a static board behind the menu
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BEE — OPS (mission control)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#08090B; --panel:#131419; --panel-2:#1a1c22; --line:#26282f; --edge:rgba(245,197,24,.28);
+    --bee:#F5C518; --bee-bright:#FFD60A; --core-blue:#9FE0FF;
+    --text:#EDEEF2; --muted:#8b929e; --faint:#565b66;
+    --ok:#2fbf71; --bad:#ff5a5c;
+    --font:'Segoe UI',system-ui,sans-serif;
+    --display:'Chakra Petch','Segoe UI',system-ui,sans-serif;
+    --mono:'JetBrains Mono','Consolas',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+  .bg-grid,.vignette,.scan{position:fixed;inset:0;pointer-events:none}
+  .bg-grid{z-index:0;background-image:linear-gradient(rgba(245,197,24,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(245,197,24,.03) 1px,transparent 1px);background-size:46px 46px;
+    -webkit-mask:radial-gradient(circle at 50% 12%,#000 0%,transparent 75%);mask:radial-gradient(circle at 50% 12%,#000 0%,transparent 75%)}
+  .vignette{z-index:1;background:radial-gradient(circle at 50% 30%,transparent 55%,rgba(0,0,0,.55))}
+  .scan{z-index:1;background:repeating-linear-gradient(transparent 0 3px,rgba(0,0,0,.10) 3px 4px);opacity:.35;mix-blend-mode:multiply}
+  .corner{position:fixed;width:26px;height:26px;z-index:2;pointer-events:none;border:2px solid var(--edge)}
+  .corner.tl{top:14px;left:14px;border-right:0;border-bottom:0}.corner.tr{top:14px;right:14px;border-left:0;border-bottom:0}
+  .corner.bl{bottom:14px;left:14px;border-right:0;border-top:0}.corner.br{bottom:14px;right:14px;border-left:0;border-top:0}
+  :focus-visible{outline:2px solid var(--core-blue);outline-offset:2px}
+  .wrap{position:relative;z-index:3;max-width:1000px;margin:0 auto;padding:24px 18px 60px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+  .brand{display:flex;align-items:center;gap:11px;font-family:var(--display);font-weight:700;letter-spacing:.24em;font-size:17px;color:var(--bee);text-shadow:0 0 22px rgba(245,197,24,.3)}
+  .brand svg{width:20px;height:20px;filter:drop-shadow(0 0 6px rgba(245,197,24,.5))}
+  .hrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .clockbox{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+  .clockbox b{color:var(--core-blue);font-weight:600}
+  button.rf{font-family:var(--display);background:linear-gradient(180deg,var(--bee-bright),var(--bee));color:#0a0a0a;border:none;font-weight:700;letter-spacing:.1em;padding:9px 18px;border-radius:10px;font-size:11.5px;cursor:pointer;
+    box-shadow:0 0 0 1px rgba(255,255,255,.15) inset,0 8px 24px rgba(245,197,24,.25);transition:transform .15s}
+  button.rf:hover{transform:translateY(-1px)} button.rf:disabled{opacity:.5;cursor:default;transform:none}
+  a.back{font-family:var(--display);color:var(--muted);text-decoration:none;font-size:11.5px;letter-spacing:.1em;transition:color .2s}
+  a.back:hover{color:var(--bee)}
+  .cols{display:grid;grid-template-columns:1fr 1.4fr;gap:14px;align-items:start}
+  @media(max-width:820px){.cols{grid-template-columns:1fr}}
+  .panel{background:linear-gradient(180deg,#16171c,var(--panel));border:1px solid var(--line);border-radius:14px;padding:16px}
+  .panel h2{font-family:var(--display);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .panel h2::before{content:'';width:14px;height:2px;background:var(--bee);box-shadow:0 0 8px rgba(245,197,24,.5)}
+  .kv{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:12px;padding:7px 0;border-bottom:1px dotted #23252c;color:var(--muted)}
+  .kv:last-child{border-bottom:0}
+  .kv b{color:var(--text);font-weight:600;text-align:right;word-break:break-all}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--faint);margin-right:8px;vertical-align:0}
+  .dot.ok{background:var(--ok);box-shadow:0 0 8px var(--ok)} .dot.bad{background:var(--bad);box-shadow:0 0 8px var(--bad)}
+  .statusword{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+  .statusword.ok{color:var(--ok)} .statusword.bad{color:var(--bad)}
+  .model{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:11.5px;padding:6px 0;color:var(--muted);border-bottom:1px dotted #23252c}
+  .model:last-child{border-bottom:0}
+  .model .nm{color:var(--text)} .model .loaded{color:var(--core-blue)}
+  .srow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dotted #23252c}
+  .srow:last-child{border-bottom:0}
+  .srow a{font-family:var(--display);color:var(--text);text-decoration:none;font-size:13px;letter-spacing:.06em;transition:color .2s;flex:1;cursor:pointer}
+  .srow a:hover{color:var(--bee)}
+  .srow .ms{font-family:var(--mono);font-size:10.5px;color:var(--faint);min-width:52px;text-align:right}
+  .empty{font-family:var(--mono);font-size:11.5px;color:var(--faint);padding:6px 0}
+  .foot{margin-top:18px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--faint);text-transform:uppercase}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .checking{animation:pulse 1.2s infinite}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+  @media(max-width:620px){.corner{display:none}}
+
+  /* ===== AGENTS-v09-compliance — adopted from ui-ux-pro-max (P2 Touch & Interaction = CRITICAL) =====
+     Every real control gets a >=44x44 tap area and >=8px separation. Visual language is
+     unchanged: min-height/min-width grow the hit box, they don't restyle anything.
+     Deliberately NOT using a blanket ::after — several demos already use ::after for
+     tooltips and sheen, and overwriting those would be a regression. */
+  html{touch-action:manipulation}                 /* kills the 300ms mobile tap delay */
+  /* NOTE: input[type="text"] misses inputs with NO type attribute — use :not() form. */
+  button, select, textarea,
+  input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  [role="button"], [role="checkbox"], [onclick]{ min-height:44px }
+  button, select, [role="button"], [onclick]{ min-width:44px }
+  /* anchor-based controls (links used as buttons) — text links in prose are exempt */
+  a.back, a.btn, .srow a, .navrow a, .factions a, .dactions a, .samples a, .ric,
+  a.card, a[role="button"]{ min-height:44px; display:inline-flex; align-items:center }
+  /* icon-only controls: keep the glyph small, grow the target */
+  .mic, .iconbtn, .fav, .x, .rf{ min-width:44px; min-height:44px }
+  /* custom toggles keep their visual size; the wrapping label carries the target */
+  .switch, label:has(> input[type="checkbox"]){ min-height:44px; display:inline-flex; align-items:center }
+  /* adjacent controls need >=8px between them */
+  .navrow, .samples, .tabs, .rowb, .controls, .factions, .dactions, .heroactions, .hrow{ gap:8px }
+  /* P6 Typography: tabular figures so live numbers never shift layout */
+  .mono, .telemetry, .stat, .kv, .cdist, .conf, .meta, .pill, .clockbox, .ms{ font-variant-numeric:tabular-nums }
+  /* final pass: sliders, and anchor-controls that were tall enough but too narrow */
+  input[type="range"]{ min-height:44px }
+  a.back, .back{ min-width:44px; justify-content:center }
+  .switch{ min-height:44px; display:inline-flex; align-items:center; gap:10px }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div><div class="vignette"></div><div class="scan"></div>
+<div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4.6v9.2L12 22 4 15.8V6.6L12 2z" stroke="#F5C518" stroke-width="1.6"/><circle cx="12" cy="12" r="3.3" fill="#9FE0FF"/></svg>
+      BEE · OPS
+    </div>
+    <div class="hrow">
+      <span class="clockbox">T+<b id="up">00:00</b> · <b id="clock">—</b></span>
+      <button class="rf" id="rfBtn" onclick="Ops.refresh()">REFRESH</button>
+      <a class="back" href="index.html">◀ BEE</a>
+    </div>
+  </header>
+
+  <div class="cols">
+    <div class="panel">
+      <h2>Ollama link</h2>
+      <div class="kv"><span><span class="dot" id="olDot"></span>Engine</span><b><span class="statusword" id="olState">checking…</span></b></div>
+      <div class="kv"><span>Version</span><b id="olVer">—</b></div>
+      <div class="kv"><span>Loaded now</span><b id="olLoaded">—</b></div>
+      <div id="olModels" style="margin-top:10px"><div class="empty">—</div></div>
+    </div>
+    <div class="panel">
+      <h2>Surfaces</h2>
+      <div id="surfaces"></div>
+      <div class="foot" id="checkedAt">never checked</div>
+    </div>
+  </div>
+  <div class="foot" style="margin-top:16px">All readings live · nothing simulated on this page · auto-refresh every 30s</div>
+</div>
+
+<script>
+'use strict';
+const OLLAMA='http://localhost:11434';
+// Same page, two layouts: repo tree (…/bee/demo/ops.html) vs the Docker container (/bee/ops.html).
+const IN_REPO=/\/bee\/demo\//i.test(location.pathname);
+const S=(name,repo,box)=>({name, href: IN_REPO?repo:box});
+const SURFACES=[
+  S('Bee demo','index.html','index.html'),
+  S('Bee SUPER','super.html','super.html'),
+  S('Bee Squad','squad.html','squad.html'),
+  S('Showroom 3D','../../showroom/index.html','../showroom/index.html'),
+  S('Allergy Scanner','../../allergy-app/demo/index.html','../allergy/index.html'),
+  S('SellSmith Market','../../tools/sellsmith/index.html','../sellsmith/index.html'),
+  S('SellSmith Copy Gen','../../tools/sellsmith/copy-generator.html','../sellsmith/copy-generator.html'),
+  S('Hive Royale','../../games/hive-royale/index.html','../hive-royale/index.html'),
+  S('SNORK','../../games/snork/index.html','../snork/index.html'),
+  S('Brawl Buns','../../games/brawl-buns/index.html','../brawl-buns/index.html'),
+  S('Urban Living','../../concepts/urban-living/index.html','../urban-living/index.html'),
+  S('Fairway Radar','../../tools/fairway/index.html','../fairway/index.html'),
+  S('Mission Tracker','../../tools/tracker/index.html','../tracker/index.html'),
+  S('Sandbox launcher','../../sandbox/index.html','../index.html'),
+];
+const $=id=>document.getElementById(id);
+const fmtGB=b=>(b/1e9).toFixed(1)+' GB';
+const state={ollama:{up:false,version:null,models:[],loaded:[]},surfaces:[],checkedAt:null,busy:false};
+
+async function checkOllama(){
+  try{
+    const [ver,tags,ps]=await Promise.all([
+      fetch(OLLAMA+'/api/version').then(r=>r.json()),
+      fetch(OLLAMA+'/api/tags').then(r=>r.json()),
+      fetch(OLLAMA+'/api/ps').then(r=>r.json()).catch(()=>({models:[]})),
+    ]);
+    state.ollama={up:true,version:ver.version||'?',models:(tags.models||[]).map(m=>({name:m.name,size:m.size})),loaded:(ps.models||[]).map(m=>m.name)};
+  }catch(e){ state.ollama={up:false,version:null,models:[],loaded:[]}; }
+  $('olDot').className='dot '+(state.ollama.up?'ok':'bad');
+  $('olState').textContent=state.ollama.up?'ONLINE':'OFFLINE';
+  $('olState').className='statusword '+(state.ollama.up?'ok':'bad');
+  $('olVer').textContent=state.ollama.version||'—';
+  $('olLoaded').textContent=state.ollama.loaded.length?state.ollama.loaded.join(', '):'none (cold)';
+  $('olModels').innerHTML=state.ollama.models.length
+    ? state.ollama.models.map(m=>`<div class="model"><span class="nm${state.ollama.loaded.includes(m.name)?' loaded':''}">${m.name}</span><span>${fmtGB(m.size)}</span></div>`).join('')
+    : '<div class="empty">'+(state.ollama.up?'no models pulled':'start Ollama on this machine to link')+'</div>';
+}
+async function checkSurfaces(){
+  const box=$('surfaces');
+  box.innerHTML=SURFACES.map((s,i)=>`<div class="srow"><span class="dot checking" id="sd${i}"></span><a href="${s.href}">${s.name}</a><span class="statusword" id="sw${i}">…</span><span class="ms" id="sm${i}"></span></div>`).join('');
+  state.surfaces=await Promise.all(SURFACES.map(async (s,i)=>{
+    const t0=performance.now(); let status=0;
+    try{ const r=await fetch(s.href,{method:'HEAD'}); status=r.status; }catch(e){ status=0; }
+    const ms=Math.round(performance.now()-t0), up=status>=200&&status<400;
+    $('sd'+i).className='dot '+(up?'ok':'bad'); $('sw'+i).textContent=up?'UP':'DOWN';
+    $('sw'+i).className='statusword '+(up?'ok':'bad'); $('sm'+i).textContent=up?ms+'ms':'—';
+    return {name:s.name,href:s.href,status,ms,up};
+  }));
+  state.checkedAt=Date.now();
+  $('checkedAt').textContent='checked '+new Date(state.checkedAt).toLocaleTimeString();
+}
+async function refresh(){
+  if(state.busy) return state.pending;
+  state.busy=true; $('rfBtn').disabled=true;
+  state.pending=Promise.all([checkOllama(),checkSurfaces()]).finally(()=>{ state.busy=false; $('rfBtn').disabled=false; });
+  return state.pending;
+}
+/* clock + uptime */
+const t0=Date.now();
+setInterval(()=>{ const s=Math.floor((Date.now()-t0)/1000);
+  $('up').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  $('clock').textContent=new Date().toLocaleTimeString();
+},1000);
+refresh(); setInterval(refresh,30000);
+
+/* test hook */
+window.Ops={ get state(){return state;}, refresh, SURFACES };
+</script>
+<script src="shell.js"></script>
+</body>
+</html>

@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BEE — Your perfectionist. Always on.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#08090B; --bg-2:#0d0e12; --panel:#131419; --panel-2:#1a1c22; --line:#26282f; --edge:rgba(245,197,24,.28);
+    --bee:#F5C518; --bee-bright:#FFD60A; --bee-dim:#8a7a1e;
+    --core-white:#FFFFFF; --core-blue:#9FE0FF; --core-deep:#5FB8FF;
+    --text:#EDEEF2; --muted:#8b929e;
+    --font:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif;
+    /* display face degrades to Segoe offline — the demo never breaks without network */
+    --display:'Chakra Petch','Segoe UI',system-ui,sans-serif;
+    --mono:'JetBrains Mono','SF Mono','Consolas',ui-monospace,'Roboto Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+  .brand,.wordmark,.tagline,.status,.chip,.cta,.ric,.chathead .title,.send,.navlinks a{font-family:var(--display)}
+  :focus-visible{outline:2px solid var(--core-blue);outline-offset:2px}
+
+  /* ---------- cinematic background layers ---------- */
+  .bg-grid,.bg-glow,.vignette,.scan{position:fixed;inset:0;pointer-events:none}
+  .bg-grid{z-index:0;background-image:linear-gradient(rgba(245,197,24,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(245,197,24,.035) 1px,transparent 1px);background-size:46px 46px;
+    -webkit-mask:radial-gradient(circle at 50% 44%,#000 0%,transparent 68%);mask:radial-gradient(circle at 50% 44%,#000 0%,transparent 68%)}
+  .bg-glow{z-index:0;background:radial-gradient(760px 540px at 50% 42%,rgba(95,184,255,.12),transparent 62%),radial-gradient(600px 600px at 50% 120%,rgba(245,197,24,.06),transparent 60%)}
+  .vignette{z-index:1;background:radial-gradient(circle at 50% 44%,transparent 52%,rgba(0,0,0,.6))}
+  .scan{z-index:1;background:repeating-linear-gradient(transparent 0 3px,rgba(0,0,0,.10) 3px 4px);opacity:.4;mix-blend-mode:multiply}
+  /* viewport corner reticle frame */
+  .corner{position:fixed;width:30px;height:30px;z-index:2;pointer-events:none;border:2px solid var(--edge)}
+  .corner.tl{top:16px;left:16px;border-right:0;border-bottom:0}
+  .corner.tr{top:16px;right:16px;border-left:0;border-bottom:0}
+  .corner.bl{bottom:16px;left:16px;border-right:0;border-top:0}
+  .corner.br{bottom:16px;right:16px;border-left:0;border-top:0}
+
+  .screen{position:relative;z-index:3;min-height:100vh;display:none;flex-direction:column}
+  .screen.active{display:flex}
+
+  /* ---------- top nav ---------- */
+  nav{display:flex;align-items:center;justify-content:space-between;padding:22px 40px;position:relative;z-index:5}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:.34em;font-size:19px;color:var(--bee);text-shadow:0 0 22px rgba(245,197,24,.35)}
+  .brand .mark{width:22px;height:22px;display:block;filter:drop-shadow(0 0 6px rgba(245,197,24,.5))}
+  .navlinks{display:flex;gap:30px}
+  .navlinks a{color:var(--muted);text-decoration:none;font-size:12px;letter-spacing:.18em;text-transform:uppercase;transition:color .2s}
+  .navlinks a:hover{color:var(--bee)}
+
+  /* ---------- hero ---------- */
+  .hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding:6px 20px 70px}
+  .status{display:flex;align-items:center;gap:9px;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);margin-bottom:26px;
+    animation:rise .9s .05s both}
+  .status .live{width:7px;height:7px;border-radius:50%;background:var(--core-blue);box-shadow:0 0 10px var(--core-blue);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+  .stage{position:relative;width:min(540px,84vw);aspect-ratio:1;display:flex;align-items:center;justify-content:center;animation:rise 1s .1s both}
+  canvas#core{position:absolute;inset:0;width:100%;height:100%}
+  /* stacked HUD rings */
+  .hud{position:absolute;inset:5%;border-radius:50%;pointer-events:none}
+  .hud svg{width:100%;height:100%;overflow:visible}
+  .hud.r1 svg{animation:spin 52s linear infinite}
+  .hud.r2{inset:-4%}.hud.r2 svg{animation:spin 90s linear infinite reverse}
+  /* radar sweep — a thin conic arc riding the outer ring */
+  .hud.sweep{background:conic-gradient(from 0deg,rgba(159,224,255,.32),rgba(159,224,255,.06) 14%,transparent 22%);
+    -webkit-mask:radial-gradient(circle,transparent 61%,#000 62%,#000 70%,transparent 71%);
+    mask:radial-gradient(circle,transparent 61%,#000 62%,#000 70%,transparent 71%);
+    animation:spin 7s linear infinite}
+  .hud .tick{stroke:var(--bee);stroke-width:2}
+  .hud .ring{fill:none;stroke:var(--bee);opacity:.5}
+  .hud .ring.dim{opacity:.18}
+  .hud .ring.dash{opacity:.3;stroke-dasharray:2 8;stroke-width:1.5}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  /* reticle brackets framing the core */
+  .reticle{position:absolute;width:26px;height:26px;border:2px solid var(--edge);z-index:2}
+  .reticle.tl{top:-6px;left:-6px;border-right:0;border-bottom:0}
+  .reticle.tr{top:-6px;right:-6px;border-left:0;border-bottom:0}
+  .reticle.bl{bottom:-6px;left:-6px;border-right:0;border-top:0}
+  .reticle.br{bottom:-6px;right:-6px;border-left:0;border-top:0}
+
+  /* capability chips */
+  .chip{position:absolute;display:flex;align-items:center;gap:8px;padding:9px 14px;border:1px solid var(--edge);
+    background:rgba(15,16,20,.62);backdrop-filter:blur(8px);border-radius:12px;font-size:10.5px;letter-spacing:.18em;color:var(--bee);
+    box-shadow:0 6px 24px rgba(0,0,0,.5);transition:transform .25s,border-color .25s,box-shadow .25s;white-space:nowrap;animation:rise 1s .3s both}
+  .chip svg{width:14px;height:14px;stroke:var(--bee);fill:none;stroke-width:1.6}
+  .chip:hover{transform:translateY(-3px);border-color:var(--bee);box-shadow:0 8px 30px rgba(245,197,24,.22)}
+  .chip.tl{top:2%;left:-4%}.chip.tr{top:2%;right:-4%}.chip.bl{bottom:2%;left:-4%}.chip.br{bottom:2%;right:-4%}
+
+  .wordmark{font-weight:800;letter-spacing:.2em;font-size:clamp(52px,9vw,92px);margin-top:30px;line-height:1;
+    background:linear-gradient(180deg,#fff 0%,#cfeaff 55%,#8fb9e0 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 30px rgba(159,224,255,.28));animation:rise .9s .35s both}
+  .tagline{color:var(--muted);letter-spacing:.3em;font-size:13px;margin-top:12px;text-transform:uppercase;animation:rise .9s .45s both}
+  .cta{position:relative;margin-top:30px;background:linear-gradient(180deg,var(--bee-bright),var(--bee));color:#0a0a0a;border:none;font-weight:800;letter-spacing:.22em;
+    padding:16px 46px;border-radius:12px;font-size:13px;cursor:pointer;box-shadow:0 0 0 1px rgba(255,255,255,.15) inset,0 10px 34px rgba(245,197,24,.35);
+    transition:transform .15s,box-shadow .15s;animation:rise .9s .55s both}
+  .cta:hover{transform:translateY(-2px);box-shadow:0 0 0 1px rgba(255,255,255,.25) inset,0 14px 44px rgba(245,197,24,.55)}
+  .cta:active{transform:translateY(0)}
+  .demo-badge{position:fixed;bottom:26px;left:0;right:0;text-align:center;color:#565b66;font-size:10.5px;letter-spacing:.16em;z-index:3;text-transform:uppercase}
+  /* mono telemetry readout */
+  .telemetry{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:20px;animation:rise .9s .65s both}
+  .telemetry span{display:flex;align-items:center;gap:7px}
+  .telemetry i{width:5px;height:5px;border-radius:50%;background:var(--core-blue);box-shadow:0 0 8px var(--core-blue)}
+  .telemetry b{color:var(--core-blue);font-weight:600}
+  /* boot readout — honest link states, shown once on ACTIVATE */
+  .boot{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;flex-direction:column;gap:7px;padding:4px 2px;animation:rise .3s both}
+  .boot div{display:flex;align-items:center;gap:10px;width:min(340px,86%)}
+  .boot i{flex:1;border-bottom:1px dotted #2a2d35;height:1px}
+  .boot b{color:var(--bee);font-weight:600}
+  .chathead{gap:14px}
+  .chathead .stat{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin-left:auto;white-space:nowrap}
+  /* chip tooltip */
+  .chip[data-desc]:hover::after{content:attr(data-desc);position:absolute;left:50%;top:-36px;transform:translateX(-50%);white-space:nowrap;
+    background:#0c0d11;border:1px solid var(--edge);color:var(--text);font-size:11px;letter-spacing:.02em;text-transform:none;padding:6px 11px;border-radius:9px;box-shadow:0 10px 28px rgba(0,0,0,.55);pointer-events:none;z-index:6}
+
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+
+  /* ---------- chat workspace ---------- */
+  .work{position:relative;flex:1;display:grid;grid-template-columns:82px 1fr;min-height:0}
+  /* LIVE 3D: real wireframe core rendered behind the workspace itself */
+  .holo3d{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+  .rail,.chatcol{position:relative;z-index:1}
+  .thread{perspective:1000px}
+  .msg{transform-style:preserve-3d}
+  .msg.bee .bubble{transform:rotateY(1.4deg) translateZ(6px)}
+  .msg.user .bubble{transform:rotateY(-1.4deg) translateZ(6px)}
+  .rail{border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:18px 0;gap:16px;background:rgba(10,11,14,.86);backdrop-filter:blur(6px)}
+  .rail canvas{width:46px;height:46px;cursor:pointer}
+  .rail .ric{width:48px;height:44px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;
+    color:var(--muted);font-size:9px;letter-spacing:.08em;cursor:pointer;text-align:center;line-height:1.1;transition:border-color .2s,color .2s,background .2s}
+  .rail .ric:hover{color:var(--text);border-color:var(--edge)}
+  .rail .ric.on{color:var(--bee);border-color:var(--edge);background:rgba(245,197,24,.06)}
+  .rail .home{margin-top:auto;color:var(--muted);cursor:pointer;font-size:10px;letter-spacing:.14em}
+  .rail .home:hover{color:var(--bee)}
+
+  .chatcol{display:flex;flex-direction:column;min-height:0;background:linear-gradient(180deg,rgba(13,14,18,.6),rgba(8,9,11,.6))}
+  .chathead{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--line)}
+  .chathead .title{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.18em;color:var(--bee);font-size:13px}
+  .chathead .title .dot{width:7px;height:7px;border-radius:50%;background:var(--core-blue);box-shadow:0 0 8px var(--core-blue)}
+  select.model{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 13px;font-size:12px;font-family:var(--font);letter-spacing:.02em}
+  select.model:focus{outline:none;border-color:var(--edge)}
+  .thread{flex:1;overflow-y:auto;padding:28px 24px;display:flex;flex-direction:column;gap:18px}
+  .thread::-webkit-scrollbar{width:8px}.thread::-webkit-scrollbar-thumb{background:#20222a;border-radius:8px}
+  .msg{max-width:min(760px,92%);display:flex;gap:12px;align-items:flex-start;animation:rise .4s both}
+  .msg.user{align-self:flex-end;flex-direction:row-reverse}
+  .avatar{width:32px;height:32px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:800;letter-spacing:.05em}
+  .avatar.bee{background:linear-gradient(160deg,#2c2f38,#15161a);color:var(--bee);border:1px solid var(--edge);box-shadow:0 0 14px rgba(245,197,24,.12)}
+  .avatar.you{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
+  .bubble{padding:14px 17px;border-radius:14px;line-height:1.55;font-size:14.5px}
+  .msg.bee .bubble{background:linear-gradient(180deg,#16171c,#131419);border:1px solid var(--line);border-top-left-radius:5px}
+  .msg.user .bubble{background:linear-gradient(180deg,#1b2733,#172029);border:1px solid #26384a;border-top-right-radius:5px;color:#dCEaf5}
+  .bubble .cursor{display:inline-block;width:7px;height:15px;background:var(--core-blue);margin-left:2px;vertical-align:-2px;box-shadow:0 0 8px var(--core-blue);animation:blink 1s steps(2) infinite}
+  @keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0}}
+
+  /* CLARIFY buttons */
+  .clarify{margin-top:14px;border:1px solid var(--edge);background:linear-gradient(180deg,rgba(245,197,24,.08),rgba(245,197,24,.03));border-radius:13px;padding:15px}
+  .clarify .q{font-size:14px;margin-bottom:12px;color:var(--text)}
+  .clarify .opts{display:flex;flex-wrap:wrap;gap:10px}
+  .clarify button{background:var(--panel-2);border:1px solid var(--edge);color:var(--bee);padding:10px 16px;border-radius:10px;
+    cursor:pointer;font-size:13px;font-family:var(--font);transition:background .15s,transform .15s}
+  .clarify button:hover{background:rgba(245,197,24,.16);transform:translateY(-1px)}
+  .clarify.answered button{opacity:.4;pointer-events:none}
+  .clarify.answered button.picked{opacity:1;background:var(--bee);color:#111}
+
+  .composer{border-top:1px solid var(--line);padding:16px 24px;display:flex;gap:12px;align-items:flex-end}
+  .composer textarea{flex:1;resize:none;background:var(--panel);border:1px solid var(--line);border-radius:13px;color:var(--text);
+    padding:13px 15px;font-family:var(--font);font-size:14.5px;line-height:1.45;max-height:140px;min-height:48px;transition:border-color .2s,box-shadow .2s}
+  .composer textarea:focus{outline:none;border-color:var(--edge);box-shadow:0 0 0 3px rgba(245,197,24,.08)}
+  .mic{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:13px;width:48px;height:48px;cursor:pointer;flex:none;transition:.15s;display:flex;align-items:center;justify-content:center}
+  .mic svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .mic:hover{border-color:var(--edge)} .mic.on{background:var(--bee);color:#111;border-color:var(--bee);box-shadow:0 0 16px rgba(245,197,24,.5);animation:micpulse 1s infinite}
+  .mic.speaking{color:var(--core-blue,#9FE0FF);border-color:var(--core-blue,#9FE0FF);box-shadow:0 0 16px rgba(159,224,255,.45)}
+  .mic.speaking svg{animation:sndpulse .7s infinite}
+  @keyframes sndpulse{50%{opacity:.45;transform:scale(.9)}}
+  /* voice settings modal */
+  .vmodal{position:fixed;inset:0;background:rgba(6,7,9,.72);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:50}
+  .vmodal.show{display:flex}
+  .vcard{background:var(--panel,#12141a);border:1px solid var(--edge,#2a2e38);border-radius:16px;padding:22px;width:min(420px,92vw);box-shadow:0 24px 60px rgba(0,0,0,.6)}
+  .vcard h3{font-size:15px;letter-spacing:.04em;margin-bottom:4px}
+  .vcard p.sub{color:var(--muted);font-size:12px;margin-bottom:16px;line-height:1.5}
+  .vrow{margin-bottom:13px} .vrow label{display:block;font-size:10.5px;letter-spacing:.1em;color:var(--muted);margin-bottom:5px;text-transform:uppercase}
+  .vrow input,.vrow select{width:100%;background:var(--bg,#0a0b0e);border:1px solid var(--line);border-radius:10px;color:var(--text);padding:9px 11px;font-size:13px;font-family:inherit}
+  .vrow input:focus,.vrow select:focus{outline:none;border-color:var(--edge)}
+  .seg2{display:flex;gap:6px;background:var(--bg,#0a0b0e);border:1px solid var(--line);border-radius:10px;padding:4px}
+  .seg2 button{flex:1;background:none;border:none;color:var(--muted);border-radius:7px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;font-family:inherit}
+  .seg2 button.on{background:var(--panel);color:var(--bee)}
+  .vactions{display:flex;gap:8px;margin-top:18px}
+  .vactions button{flex:1;border-radius:10px;padding:10px;font-size:12.5px;font-weight:800;cursor:pointer;border:none;letter-spacing:.04em;transition:.15s;font-family:inherit}
+  .vactions .prim{background:linear-gradient(180deg,var(--bee-bright,#ffd94a),var(--bee,#F5C518));color:#0a0a0a}
+  .vactions .ghost{background:var(--panel);color:var(--text);border:1px solid var(--line)}
+  .vactions button:hover{filter:brightness(1.08)}
+  .vhint{font-size:11px;color:var(--faint,#5a6472);margin-top:11px;line-height:1.5}
+  .vhint a{color:var(--core-blue,#9FE0FF)}
+  @keyframes micpulse{50%{box-shadow:0 0 26px rgba(245,197,24,.8)}}
+  .send{background:linear-gradient(180deg,var(--bee-bright),var(--bee));border:none;color:#0a0a0a;font-weight:800;border-radius:13px;padding:0 24px;height:48px;cursor:pointer;letter-spacing:.08em;transition:transform .12s}
+  .send:hover{transform:translateY(-1px)}.send:disabled{opacity:.4;cursor:default;transform:none}
+  .hint{padding:0 24px 14px;color:#565b66;font-size:11px;letter-spacing:.02em}
+  @media(max-width:620px){.work{grid-template-columns:62px 1fr}.chip{font-size:9.5px;padding:7px 10px}.corner{display:none}}
+
+  /* ===== AGENTS-v09-compliance — adopted from ui-ux-pro-max (P2 Touch & Interaction = CRITICAL) =====
+     Every real control gets a >=44x44 tap area and >=8px separation. Visual language is
+     unchanged: min-height/min-width grow the hit box, they don't restyle anything.
+     Deliberately NOT using a blanket ::after — several demos already use ::after for
+     tooltips and sheen, and overwriting those would be a regression. */
+  html{touch-action:manipulation}                 /* kills the 300ms mobile tap delay */
+  /* NOTE: input[type="text"] misses inputs with NO type attribute — use :not() form. */
+  button, select, textarea,
+  input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  [role="button"], [role="checkbox"], [onclick]{ min-height:44px }
+  button, select, [role="button"], [onclick]{ min-width:44px }
+  /* anchor-based controls (links used as buttons) — text links in prose are exempt */
+  a.back, a.btn, .srow a, .navrow a, .factions a, .dactions a, .samples a, .ric,
+  a.card, a[role="button"]{ min-height:44px; display:inline-flex; align-items:center }
+  /* icon-only controls: keep the glyph small, grow the target */
+  .mic, .iconbtn, .fav, .x, .rf{ min-width:44px; min-height:44px }
+  /* custom toggles keep their visual size; the wrapping label carries the target */
+  .switch, label:has(> input[type="checkbox"]){ min-height:44px; display:inline-flex; align-items:center }
+  /* adjacent controls need >=8px between them */
+  .navrow, .samples, .tabs, .rowb, .controls, .factions, .dactions, .heroactions, .hrow{ gap:8px }
+  /* P6 Typography: tabular figures so live numbers never shift layout */
+  .mono, .telemetry, .stat, .kv, .cdist, .conf, .meta, .pill, .clockbox, .ms{ font-variant-numeric:tabular-nums }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div><div class="bg-glow"></div><div class="vignette"></div><div class="scan"></div>
+<div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+
+<!-- ============ HOME / IDLE ============ -->
+<section id="home" class="screen active">
+  <nav>
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4.6v9.2L12 22 4 15.8V6.6L12 2z" stroke="#F5C518" stroke-width="1.6"/><circle cx="12" cy="12" r="3.3" fill="#9FE0FF"/></svg>
+      BEE
+    </div>
+    <div class="navlinks"><a>System</a><a>Agents</a><a>Docs</a></div>
+  </nav>
+  <div class="hero">
+    <div class="status"><span class="live"></span><span id="linkState">System online · local-first</span></div>
+    <div class="stage">
+      <canvas id="core"></canvas>
+      <div class="hud sweep"></div>
+      <div class="hud r2"><svg viewBox="0 0 200 200"><circle class="ring dash" cx="100" cy="100" r="99"/></svg></div>
+      <div class="hud r1">
+        <svg viewBox="0 0 200 200">
+          <circle class="ring" cx="100" cy="100" r="92"/>
+          <circle class="ring dim" cx="100" cy="100" r="78"/>
+          <g id="ticks"></g>
+        </svg>
+      </div>
+      <div class="reticle tl"></div><div class="reticle tr"></div><div class="reticle bl"></div><div class="reticle br"></div>
+      <div class="chip tl" data-desc="Talk to Bee, hear it back"><svg viewBox="0 0 24 24"><path d="M4 12h2l2-5 4 10 2-7 2 4h4"/></svg>VOICE</div>
+      <div class="chip tr" data-desc="See through the camera, on-device"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>VISION</div>
+      <div class="chip bl" data-desc="Long-term memory that learns you"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="2"/><circle cx="18" cy="7" r="2"/><circle cx="18" cy="17" r="2"/><path d="M8 12l8-4M8 12l8 4"/></svg>MEMORY</div>
+      <div class="chip br" data-desc="Many agents working at once"><svg viewBox="0 0 24 24"><path d="M5 6h9M5 12h14M5 18h9"/></svg>PARALLEL</div>
+    </div>
+    <div class="wordmark">BEE</div>
+    <div class="tagline">Your perfectionist. Always on.</div>
+    <button class="cta" onclick="activate()">ACTIVATE</button>
+    <div class="telemetry"><span><i></i>Core <b id="tFps">—</b> fps</span><span>T+<b id="tUp">00:00</b></span><span id="tClock">—</span><span>Local-first</span></div>
+  </div>
+  <div class="demo-badge">Phase 1 · animated core wired to a local Ollama backend</div>
+</section>
+
+<!-- ============ CHAT WORKSPACE ============ -->
+<section id="chat" class="screen">
+  <div class="work">
+    <canvas class="holo3d" id="holo3d" aria-hidden="true"></canvas>
+    <div class="rail">
+      <canvas id="coreMini" title="Bee"></canvas>
+      <div class="ric on">CHAT</div>
+      <div class="ric" id="voiceChip" title="Voice settings — browser voice or ElevenLabs" onclick="openVoiceSettings()" style="cursor:pointer">VOICE</div>
+      <div class="ric" title="coming online">VISION</div>
+      <div class="ric" title="coming online">MEM</div>
+      <a class="ric on" href="squad.html" title="multi-agent squad" style="text-decoration:none">SQUAD</a>
+      <a class="ric on" href="super.html" title="BEE SUPER — chat + squad combined" style="text-decoration:none">SUPER</a>
+      <a class="ric on" href="ops.html" title="mission control — live system status" style="text-decoration:none">OPS</a>
+      <div class="home" onclick="goHome()">◀ HOME</div>
+    </div>
+    <div class="chatcol">
+      <div class="chathead">
+        <div class="title"><span class="dot"></span>BEE · CHAT</div>
+        <span class="stat" id="chatStat"></span>
+        <select class="model" id="model">
+          <option>llama3.1:8b</option><option>qwen2.5:14b</option><option>mistral:7b</option><option>phi3:mini</option>
+        </select>
+      </div>
+      <div class="thread" id="thread"></div>
+      <div class="composer">
+        <textarea id="input" placeholder="Message Bee…  (or talk)" rows="1"></textarea>
+        <button class="mic" id="mic" title="Talk to Bee (voice input)" aria-label="Voice input" onclick="toggleVoice()"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+        <button class="mic" id="spk" title="Bee speaks replies (voice output)" aria-label="Voice output" onclick="toggleSpeak()"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg></button>
+        <button class="send" id="send" onclick="sendMsg()">SEND</button>
+      </div>
+      <div class="hint">Auto-connects to your local Ollama — real streaming + <b>[[CLARIFY]]</b> buttons. Tap the speaker to have Bee <b>talk back</b> (free browser voice, or add an ElevenLabs key in VOICE). Falls back to a simulated reply if Ollama isn't running.</div>
+    </div>
+  </div>
+</section>
+
+<div class="vmodal" id="vmodal" onclick="if(event.target===this)closeVoiceSettings()">
+  <div class="vcard">
+    <h3>Bee's voice</h3>
+    <p class="sub">Bee reads replies out loud. Browser voice is free and works offline. Add an ElevenLabs key for a far more natural voice.</p>
+    <div class="vrow"><label>Engine</label>
+      <div class="seg2" id="engineSeg">
+        <button data-e="browser" class="on">Browser voice (free)</button>
+        <button data-e="eleven">ElevenLabs</button>
+      </div>
+    </div>
+    <div class="vrow" id="browserRow"><label>Browser voice</label>
+      <select id="browserVoice"></select>
+    </div>
+    <div id="elevenRows" style="display:none">
+      <div class="vrow"><label>ElevenLabs API key</label>
+        <input id="elKey" type="password" placeholder="xi-… (stored only in this browser)" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="vrow"><label>Voice ID</label>
+        <input id="elVoice" type="text" placeholder="21m00Tcm4TlvDq8ikWAM (Rachel)" spellcheck="false">
+      </div>
+    </div>
+    <div class="vactions">
+      <button class="ghost" onclick="testVoice()">Test voice</button>
+      <button class="prim" onclick="saveVoiceSettings()">Save</button>
+    </div>
+    <p class="vhint">Your key stays in this browser (localStorage) and is sent only to ElevenLabs. Nothing is committed or shared. Get a key at <a href="https://elevenlabs.io" target="_blank" rel="noopener">elevenlabs.io</a>.</p>
+  </div>
+</div>
+
+<script>
+/* ---------------- animated Core (shared draw fn) ---------------- */
+function makeCore(canvas, scale){
+  const ctx = canvas.getContext('2d');
+  let W,H,DPR=Math.min(devicePixelRatio||1,2);
+  function size(){ const r=canvas.getBoundingClientRect(); W=canvas.width=r.width*DPR; H=canvas.height=r.height*DPR; }
+  size(); addEventListener('resize',size);
+  const N=Math.round(90*scale), parts=[];
+  for(let i=0;i<N;i++){ parts.push({a:Math.random()*Math.PI*2, r:Math.random(), sp:0.2+Math.random()*0.8, z:Math.random()}); }
+  let t=0;
+  function frame(){
+    t+=0.016;
+    if(canvas.id==='core') window.__coreFrames=(window.__coreFrames||0)+1;   // real fps feed for telemetry
+    ctx.clearRect(0,0,W,H);
+    const cx=W/2, cy=H/2, R=Math.min(W,H)*0.30;
+    const pulse=1+Math.sin(t*1.6)*0.05;
+    // outer glow
+    let g=ctx.createRadialGradient(cx,cy,0,cx,cy,R*2.6*pulse);
+    g.addColorStop(0,'rgba(159,224,255,0.30)'); g.addColorStop(0.4,'rgba(95,184,255,0.12)'); g.addColorStop(1,'rgba(95,184,255,0)');
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    // core body
+    let c=ctx.createRadialGradient(cx-R*0.25,cy-R*0.3,R*0.1,cx,cy,R*pulse);
+    c.addColorStop(0,'rgba(255,255,255,0.98)'); c.addColorStop(0.45,'rgba(200,240,255,0.95)');
+    c.addColorStop(0.8,'rgba(95,184,255,0.55)'); c.addColorStop(1,'rgba(60,120,200,0.05)');
+    ctx.beginPath(); ctx.arc(cx,cy,R*pulse,0,Math.PI*2); ctx.fillStyle=c; ctx.fill();
+    // electric filaments
+    ctx.strokeStyle='rgba(180,230,255,0.5)'; ctx.lineWidth=1*DPR;
+    for(let k=0;k<4;k++){
+      ctx.beginPath();
+      for(let s=0;s<=10;s++){
+        const ang=t*0.6+k*1.7+s*0.35, rr=R*(0.2+s/12)*pulse;
+        const x=cx+Math.cos(ang)*rr+Math.sin(s*3+t*4)*4*DPR;
+        const y=cy+Math.sin(ang)*rr+Math.cos(s*2+t*3)*4*DPR;
+        s?ctx.lineTo(x,y):ctx.moveTo(x,y);
+      }
+      ctx.stroke();
+    }
+    // orbiting ice particles
+    for(const p of parts){
+      p.a+=0.004*p.sp;
+      const rr=R*(1.15+p.r*0.9)*pulse, x=cx+Math.cos(p.a)*rr, y=cy+Math.sin(p.a)*rr*0.9;
+      const sz=(0.6+p.z*1.8)*DPR;
+      ctx.globalAlpha=0.25+p.z*0.5;
+      ctx.fillStyle= p.z>0.7?'rgba(255,255,255,0.9)':'rgba(159,224,255,0.8)';
+      ctx.beginPath(); ctx.arc(x,y,sz,0,Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    requestAnimationFrame(frame);
+  }
+  frame();
+}
+/* HUD tick marks */
+(function(){ const g=document.getElementById('ticks'); let s='';
+  for(let i=0;i<60;i++){ const a=i/60*Math.PI*2, big=i%5===0; const r1=big?70:74, r2=78;
+    const x1=100+Math.cos(a)*r1, y1=100+Math.sin(a)*r1, x2=100+Math.cos(a)*r2, y2=100+Math.sin(a)*r2;
+    s+=`<line class="tick" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" opacity="${big?0.8:0.4}"/>`; }
+  g.innerHTML=s;
+})();
+makeCore(document.getElementById('core'),1);
+
+/* live telemetry — real numbers, not set dressing */
+(function(){
+  const fps=document.getElementById('tFps'), up=document.getElementById('tUp'), clk=document.getElementById('tClock');
+  if(!fps) return;
+  const t0=Date.now(); let last=0;
+  const tick=()=>{
+    const f=window.__coreFrames||0; fps.textContent=Math.max(0,f-last); last=f;
+    const s=Math.floor((Date.now()-t0)/1000);
+    up.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+    clk.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  };
+  tick(); setInterval(tick,1000);
+})();
+/* reflect the real Ollama link on the hero, without blocking anything */
+function reflectLink(ok){ const el=document.getElementById('linkState'); if(el) el.textContent = ok ? 'Ollama linked · local-first' : 'Sim mode · local-first'; }
+detectOllama().then(reflectLink);
+
+/* ---------------- navigation ---------------- */
+let miniStarted=false;
+function setStat(s){ const e=document.getElementById('chatStat'); if(e) e.textContent=s; }
+async function bootSeq(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const b=document.createElement('div'); b.className='boot'; thread.appendChild(b);
+  const rows=[['BEE CORE','ONLINE'],
+              ['MODEL LINK', LIVE?('LIVE · '+document.getElementById('model').value):'SIM MODE'],
+              ['VOICE', vcfg.on?'ON':'STANDBY'],
+              ['MEMORY','LOCAL']];
+  for(const [k,v] of rows){
+    const r=document.createElement('div'); r.innerHTML=`<span>${k}</span><i></i><b>${v}</b>`;
+    b.appendChild(r); thread.scrollTop=thread.scrollHeight;
+    await new Promise(res=>setTimeout(res,170));
+  }
+  await new Promise(res=>setTimeout(res,220));
+}
+async function activate(){
+  document.getElementById('home').classList.remove('active');
+  document.getElementById('chat').classList.add('active');
+  if(!miniStarted){ makeCore(document.getElementById('coreMini'),0.4); miniStarted=true; }
+  if(!thread.children.length){ await detectOllama(); await bootSeq(); greet(); }
+}
+function goHome(){ document.getElementById('chat').classList.remove('active'); document.getElementById('home').classList.add('active'); }
+
+/* ---------------- chat (simulated) ---------------- */
+const thread=document.getElementById('thread'), input=document.getElementById('input'), sendBtn=document.getElementById('send');
+input.addEventListener('input',()=>{ input.style.height='auto'; input.style.height=Math.min(input.scrollHeight,140)+'px'; });
+input.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendMsg(); }});
+
+function addMsg(who,html){
+  const m=document.createElement('div'); m.className='msg '+who;
+  m.innerHTML=`<div class="avatar ${who==='bee'?'bee':'you'}">${who==='bee'?'BEE':'YOU'}</div><div class="bubble">${html}</div>`;
+  thread.appendChild(m); thread.scrollTop=thread.scrollHeight; return m.querySelector('.bubble');
+}
+/* ---------------- LIVE Ollama backend ---------------- */
+const OLLAMA_BASE='http://localhost:11434';
+const SYS="You are Bee — the user's perfectionist, get-it-done second-in-command. Loyal, blunt, precise. Lead with the result, no filler. When you are choosing between a few clear paths, emit EXACTLY this block and nothing else around it:\n[[CLARIFY]]\nquestion: <your question>\noptions: <A> | <B> | <C>\n[[/CLARIFY]]\nOtherwise answer in plain prose. Never fabricate.";
+let LIVE=false; const history=[];
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+async function detectOllama(){
+  try{
+    const r=await fetch(OLLAMA_BASE+'/api/tags'); if(!r.ok) return false;
+    const d=await r.json(); const names=(d.models||[]).map(m=>m.name);
+    if(!names.length) return false;
+    const sel=document.getElementById('model');
+    sel.innerHTML=names.map(n=>`<option>${n}</option>`).join('');
+    // Default to a fast LOCAL text model (avoid cloud=403, huge models, and vision/embed models for chat).
+    const chatty=n=>!/:cloud$/.test(n)&&!/llava|embed|vision/i.test(n);
+    const pref=names.find(n=>chatty(n)&&/(:8b|:7b|:3b|mini|small)/i.test(n)) || names.find(chatty) || names[0];
+    if(pref) sel.value=pref;
+    LIVE=true; reflectLink(true); return true;
+  }catch(e){ return false; }
+}
+function parseClarify(text){
+  const m=text.match(/\[\[CLARIFY\]\]([\s\S]*?)\[\[\/CLARIFY\]\]/);
+  if(!m) return {clean:text, block:null};
+  const body=m[1];
+  const q=((body.match(/question:\s*(.+)/i)||[])[1]||'').trim();
+  const opts=((body.match(/options:\s*(.+)/i)||[])[1]||'').split('|').map(s=>s.trim()).filter(Boolean);
+  return {clean:text.replace(m[0],'').trim(), block:(q&&opts.length)?{q,opts}:null};
+}
+const stripClarify=t=>t.replace(/\[\[CLARIFY\]\][\s\S]*?(\[\[\/CLARIFY\]\]|$)/,'').trim();
+
+async function ollamaChat(userText){
+  history.push({role:'user',content:userText});
+  const b=addMsg('bee',''); b.innerHTML='<span class="cursor"></span>';
+  let acc=''; const tSend=performance.now(); let ttft=0;
+  window.__beeBusy=true;                 // drives the live 3D core
+  try{
+    const res=await fetch(OLLAMA_BASE+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:document.getElementById('model').value,messages:[{role:'system',content:SYS}].concat(history),stream:true})});
+    if(!res.ok||!res.body) throw new Error('HTTP '+res.status);
+    const reader=res.body.getReader(), dec=new TextDecoder(); let buf='';
+    for(;;){ const {done,value}=await reader.read(); if(done) break;
+      buf+=dec.decode(value,{stream:true}); const lines=buf.split('\n'); buf=lines.pop();
+      for(const ln of lines){ const s=ln.trim(); if(!s) continue;
+        try{ const j=JSON.parse(s); const p=(j.message&&j.message.content)||'';
+          if(p){ if(!ttft) ttft=Math.round(performance.now()-tSend); acc+=p; b.innerHTML=esc(stripClarify(acc)).replace(/\n/g,'<br>')+'<span class="cursor"></span>'; thread.scrollTop=thread.scrollHeight; }
+        }catch(e){}
+      }
+    }
+    const {clean,block}=parseClarify(acc);
+    b.innerHTML=esc(clean).replace(/\n/g,'<br>'); history.push({role:'assistant',content:acc});
+    setStat('LIVE · '+document.getElementById('model').value+(ttft?(' · TTFT '+ttft+'MS'):''));
+    speakOut(clean);
+    if(block) clarify(b,block.q,block.opts);
+  }catch(e){
+    b.innerHTML='<span style="color:#ff9a9b">Ollama error: '+esc(String(e))+' — is it running? Retry, or reload for simulated mode.</span>';
+  }finally{ window.__beeBusy=false; }
+}
+// Route a turn to the live model when connected, else the simulated replies.
+function route(text){ if(LIVE) ollamaChat(text); else setTimeout(()=>reply(text),260); }
+
+function stream(bubble,text,done){
+  let i=0; bubble.innerHTML='<span class="cursor"></span>';
+  const iv=setInterval(()=>{ i+=Math.max(1,Math.round(Math.random()*3));
+    bubble.innerHTML=text.slice(0,i).replace(/\n/g,'<br>')+'<span class="cursor"></span>';
+    thread.scrollTop=thread.scrollHeight;
+    if(i>=text.length){ clearInterval(iv); bubble.innerHTML=text.replace(/\n/g,'<br>'); speakOut(text); done&&done(); }
+  },18);
+}
+function greet(){
+  const b=addMsg('bee','');
+  if(LIVE){
+    const m=document.getElementById('model').value;
+    setStat('LIVE · '+m);
+    stream(b,"Online — connected to your local Ollama ("+m+"). I'm Bee, your perfectionist second-in-command. Swap models top-right anytime.\n\nWhat are we building?");
+  } else {
+    setStat('SIM MODE');
+    stream(b,"Online (demo mode — Ollama not detected, so replies are simulated). I'm Bee, your perfectionist second-in-command.\n\nStart Ollama and reload to run me on a real model. What are we building?");
+  }
+}
+function clarify(bubble,q,opts){
+  const wrap=document.createElement('div'); wrap.className='clarify';
+  wrap.innerHTML=`<div class="q">${q}</div><div class="opts"></div>`;
+  const row=wrap.querySelector('.opts');
+  opts.forEach(o=>{ const btn=document.createElement('button'); btn.textContent=o;
+    btn.onclick=()=>{ wrap.classList.add('answered'); btn.classList.add('picked'); addMsg('user',o); route(o); };
+    row.appendChild(btn); });
+  bubble.appendChild(wrap); thread.scrollTop=thread.scrollHeight;
+}
+function reply(text){
+  const t=text.toLowerCase(); const b=addMsg('bee','');
+  if(/stack|build|pick|choose|which/.test(t) && !/electron|python|web/.test(t)){
+    stream(b,"Good — let's lock the foundation first. I'll ask the way I always do when there's a clean fork: tap an answer.",()=>{
+      clarify(b,"What are we building right now?",["Bee desktop app","The Allergy Scanner","Something new"]);
+    });
+  } else if(/desktop|electron|bee desktop/.test(t)){
+    stream(b,"Bee desktop it is. Phase 1 is already specced: Electron + React + TypeScript + Vite, this animated Core as the home screen, chat streaming from Ollama, JSON persistence, and this CLARIFY feature you're using now.\n\nOpen Claude Code in the repo, Shift+Tab into accept-edits, and paste bee-build-brief.md — I'll build it end-to-end and stop at the Phase 1 checklist.");
+  } else if(/allergy/.test(t)){
+    stream(b,"The Allergy Scanner — the safety-first one. That build is governed by the Safety Constitution: fail-safe verdicts, real cited data only, never a false green. Its verdict engine ships with unit tests before anything else. Say the word and I'll walk its Phase 1.");
+  } else if(/new|something/.test(t)){
+    stream(b,"A new project. Give me the one-line mission and I'll draft a build brief in the same shape as Bee and the Allergy app — governance at the root, phased plan, definition-of-done.");
+  } else {
+    stream(b,"On it. In the real app this response streams token-by-token from your selected Ollama model ("+document.getElementById('model').value+"), grounded in Bee's system prompt. This demo simulates it so it runs anywhere with zero setup.\n\nTry asking me to “help me pick a stack.”");
+  }
+}
+function sendMsg(){
+  const v=input.value.trim(); if(!v) return;
+  addMsg('user',v.replace(/</g,'&lt;')); input.value=''; input.style.height='auto';
+  route(v);
+}
+/* ---------------- voice input (Web Speech API) ---------------- */
+let recog=null, listening=false;
+function toggleVoice(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ input.placeholder='Voice input needs Chrome or Edge'; return; }
+  if(listening){ recog&&recog.stop(); return; }
+  recog=new SR(); recog.lang='en-US'; recog.interimResults=true; recog.continuous=false;
+  listening=true; document.getElementById('mic').classList.add('on'); input.placeholder='Listening…';
+  let finalT='';
+  recog.onresult=(e)=>{ let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ const t=e.results[i][0].transcript; if(e.results[i].isFinal) finalT+=t; else interim+=t; } input.value=(finalT+interim).trim(); input.style.height='auto'; input.style.height=Math.min(input.scrollHeight,140)+'px'; };
+  recog.onerror=()=>{ listening=false; document.getElementById('mic').classList.remove('on'); input.placeholder='Message Bee…  (or 🎤 talk)'; };
+  recog.onend=()=>{ listening=false; document.getElementById('mic').classList.remove('on'); input.placeholder='Message Bee…  (or 🎤 talk)'; if(input.value.trim()) sendMsg(); };
+  recog.start();
+}
+
+/* ---------------- voice OUTPUT — Bee talks back ---------------- */
+const VKEY='bee.voice';
+function safeJSON(s){ try{ return JSON.parse(s||'{}'); }catch{ return {}; } }
+let vcfg=Object.assign({on:false,engine:'browser',browserVoice:'',elKey:'',elVoice:'21m00Tcm4TlvDq8ikWAM'}, safeJSON(localStorage.getItem(VKEY)));
+let curAudio=null;
+const saveVcfg=()=>localStorage.setItem(VKEY,JSON.stringify(vcfg));
+
+// Never read markup, code, or urls aloud. (Same idea as the CLI's speakable().)
+function speakableText(t){
+  return String(t||'')
+    .replace(/\[\[CLARIFY\]\][\s\S]*?(\[\[\/CLARIFY\]\]|$)/g,'')
+    .replace(/```[\s\S]*?```/g,' code snippet ')
+    .replace(/`[^`]*`/g,'')
+    .replace(/https?:\/\/\S+/g,' a link ')
+    .replace(/[*_#>|]/g,'')
+    .replace(/\s+/g,' ').trim().slice(0,700);
+}
+function setSpeaking(on){ document.getElementById('spk').classList.toggle('speaking', on && vcfg.on); }
+function stopSpeaking(){ try{ speechSynthesis&&speechSynthesis.cancel(); }catch{} if(curAudio){ curAudio.pause(); curAudio=null; } setSpeaking(false); }
+
+function pickBrowserVoice(){
+  const vs=(window.speechSynthesis&&speechSynthesis.getVoices())||[];
+  if(!vs.length) return null;
+  if(vcfg.browserVoice){ const m=vs.find(v=>v.name===vcfg.browserVoice); if(m) return m; }
+  return vs.find(v=>/en-GB/i.test(v.lang)) || vs.find(v=>/^en/i.test(v.lang)) || vs[0];   // British for the Jarvis feel
+}
+function browserSpeak(text){
+  if(!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  const v=pickBrowserVoice(); if(v) u.voice=v;
+  u.rate=1.02;
+  u.onstart=()=>setSpeaking(true); u.onend=()=>setSpeaking(false); u.onerror=()=>setSpeaking(false);
+  speechSynthesis.speak(u);
+}
+async function elevenSpeak(text){
+  const r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+(vcfg.elVoice||'21m00Tcm4TlvDq8ikWAM'),{
+    method:'POST', headers:{'xi-api-key':vcfg.elKey,'Content-Type':'application/json',Accept:'audio/mpeg'},
+    body:JSON.stringify({text, model_id:'eleven_turbo_v2_5', voice_settings:{stability:0.4,similarity_boost:0.75}})
+  });
+  if(!r.ok) throw new Error('ElevenLabs '+r.status);
+  const url=URL.createObjectURL(await r.blob());
+  const a=new Audio(url); curAudio=a;
+  a.onplay=()=>setSpeaking(true);
+  a.onended=()=>{ setSpeaking(false); URL.revokeObjectURL(url); curAudio=null; };
+  a.onerror=()=>setSpeaking(false);
+  await a.play();
+}
+function speakOut(text){
+  if(!vcfg.on) return;
+  const t=speakableText(text); if(!t) return;
+  stopSpeaking();
+  if(vcfg.engine==='eleven' && vcfg.elKey) elevenSpeak(t).catch(()=>browserSpeak(t));   // key bad/offline -> fall back, never silent
+  else browserSpeak(t);
+}
+function reflectVoiceUI(){
+  document.getElementById('spk').classList.toggle('on', vcfg.on);
+  const c=document.getElementById('voiceChip'); if(c) c.classList.toggle('on', vcfg.on);
+}
+function toggleSpeak(){
+  vcfg.on=!vcfg.on; saveVcfg(); reflectVoiceUI();
+  if(!vcfg.on){ stopSpeaking(); return; }
+  if(vcfg.engine!=='eleven') browserSpeak('Voice on.');   // prime speechSynthesis inside this click gesture
+}
+
+/* settings modal */
+function fillBrowserVoices(){
+  const sel=document.getElementById('browserVoice'); if(!sel) return;
+  const vs=(window.speechSynthesis&&speechSynthesis.getVoices())||[];
+  sel.innerHTML = vs.length ? vs.map(v=>`<option value="${v.name}">${v.name} · ${v.lang}</option>`).join('') : '<option value="">No browser voices found</option>';
+  const want=vcfg.browserVoice||(pickBrowserVoice()||{}).name; if(want) sel.value=want;
+}
+function setEngineUI(e){
+  document.querySelectorAll('#engineSeg button').forEach(b=>b.classList.toggle('on', b.dataset.e===e));
+  document.getElementById('browserRow').style.display = e==='browser'?'':'none';
+  document.getElementById('elevenRows').style.display = e==='eleven'?'':'none';
+}
+function openVoiceSettings(){
+  document.getElementById('vmodal').classList.add('show');
+  setEngineUI(vcfg.engine);
+  document.getElementById('elKey').value=vcfg.elKey||'';
+  document.getElementById('elVoice').value=vcfg.elVoice||'';
+  fillBrowserVoices();
+}
+function closeVoiceSettings(){ document.getElementById('vmodal').classList.remove('show'); }
+document.querySelectorAll('#engineSeg button').forEach(b=>b.onclick=()=>setEngineUI(b.dataset.e));
+function saveVoiceSettings(){
+  vcfg.engine=document.querySelector('#engineSeg button.on').dataset.e;
+  vcfg.browserVoice=document.getElementById('browserVoice').value||'';
+  vcfg.elKey=document.getElementById('elKey').value.trim();
+  vcfg.elVoice=document.getElementById('elVoice').value.trim()||'21m00Tcm4TlvDq8ikWAM';
+  vcfg.on=true;                       // saving means you want Bee to talk
+  saveVcfg(); reflectVoiceUI(); closeVoiceSettings();
+  (vcfg.engine==='eleven'&&vcfg.elKey?elevenSpeak('Voice saved. This is me.').catch(()=>browserSpeak('Voice saved.')):browserSpeak('Voice saved.'));
+}
+function testVoice(){
+  const e=document.querySelector('#engineSeg button.on').dataset.e, line="Bee here. This is how I'll sound.";
+  if(e==='eleven'){
+    const key=document.getElementById('elKey').value.trim(), vid=document.getElementById('elVoice').value.trim()||'21m00Tcm4TlvDq8ikWAM';
+    if(!key){ browserSpeak(line); return; }
+    const sk=vcfg.elKey, sv=vcfg.elVoice; vcfg.elKey=key; vcfg.elVoice=vid;
+    elevenSpeak(line).catch(()=>browserSpeak(line)).finally(()=>{ vcfg.elKey=sk; vcfg.elVoice=sv; });
+  } else {
+    const s=vcfg.browserVoice; vcfg.browserVoice=document.getElementById('browserVoice').value; browserSpeak(line); vcfg.browserVoice=s;
+  }
+}
+if(window.speechSynthesis) speechSynthesis.onvoiceschanged=()=>{ if(document.getElementById('vmodal').classList.contains('show')) fillBrowserVoices(); };
+reflectVoiceUI();
+
+/* ================= LIVE 3D core rendered behind the workspace ================= */
+/* Real wireframe 3D drawn into the demo itself — idle = amber slow spin,
+   Bee thinking = icy + faster. Same projection engine as the showroom. */
+const Holo3D=(function(){
+  const cv=document.getElementById('holo3d'); if(!cv) return {draw(){},px:()=>0};
+  const ctx=cv.getContext('2d');
+  const RED=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const hex=r=>Array.from({length:6},(_,i)=>[r*Math.cos(i*Math.PI/3+Math.PI/6),r*Math.sin(i*Math.PI/3+Math.PI/6)]);
+  function extrude(pts,d){ const V=[],E=[];
+    pts.forEach(([x,y])=>V.push([x,y,-d/2])); pts.forEach(([x,y])=>V.push([x,y,d/2]));
+    const n=pts.length; for(let i=0;i<n;i++){ E.push([i,(i+1)%n]); E.push([i+n,(i+1)%n+n]); E.push([i,i+n]); } return {V,E}; }
+  const shell=extrude(hex(1),0.62);
+  const coreV=[[0,-1.15,0],[1.15,0,0],[0,1.15,0],[-1.15,0,0],[0,0,1.15],[0,0,-1.15]].map(v=>v.map(n=>n*0.58));
+  const coreE=[[0,1],[1,2],[2,3],[3,0],[0,4],[1,4],[2,4],[3,4],[0,5],[1,5],[2,5],[3,5]];
+  const V=[...shell.V,...coreV], E=[...shell.E,...coreE.map(([a,b])=>[a+shell.V.length,b+shell.V.length])];
+  let rot=0, glow=0;
+  function draw(){
+    const DPR=Math.min(devicePixelRatio||1,2), r=cv.getBoundingClientRect(); if(!r.width) return;
+    if(cv.width!==Math.round(r.width*DPR)){ cv.width=r.width*DPR; cv.height=r.height*DPR; }
+    const W=cv.width,H=cv.height,S=Math.min(W,H)*0.24,CX=W*0.66,CY=H*0.56;
+    ctx.clearRect(0,0,W,H);
+    const busy=window.__beeBusy?1:0; glow+=(busy-glow)*0.06;
+    if(!RED) rot+=0.0022+glow*0.007;
+    const cy=Math.cos(rot),sy=Math.sin(rot),bx=0.30,cx2=Math.cos(bx),sx2=Math.sin(bx);
+    const P=V.map(([x,y,z])=>{ let X=x*cy+z*sy,Z=-x*sy+z*cy,Y=y*cx2-Z*sx2,Z2=y*sx2+Z*cx2;
+      const d=1/(1+Z2*0.28); return [CX+X*S*d,CY+Y*S*d,Z2]; });
+    for(const [a,b] of E){ const za=(P[a][2]+P[b][2])/2;
+      ctx.strokeStyle = glow>0.5 ? '#9FE0FF' : '#F5C518';
+      ctx.globalAlpha = Math.max(0.05,Math.min(0.55,0.40-(za+1.2)*0.13)) * (0.75+glow*0.65);
+      ctx.lineWidth=(za<0?1.7:1)*DPR;
+      ctx.beginPath(); ctx.moveTo(P[a][0],P[a][1]); ctx.lineTo(P[b][0],P[b][1]); ctx.stroke(); }
+    ctx.globalAlpha=Math.min(0.7,0.3+glow*0.5); ctx.fillStyle=glow>0.5?'#9FE0FF':'#F5C518';
+    for(const [x,y,z] of P){ if(z<0){ ctx.beginPath(); ctx.arc(x,y,1.9*DPR,0,6.29); ctx.fill(); } }
+    ctx.globalAlpha=1;
+  }
+  (function loop(){ draw(); requestAnimationFrame(loop); })();
+  return { draw, px(){ if(!cv.width) return 0; const d=ctx.getImageData(0,0,cv.width,cv.height).data;
+    let n=0; for(let i=3;i<d.length;i+=4) if(d[i]>0) n++; return n; } };
+})();
+window.BeeDemo={ holoPx(){ Holo3D.draw(); return Holo3D.px(); },
+  get busy(){ return !!window.__beeBusy; }, _setBusy(v){ window.__beeBusy=!!v; } };
+</script>
+<script src="shell.js"></script>
+</body>
+</html>

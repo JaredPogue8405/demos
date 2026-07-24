@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MISSION TRACKER — every project, every task, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07080c; --panel:#111420; --panel-2:#161b2a; --line:#232838; --edge:rgba(120,180,255,.28);
+    --holo:#8fd0ff; --holo-bright:#bfe6ff; --holo-deep:#4f92e6; --gold:#f5c518;
+    --good:#3fd08a; --warn:#e0a63c; --idle:#5a6172;
+    --text:#eaf0f8; --muted:#8b93a8; --faint:#5b6172;
+    --font:'Segoe UI',system-ui,sans-serif;
+    --display:'Chakra Petch','Segoe UI',system-ui,sans-serif;
+    --mono:'JetBrains Mono','Consolas',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1100px 620px at 50% -8%,#0e1424,var(--bg) 60%);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:linear-gradient(rgba(120,180,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(120,180,255,.03) 1px,transparent 1px);
+    background-size:46px 46px;-webkit-mask:radial-gradient(circle at 50% 12%,#000,transparent 78%);mask:radial-gradient(circle at 50% 12%,#000,transparent 78%)}
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:1;background:repeating-linear-gradient(transparent 0 3px,rgba(0,0,0,.08) 3px 4px);opacity:.4;mix-blend-mode:multiply}
+  .corner{position:fixed;width:26px;height:26px;z-index:2;pointer-events:none;border:2px solid var(--edge)}
+  .corner.tl{top:14px;left:14px;border-right:0;border-bottom:0}.corner.tr{top:14px;right:14px;border-left:0;border-bottom:0}
+  .corner.bl{bottom:14px;left:14px;border-right:0;border-top:0}.corner.br{bottom:14px;right:14px;border-left:0;border-top:0}
+  :focus-visible{outline:2px solid var(--holo);outline-offset:2px}
+  .wrap{position:relative;z-index:3;max-width:1120px;margin:0 auto;padding:26px 18px 80px}
+
+  header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  h1{font-family:var(--display);font-size:clamp(22px,4vw,34px);font-weight:700;letter-spacing:.12em;
+    background:linear-gradient(180deg,#fff,#bfe0ff 65%,#7ba9d6);-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 24px rgba(143,208,255,.25))}
+  .sub{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+
+  /* hero: 3D core + overall stats */
+  .hero{display:grid;grid-template-columns:300px 1fr;gap:22px;align-items:center;margin-top:22px;
+    background:linear-gradient(180deg,#0f1420,var(--panel));border:1px solid var(--line);border-radius:18px;padding:18px}
+  @media(max-width:760px){.hero{grid-template-columns:1fr}}
+  .corebox{position:relative;aspect-ratio:1;max-width:300px;margin:0 auto;width:100%}
+  .corebox canvas{width:100%;height:100%;display:block}
+  .corepct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+  .corepct .big{font-family:var(--display);font-weight:700;font-size:46px;letter-spacing:.02em;color:#fff;text-shadow:0 0 24px rgba(143,208,255,.5)}
+  .corepct .lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+  .herostats{display:flex;flex-direction:column;gap:12px}
+  .herostats h2{font-family:var(--display);font-size:15px;letter-spacing:.06em}
+  .statrow{display:flex;gap:10px;flex-wrap:wrap}
+  .stat{flex:1;min-width:120px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .stat .n{font-family:var(--mono);font-size:24px;font-weight:600;color:var(--holo-bright)}
+  .stat .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:2px}
+  .stat.done .n{color:var(--good)} .stat.open .n{color:var(--warn)}
+  .heroactions{display:flex;gap:9px;flex-wrap:wrap;margin-top:4px}
+
+  .btn{font-family:var(--display);background:linear-gradient(180deg,var(--holo-bright),var(--holo-deep));color:#06101c;border:none;font-weight:700;letter-spacing:.06em;padding:10px 18px;border-radius:10px;font-size:12.5px;cursor:pointer;
+    box-shadow:0 0 0 1px rgba(255,255,255,.14) inset,0 8px 22px rgba(79,146,230,.24);transition:transform .15s}
+  .btn:hover{transform:translateY(-1px)} .btn:disabled{opacity:.5;cursor:default;transform:none}
+  .btn.ghost{background:var(--panel-2);color:var(--text);border:1px solid var(--line);box-shadow:none}
+  .btn.ghost:hover{border-color:var(--edge)}
+  .btn.sm{padding:7px 13px;font-size:11px}
+
+  .projgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px;margin-top:18px}
+  .proj{background:linear-gradient(180deg,#131826,var(--panel));border:1px solid var(--line);border-radius:15px;padding:15px;transition:border-color .2s,box-shadow .2s;display:flex;flex-direction:column}
+  .proj:hover{border-color:var(--edge);box-shadow:0 12px 30px rgba(0,0,0,.4)}
+  .phead{display:flex;align-items:center;gap:12px}
+  .ring{position:relative;width:52px;height:52px;flex:none}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .rp{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:600}
+  .pmeta{flex:1;min-width:0}
+  .pname{font-family:var(--display);font-weight:700;font-size:14.5px;letter-spacing:.03em;display:flex;align-items:center;gap:8px}
+  .pkind{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+  .pcount{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:3px}
+  .pbar{height:5px;border-radius:99px;background:#0c1018;margin-top:11px;overflow:hidden}
+  .pbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--holo-deep),var(--good));transition:width .35s}
+  .tasks{list-style:none;margin-top:11px;display:flex;flex-direction:column;gap:2px}
+  .task{display:flex;align-items:center;gap:9px;padding:6px 4px;border-radius:8px;transition:background .15s;font-size:13.5px;line-height:1.35}
+  .task:hover{background:rgba(255,255,255,.02)}
+  .task .box{width:17px;height:17px;flex:none;border:1.6px solid var(--idle);border-radius:5px;cursor:pointer;display:grid;place-items:center;transition:.15s}
+  .task .box svg{width:11px;height:11px;stroke:#06101c;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+  .task.done .box{background:var(--good);border-color:var(--good)} .task.done .box svg{opacity:1}
+  .task .txt{flex:1;cursor:pointer;word-break:break-word}
+  .task.done .txt{color:var(--faint);text-decoration:line-through}
+  .task .del{opacity:0;background:none;border:none;color:var(--faint);cursor:pointer;font-size:15px;line-height:1;padding:2px 5px;border-radius:5px;transition:.15s;flex:none}
+  .task:hover .del{opacity:1} .task .del:hover{color:#ff7a7c;background:rgba(255,90,92,.1)}
+  .addtask{display:flex;gap:7px;margin-top:9px}
+  .addtask input{flex:1;background:#0c1018;border:1px solid var(--line);border-radius:9px;color:var(--text);padding:8px 11px;font-family:var(--font);font-size:13px;transition:border-color .2s}
+  .addtask input:focus{outline:none;border-color:var(--edge)}
+  .addtask button{background:var(--panel-2);border:1px solid var(--line);color:var(--holo);border-radius:9px;width:36px;font-size:18px;cursor:pointer;transition:.15s;flex:none}
+  .addtask button:hover{border-color:var(--edge);background:rgba(120,180,255,.08)}
+  .pfoot{margin-top:auto;padding-top:10px;display:flex;justify-content:flex-end}
+  .pfoot button{background:none;border:none;color:var(--faint);font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:color .2s}
+  .pfoot button:hover{color:#ff7a7c}
+
+  .newproj{border:1.5px dashed var(--line);border-radius:15px;padding:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:180px;text-align:center}
+  .newproj input{width:100%;background:#0c1018;border:1px solid var(--line);border-radius:9px;color:var(--text);padding:9px 12px;font-family:var(--font);font-size:13.5px}
+  .newproj input:focus{outline:none;border-color:var(--edge)}
+  .newproj .hint{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+
+  footer{margin-top:28px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--faint);text-transform:uppercase;line-height:1.9}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--panel-2);border:1px solid var(--edge);color:var(--text);
+    font-family:var(--mono);font-size:12px;padding:10px 16px;border-radius:10px;z-index:20;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  /* ===== AGENTS §21 v0.9 — adopted from UI/UX Pro Max =====
+     P2 Touch & Interaction is CRITICAL: every target ≥44×44 with ≥8px spacing.
+     Hit areas are expanded with a centered pseudo-element so the VISUAL size is
+     unchanged — the tap area grows, the design doesn't. */
+  html{touch-action:manipulation}                       /* kills the 300ms mobile tap delay */
+  .task .box,.task .del{position:relative}
+  .task .box::after,.task .del::after{content:'';position:absolute;left:50%;top:50%;
+    transform:translate(-50%,-50%);width:44px;height:44px}
+  .task{gap:11px}                                       /* ≥8px between adjacent targets */
+  .btn,.addtask button,.addtask input,.newproj input,.newproj button{min-height:44px}
+  .addtask button{min-width:44px}
+  .pfoot{gap:8px}
+  .pfoot button{position:relative;padding:6px 4px}
+  .pfoot button::after{content:'';position:absolute;inset:-14px -6px}   /* expand tap area only */
+  /* P6 Typography: tabular figures so live numbers never shift layout */
+  .stat .n,.tile .v,.pcount,.rp,.dcount,.clockbox{font-variant-numeric:tabular-nums}
+  /* P5 Layout: a defined z-index scale instead of ad-hoc stacking */
+  /* 0 backdrop · 1 grid/scanlines · 2 corners · 3 content · 20 toast */
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media(max-width:620px){.corner{display:none}}
+</style>
+</head>
+<body>
+<div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+<div class="wrap">
+  <header>
+    <h1>MISSION TRACKER</h1>
+    <span class="sub">Every project · every task · live percentages · saved on your device</span>
+  </header>
+
+  <div class="hero">
+    <div class="corebox"><canvas id="core"></canvas>
+      <div class="corepct"><div class="big" id="corePct">0%</div><div class="lbl">overall complete</div></div>
+    </div>
+    <div class="herostats">
+      <h2 id="heroTitle">Loading…</h2>
+      <div class="statrow">
+        <div class="stat"><div class="n" id="sProj">0</div><div class="k">projects</div></div>
+        <div class="stat done"><div class="n" id="sDone">0</div><div class="k">tasks done</div></div>
+        <div class="stat open"><div class="n" id="sOpen">0</div><div class="k">tasks open</div></div>
+        <div class="stat"><div class="n" id="sPct">0%</div><div class="k">weighted</div></div>
+      </div>
+      <div class="heroactions">
+        <button class="btn ghost sm" onclick="Tracker.expandAll(true)">Expand all</button>
+        <button class="btn ghost sm" onclick="Tracker.expandAll(false)">Collapse tasks</button>
+        <button class="btn ghost sm" onclick="Tracker.reset()">Reset to defaults</button>
+        <button class="btn ghost sm" onclick="Tracker.exportJSON()">Export JSON</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="projgrid" id="grid"></div>
+
+  <footer>
+    Percentages are live: adding an open task lowers a project's % (further from 100), completing tasks raises it ·
+    Add your own tasks and projects — everything saves to this browser (localStorage), no account, no server ·
+    Overall = every completed task ÷ every task across all projects
+  </footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* ================== data model ================== */
+const KEY='mission.tracker.v1';
+// Seeded from the repo's real state (2026-07-20). Everything here is editable + persists.
+const SEED=[
+  {id:'bee',name:'Bee (JARVIS agent)',kind:'flagship',open:true,tasks:[
+    ['Chat demo (streaming + CLARIFY)',1],['Multi-agent Squad',1],['Voice (ElevenLabs + local)',1],
+    ['File-backed memory (~/.bee)',1],['Desktop app runs on hardware',1],['Desktop wired to CLI brain',1],
+    ['HUD redesign (de-cartoon)',1],['BEE SUPER combined build',1],['Wake-word ("Hey Bee")',0],['Package w/ electron-builder',0]]},
+  {id:'allergy',name:'Allergy Scanner',kind:'product',open:true,tasks:[
+    ['Fail-safe verdict engine',1],['60/60 tests pass',1],['Web scanner demo',1],['Expo mobile scaffold',1],
+    ['Run on a real iPhone',0],['Label OCR',0],['Multi-API provider chain',0],['OpenFDA recall alerts',0]]},
+  {id:'sellsmith',name:'SellSmith',kind:'saas',open:false,tasks:[
+    ['Marketplace UI',1],['AI copy generator',1],['XSS fix',1],['Futurist design pass',1]]},
+  {id:'hive',name:'Hive Royale',kind:'game',open:false,tasks:[
+    ['Real-time lane battler',1],['Phone-first',1],['Balance + smarter bot',1],['Card-art render fix',1],['Hex-HUD pass',1]]},
+  {id:'snork',name:'SNORK',kind:'game',open:false,tasks:[
+    ['Pig-snake gameplay',1],['Direction-guard fix',1],['Night-arcade shell',1]]},
+  {id:'urban',name:'Urban Living',kind:'concept',open:false,tasks:[
+    ['Eco-home concept page',1],['Live day simulation',1],['30-day invariant test',1]]},
+  {id:'showroom',name:'Showroom 3D',kind:'gallery',open:false,tasks:[
+    ['Wireframe 3D engine',1],['11 hologram models',1],['Cursor tilt UX',1]]},
+  {id:'fairway',name:'Fairway Radar',kind:'tool',open:true,tasks:[
+    ['OSM course search',1],['Geolocation + search-anywhere',1],['Radar view',1],['Google/Apple/Waze deep links',1],['Hidden-gem heuristic',1],['Tee-time API layer',0]]},
+  {id:'ops',name:'Bee OPS',kind:'tool',open:false,tasks:[
+    ['Live Ollama link',1],['Model inventory',1],['Surface health + latency',1]]},
+  {id:'salas-car',name:"Salas' Car",kind:'IRL',open:true,tasks:[
+    ['AC compressor',0],['Brake fluid',0],['Coolant',0],['Alternator install',0]]},
+  {id:'3d-frontend',name:'3D interactive front-end',kind:'design',open:true,tasks:[
+    ['Showroom — interactive orbit + focus viewer (all 13)',1],['Mission Tracker — 3D holo core',1],
+    ['Fairway — radar view',1],['Bee surfaces — 3D HUD core',1],
+    ['Allergy — kept 2D (medical: calm > gimmick, §21)',1],
+    ['Urban Living — kept 2D (minimal; SVG IS the live sim)',1],
+    ['SellSmith — kept 2D (shopping UX)',1],
+    ['Games — native drawn art (decided)',1]]},
+];
+function seed(){ return SEED.map(p=>({id:p.id,name:p.name,kind:p.kind,open:p.open,
+  tasks:p.tasks.map((t,i)=>({id:p.id+'-'+i+'-'+Math.random().toString(36).slice(2,6),text:t[0],done:!!t[1]}))})); }
+
+let data;
+function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s&&Array.isArray(s.projects)&&s.projects.length) return s.projects; }catch{} return seed(); }
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify({projects:data,savedAt:Date.now()})); }catch{} }
+data=load();
+
+/* ================== math ================== */
+const pctOf=p=>p.tasks.length?Math.round(p.tasks.filter(t=>t.done).length/p.tasks.length*100):0;
+function totals(){ let done=0,all=0; data.forEach(p=>{ done+=p.tasks.filter(t=>t.done).length; all+=p.tasks.length; });
+  return {done,all,open:all-done,pct:all?Math.round(done/all*100):0,projects:data.length}; }
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const uid=p=>p+'-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+
+/* ================== render ================== */
+function ring(pct,color){
+  const r=22,C=2*Math.PI*r,off=C*(1-pct/100);
+  return `<div class="ring"><svg width="52" height="52" viewBox="0 0 52 52">
+    <circle cx="26" cy="26" r="${r}" fill="none" stroke="#0c1018" stroke-width="5"/>
+    <circle cx="26" cy="26" r="${r}" fill="none" stroke="${color}" stroke-width="5" stroke-linecap="round"
+      stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>
+  </svg><div class="rp" style="color:${color}">${pct}</div></div>`;
+}
+function taskRow(p,t){
+  return `<li class="task ${t.done?'done':''}" data-t="${t.id}">
+    <span class="box" role="checkbox" aria-checked="${t.done}" tabindex="0" data-act="toggle"><svg viewBox="0 0 24 24"><path d="M4 12l5 5 11-12"/></svg></span>
+    <span class="txt" data-act="toggle">${esc(t.text)}</span>
+    <button class="del" data-act="del" aria-label="Delete task" title="Delete">×</button>
+  </li>`;
+}
+function projCard(p){
+  const pct=pctOf(p), color=pct===100?'#3fd08a':pct>0?'#8fd0ff':'#5a6172';
+  const done=p.tasks.filter(t=>t.done).length;
+  return `<div class="proj" data-p="${p.id}">
+    <div class="phead">
+      ${ring(pct,color)}
+      <div class="pmeta">
+        <div class="pname">${esc(p.name)} <span class="pkind">${esc(p.kind)}</span></div>
+        <div class="pcount">${done}/${p.tasks.length} done · ${pct}%</div>
+      </div>
+    </div>
+    <div class="pbar"><i style="width:${pct}%"></i></div>
+    <ul class="tasks" ${p.open?'':'style="display:none"'}>${p.tasks.map(t=>taskRow(p,t)).join('')||'<li class="pcount" style="padding:6px 4px">No tasks yet — add one below.</li>'}</ul>
+    <div class="addtask" ${p.open?'':'style="display:none"'}>
+      <input type="text" placeholder="Add a task to ${esc(p.name)}…" data-act="addinput" aria-label="New task for ${esc(p.name)}">
+      <button data-act="add" title="Add task">+</button>
+    </div>
+    <div class="pfoot">
+      <button data-act="toggleopen">${p.open?'▲ hide tasks':'▼ show '+p.tasks.length+' tasks'}</button>
+      <button data-act="delproj" style="margin-left:14px">delete project</button>
+    </div>
+  </div>`;
+}
+function renderHero(){
+  const t=totals();
+  document.getElementById('corePct').textContent=t.pct+'%';
+  document.getElementById('sProj').textContent=t.projects;
+  document.getElementById('sDone').textContent=t.done;
+  document.getElementById('sOpen').textContent=t.open;
+  document.getElementById('sPct').textContent=t.pct+'%';
+  document.getElementById('heroTitle').textContent=
+    t.open===0 ? 'All clear — every task complete.' :
+    `${t.open} task${t.open===1?'':'s'} open across ${t.projects} project${t.projects===1?'':'s'}.`;
+  window.__coreFill=t.pct/100;
+}
+function render(){
+  const grid=document.getElementById('grid');
+  grid.innerHTML=data.map(projCard).join('')+`
+    <div class="newproj">
+      <div class="hint">＋ New project</div>
+      <input type="text" id="newProjName" placeholder="Project name (e.g. Garage shelves)" aria-label="New project name">
+      <button class="btn sm" onclick="Tracker.addProject()">Create project</button>
+    </div>`;
+  renderHero();
+  save();
+}
+
+/* ================== interactions (event delegation) ================== */
+document.getElementById('grid').addEventListener('click',e=>{
+  const act=e.target.closest('[data-act]')?.dataset.act;
+  if(!act) return;
+  const pEl=e.target.closest('.proj'); const pid=pEl?.dataset.p;
+  const p=data.find(x=>x.id===pid);
+  if(act==='toggle'){ const tid=e.target.closest('.task').dataset.t; const t=p.tasks.find(x=>x.id===tid); t.done=!t.done; render(); }
+  else if(act==='del'){ const tid=e.target.closest('.task').dataset.t; p.tasks=p.tasks.filter(x=>x.id!==tid); render(); }
+  else if(act==='add'){ addTaskFrom(pEl,p); }
+  else if(act==='toggleopen'){ p.open=!p.open; render(); }
+  else if(act==='delproj'){ if(confirm('Delete "'+p.name+'" and all its tasks?')){ data=data.filter(x=>x.id!==pid); render(); toast('Project deleted'); } }
+});
+document.getElementById('grid').addEventListener('keydown',e=>{
+  if(e.target.dataset.act==='addinput' && e.key==='Enter'){ addTaskFrom(e.target.closest('.proj'), data.find(x=>x.id===e.target.closest('.proj').dataset.p)); }
+  if(e.target.dataset.act==='toggle' && (e.key==='Enter'||e.key===' ')){ e.preventDefault(); e.target.closest('[data-act]').click(); }
+});
+function addTaskFrom(pEl,p){
+  const input=pEl.querySelector('[data-act="addinput"]'); const text=input.value.trim(); if(!text) return;
+  p.tasks.push({id:uid(p.id),text,done:false}); p.open=true; render();
+  // restore focus to the same project's input for fast multi-add
+  const again=document.querySelector(`.proj[data-p="${p.id}"] [data-act="addinput"]`); if(again) again.focus();
+}
+
+/* ================== public API / test hook ================== */
+let toastT;
+function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),1800); }
+window.Tracker={
+  get data(){ return data; },
+  totals,
+  addProject(name){
+    const nm=(name||document.getElementById('newProjName')?.value||'').trim(); if(!nm) return null;
+    const p={id:uid('proj'),name:nm,kind:'custom',open:true,tasks:[]}; data.push(p); render(); toast('Project added: '+nm); return p.id;
+  },
+  addTask(pid,text){ const p=data.find(x=>x.id===pid); if(!p||!text) return false; p.tasks.push({id:uid(pid),text,done:false}); render(); return true; },
+  toggle(pid,tid){ const p=data.find(x=>x.id===pid); const t=p?.tasks.find(x=>x.id===tid); if(!t) return false; t.done=!t.done; render(); return t.done; },
+  expandAll(open){ data.forEach(p=>p.open=open); render(); },
+  reset(){ if(confirm('Reset the tracker to the seeded projects? Your custom edits will be lost.')){ data=seed(); render(); toast('Reset to defaults'); } },
+  exportJSON(){ const blob=new Blob([JSON.stringify({projects:data},null,2)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='mission-tracker.json'; a.click(); URL.revokeObjectURL(a.href); toast('Exported JSON'); },
+};
+
+/* ================== 3D holographic core (fills with completion) ================== */
+const cv=document.getElementById('core'); const cx=cv.getContext('2d');
+window.__coreFill=totals().pct/100;
+const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches;
+// icosphere-ish wireframe (subdivided octahedron vertices) for the holo core
+const V=[[0,1,0],[0,-1,0],[1,0,0],[-1,0,0],[0,0,1],[0,0,-1],
+  [.7,.7,0],[-.7,.7,0],[.7,-.7,0],[-.7,-.7,0],[.7,0,.7],[-.7,0,.7],[.7,0,-.7],[-.7,0,-.7],[0,.7,.7],[0,.7,-.7],[0,-.7,.7],[0,-.7,-.7]];
+const E=[[0,6],[0,7],[0,14],[0,15],[1,8],[1,9],[1,16],[1,17],[2,6],[2,8],[2,10],[2,12],[3,7],[3,9],[3,11],[3,13],
+  [4,10],[4,11],[4,14],[4,16],[5,12],[5,13],[5,15],[5,17],[6,14],[6,15],[7,14],[7,15],[8,16],[8,17],[9,16],[9,17],
+  [10,14],[10,16],[11,14],[11,16],[12,15],[12,17],[13,15],[13,17]];
+let rot=0, shownFill=0;
+function drawCore(dt){
+  const DPR=Math.min(devicePixelRatio||1,2), r=cv.getBoundingClientRect(); if(!r.width) return;
+  if(cv.width!==r.width*DPR){ cv.width=r.width*DPR; cv.height=r.height*DPR; }
+  const W=cv.width,H=cv.height,C=W/2,CY=H/2,S=Math.min(W,H)*0.34;
+  cx.clearRect(0,0,W,H);
+  if(!REDUCED) rot+=dt*0.4;
+  shownFill+=(window.__coreFill-shownFill)*Math.min(1,dt*3||1);
+  const cy2=Math.cos(rot),sy=Math.sin(rot),cxx=Math.cos(0.4),sxx=Math.sin(0.4);
+  const P=V.map(([x,y,z])=>{ let X=x*cy2+z*sy,Z=-x*sy+z*cy2; let Y=y*cxx-Z*sxx,Z2=y*sxx+Z*cxx;
+    const d=1/(1+Z2*0.3); return [C+X*S*d,CY+Y*S*d,Z2]; });
+  // completion "fill" — a rising glowing disc inside the sphere
+  const fillY=CY+S-(2*S*shownFill);
+  let g=cx.createLinearGradient(0,fillY,0,CY+S); g.addColorStop(0,'rgba(63,208,138,.28)'); g.addColorStop(1,'rgba(79,146,230,.05)');
+  cx.fillStyle=g; cx.beginPath(); cx.arc(C,CY,S*0.98,0,6.29); cx.save(); cx.clip();
+  cx.fillRect(0,fillY,W,H); cx.restore();
+  // wireframe
+  for(const [a,b] of E){ const za=(P[a][2]+P[b][2])/2;
+    cx.strokeStyle= shownFill>0.999?'#7ee2a8':'#8fd0ff'; cx.globalAlpha=Math.max(0.16,0.85-(za+1.1)*0.3); cx.lineWidth=(za<0?1.7:1)*DPR;
+    cx.beginPath(); cx.moveTo(P[a][0],P[a][1]); cx.lineTo(P[b][0],P[b][1]); cx.stroke(); }
+  cx.globalAlpha=0.9;
+  for(const [x,y,z] of P){ cx.fillStyle=z<0?'#bfe6ff':'#4f92e6'; cx.beginPath(); cx.arc(x,y,(z<0?2.4:1.5)*DPR,0,6.29); cx.fill(); }
+  cx.globalAlpha=1;
+}
+let last=0;
+function loop(ts){ const dt=Math.min(0.05,(ts-last)/1000||0.016); last=ts; drawCore(dt); if(!REDUCED) requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+if(REDUCED){ requestAnimationFrame(()=>drawCore(0.016)); }
+
+render();
+</script>
+</body>
+</html>

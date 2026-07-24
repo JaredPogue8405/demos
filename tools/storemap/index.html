@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Store Guide — find anything fast</title>
+<meta name="description" content="Interactive store map — search a department, see where it is, get walking directions from the front door." />
+<meta name="theme-color" content="#faf6ef" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='26' height='26' rx='8' fill='%232e5e4e'/%3E%3Ccircle cx='16' cy='13' r='5' fill='none' stroke='%23f7e9c8' stroke-width='2.6'/%3E%3Cpath d='M16 18v8' stroke='%23f7e9c8' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     STORE GUIDE — its own identity (warm boutique retail), NOT the
+     Fusion dark language: a shopper's tool for Jared's mother's store.
+     Two faces in one file:
+       ·  default   -> the phone guide the QR code opens
+       ·  ?board    -> the printable lobby board with the QR on it
+     EVERYTHING store-specific lives in the STORE object below —
+     edit that, never the rendering.
+     ============================================================ */
+  :root{
+    --paper:#faf6ef; --card:#ffffff; --ink:#26332c; --muted:#6b7a70; --faint:#9aa79d;
+    --green:#2e5e4e; --green-soft:#eaf2ec; --terra:#c96f4a; --terra-soft:#f9ece4;
+    --gold:#d9a441; --line:#e7dfd0;
+    --display:'Fraunces',Georgia,serif;
+    --font:'Inter',-apple-system,system-ui,sans-serif;
+    --ease:cubic-bezier(.16,1,.3,1);
+    --shadow:0 18px 44px -22px rgba(38,51,44,.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{touch-action:manipulation}
+  body{background:var(--paper);color:var(--ink);font-family:var(--font);min-height:100dvh;
+    -webkit-font-smoothing:antialiased}
+  :focus-visible{outline:2.5px solid var(--green);outline-offset:2px;border-radius:6px}
+
+  .wrap{max-width:1060px;margin:0 auto;padding:0 16px calc(28px + env(safe-area-inset-bottom))}
+  header{padding:22px 0 6px;text-align:center}
+  .kicker{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--terra);font-weight:600}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(28px,6vw,44px);letter-spacing:-.01em;margin-top:6px}
+  .tag{color:var(--muted);font-weight:300;font-size:14.5px;margin-top:6px}
+
+  .search{position:sticky;top:10px;z-index:40;margin:16px auto 0;max-width:520px;display:flex;align-items:center;gap:10px;
+    background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:4px 8px 4px 18px;box-shadow:var(--shadow)}
+  .search svg{width:18px;height:18px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;flex:none}
+  .search input{flex:1;border:none;background:none;font:inherit;font-size:16px;min-height:44px;color:var(--ink)}
+  .search input::placeholder{color:var(--faint)}
+  .search input:focus{outline:none}
+  .search .clear{border:none;background:var(--green-soft);color:var(--green);border-radius:999px;
+    min-width:44px;min-height:44px;display:none;place-items:center;cursor:pointer;font-size:0}
+  .search .clear svg{stroke:var(--green)}
+  .search .clear.show{display:grid}
+
+  .cols{display:grid;grid-template-columns:1.25fr 1fr;gap:18px;margin-top:18px;align-items:start}
+  @media(max-width:800px){.cols{grid-template-columns:1fr}}
+
+  .mapcard{background:var(--card);border:1.5px solid var(--line);border-radius:22px;padding:14px;box-shadow:var(--shadow)}
+  .mapcard svg{width:100%;height:auto;display:block;border-radius:12px}
+  .maplegend{display:flex;gap:14px;flex-wrap:wrap;padding:10px 6px 2px;font-size:11.5px;color:var(--muted)}
+  .maplegend span{display:inline-flex;align-items:center;gap:6px}
+  .maplegend i{width:10px;height:10px;border-radius:3px;flex:none}
+
+  /* the floor plan */
+  .sec-shape{stroke:rgba(38,51,44,.18);stroke-width:1.5;cursor:pointer;transition:filter .3s var(--ease)}
+  .sec-shape:hover{filter:brightness(.96)}
+  .sec-label{font-family:var(--font);font-weight:600;pointer-events:none;fill:#3a4a40}
+  .sec-aisle{font-weight:500;pointer-events:none;fill:rgba(58,74,64,.55)}
+  .sel .sec-shape{stroke:var(--green);stroke-width:3;animation:pulse 1.6s var(--ease) infinite}
+  @keyframes pulse{50%{filter:brightness(1.08) saturate(1.15)}}
+  .fixture{fill:#efe9dc;stroke:rgba(38,51,44,.12)}
+  .walls{fill:none;stroke:#26332c;stroke-width:3;stroke-linejoin:round}
+
+  .list{display:flex;flex-direction:column;gap:8px}
+  .dept{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;cursor:pointer;
+    background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:11px 14px;min-height:56px;
+    transition:transform .35s var(--ease),border-color .3s var(--ease),box-shadow .3s var(--ease)}
+  .dept:hover{transform:translateY(-1.5px);box-shadow:var(--shadow)}
+  .dept[aria-pressed="true"]{border-color:var(--green);background:var(--green-soft)}
+  .dept .dot{width:34px;height:34px;border-radius:11px;flex:none;display:grid;place-items:center}
+  .dept .dot svg{width:17px;height:17px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .dept b{font-weight:600;font-size:14.5px;display:block}
+  .dept small{color:var(--muted);font-weight:300;font-size:12px;display:block;margin-top:1px}
+  .dept .aisle{margin-left:auto;flex:none;font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--green);
+    background:var(--green-soft);border-radius:999px;padding:5px 10px}
+  .empty{border:1.5px dashed var(--line);border-radius:16px;padding:26px;text-align:center;color:var(--faint);font-size:13.5px;display:none}
+
+  .hintbar{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translate(-50%,140%);
+    width:min(94vw,560px);z-index:50;background:var(--ink);color:#f4efe4;border-radius:18px;padding:14px 18px;
+    box-shadow:0 24px 50px -16px rgba(38,51,44,.6);display:flex;gap:12px;align-items:center;
+    transition:transform .55s var(--ease)}
+  .hintbar.show{transform:translate(-50%,0)}
+  .hintbar .walk{width:34px;height:34px;flex:none;border-radius:50%;background:var(--terra);display:grid;place-items:center}
+  .hintbar .walk svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .hintbar b{font-weight:600;font-size:14px;display:block}
+  .hintbar p{font-weight:300;font-size:12.5px;opacity:.85;margin-top:2px;line-height:1.45}
+  .hintbar .x{margin-left:auto;flex:none;border:none;background:rgba(255,255,255,.12);color:#f4efe4;border-radius:50%;
+    min-width:44px;min-height:44px;cursor:pointer;font-size:0;display:grid;place-items:center}
+  .hintbar .x svg{width:15px;height:15px;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+
+  footer{margin-top:26px;text-align:center;color:var(--faint);font-size:11.5px;font-weight:300;line-height:1.8}
+  footer a{color:var(--muted)}
+
+  /* ---------- ?board — the printable lobby directory ---------- */
+  .board{display:none}
+  body.boardmode .guide{display:none}
+  body.boardmode .board{display:block}
+  .board .bwrap{max-width:1080px;margin:0 auto;padding:26px 20px}
+  .board .bhead{text-align:center;padding-bottom:8px}
+  .board h1{font-size:clamp(34px,5vw,58px)}
+  .board .bcols{display:grid;grid-template-columns:2fr 1fr;gap:22px;margin-top:18px;align-items:start}
+  @media(max-width:760px){.board .bcols{grid-template-columns:1fr}}
+  .board .legendgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:14px}
+  .board .lrow{display:flex;align-items:center;gap:9px;font-size:13px;background:var(--card);
+    border:1.5px solid var(--line);border-radius:12px;padding:8px 11px}
+  .board .lrow i{width:13px;height:13px;border-radius:4px;flex:none}
+  .board .lrow .a{margin-left:auto;font-weight:600;color:var(--green);font-size:11.5px}
+  .qrcard{background:var(--card);border:1.5px solid var(--line);border-radius:22px;padding:20px;text-align:center;box-shadow:var(--shadow)}
+  .qrcard h3{font-family:var(--display);font-weight:600;font-size:20px}
+  .qrcard p{color:var(--muted);font-weight:300;font-size:13px;margin-top:6px;line-height:1.5}
+  #qr{display:grid;place-items:center;margin:16px auto 6px;min-height:180px}
+  #qr img,#qr canvas{border:10px solid #fff;border-radius:10px;box-shadow:0 10px 26px -14px rgba(38,51,44,.4)}
+  .qrurl{margin-top:12px;display:flex;gap:8px}
+  .qrurl input{flex:1;font:inherit;font-size:12.5px;min-height:44px;border:1.5px solid var(--line);border-radius:12px;
+    padding:0 12px;color:var(--ink);background:var(--paper)}
+  .bactions{display:flex;gap:10px;justify-content:center;margin-top:18px}
+  .btn{font:inherit;font-size:14px;font-weight:600;min-height:48px;padding:0 26px;border-radius:999px;cursor:pointer;
+    border:none;background:var(--green);color:#f4efe4;display:inline-flex;align-items:center;gap:9px;
+    box-shadow:0 14px 30px -12px rgba(46,94,78,.55);transition:transform .35s var(--ease)}
+  .btn:hover{transform:translateY(-2px)}
+  .btn.ghost{background:var(--card);color:var(--ink);border:1.5px solid var(--line);box-shadow:none}
+  .btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  @media print{
+    body{background:#fff}
+    .search,.hintbar,.bactions,.qrurl,footer .noprint{display:none!important}
+    .mapcard,.qrcard,.lrow{box-shadow:none;border-color:#ccc}
+    .board .bwrap{padding:0}
+    @page{size:landscape;margin:12mm}
+  }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}
+    .hintbar{transition:none}}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════════
+     EDIT ME — everything about the store lives here.
+     Coordinates are on a 1000 x 620 grid, [x, y, width, height].
+     ════════════════════════════════════════════════════════════════ -->
+<script>
+const STORE={
+  name:"Pogue's",                        // ← her store's name
+  tagline:"Family-run since forever — if we don't have it, we'll find it.",
+  mapNote:"Aisle numbers run left to right from the front door.",
+  sections:[
+    // id        name                aisle   colour     hint (walking directions from the FRONT DOOR)
+    {id:'apparel', name:'Apparel & Shoes',   aisle:'1–3',  color:'#dcebe1', icon:'shirt',
+      blurb:'Clothing, boots, seasonal wear', hint:'From the front door: hard left, along the front windows.',
+      rect:[40,40,300,180]},
+    {id:'home',    name:'Home & Kitchen',    aisle:'4–6',  color:'#f3e6d8', icon:'pot',
+      blurb:'Cookware, dishes, small appliances', hint:'Straight in from the door, first big section on the left.',
+      rect:[40,240,300,180]},
+    {id:'craft',   name:'Crafts & Fabric',   aisle:'7–8',  color:'#e9e3f2', icon:'scissors',
+      blurb:'Fabric, yarn, sewing, art supplies', hint:'Center of the store — look for the tall thread wall.',
+      rect:[360,40,280,180]},
+    {id:'garden',  name:'Lawn & Garden',     aisle:'9–10', color:'#e2eed9', icon:'leaf',
+      blurb:'Plants, seed, tools, outdoor', hint:'Back right corner — follow the main aisle all the way back.',
+      rect:[660,40,300,180]},
+    {id:'hardware',name:'Hardware & Paint',  aisle:'11–12',color:'#e8e8e2', icon:'hammer',
+      blurb:'Tools, fasteners, paint mixing', hint:'Back wall, behind Crafts.',
+      rect:[360,240,280,180]},
+    {id:'toys',    name:'Toys & Candy',      aisle:'13',   color:'#fbe9e2', icon:'kite',
+      blurb:'The kids drag you here anyway', hint:'Right-hand wall, halfway back — you will hear it.',
+      rect:[660,240,300,180]},
+    {id:'seasonal',name:'Seasonal',          aisle:'14',   color:'#f7ecd7', icon:'sun',
+      blurb:'Holiday, back-to-school, rotating', hint:'Front right, across from the registers.',
+      rect:[660,440,300,140]},
+    {id:'checkout',name:'Checkout',          aisle:'',     color:'#f0ddd2', icon:'bag',
+      blurb:'Registers & customer service', hint:'Front and center — you cannot miss it.',
+      rect:[360,460,280,120]},
+    {id:'fitting', name:'Fitting Rooms',     aisle:'',     color:'#e5e9ee', icon:'door',
+      blurb:'Next to Apparel', hint:'Front left corner, past Apparel.',
+      rect:[40,460,140,120]},
+    {id:'restroom',name:'Restrooms',         aisle:'',     color:'#e5e9ee', icon:'wc',
+      blurb:'Customer restrooms', hint:'Front left, beside the fitting rooms.',
+      rect:[200,460,140,120]},
+  ],
+  entrance:{x:500,y:614,label:'FRONT DOOR'},
+};
+</script>
+
+<div class="guide">
+  <div class="wrap">
+    <header>
+      <div class="kicker">Store guide</div>
+      <h1 id="storeName"></h1>
+      <p class="tag" id="storeTag"></p>
+    </header>
+
+    <div class="search" role="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
+      <input id="q" type="search" placeholder="What are you looking for?" aria-label="Search departments" autocomplete="off" />
+      <button class="clear" id="clearBtn" aria-label="Clear search"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+
+    <div class="cols">
+      <div class="mapcard">
+        <div id="mapGuide"></div>
+        <div class="maplegend" id="legendGuide"></div>
+      </div>
+      <div>
+        <div class="list" id="deptList" role="listbox" aria-label="Departments"></div>
+        <div class="empty" id="noResults">Nothing matches that — try "fabric", "tools", or "restroom".</div>
+      </div>
+    </div>
+
+    <footer>
+      <span id="footNote"></span><br>
+      <span class="noprint">Looking at the lobby board? <a href="?board">Printable board version</a></span>
+    </footer>
+  </div>
+</div>
+
+<!-- the hint toast -->
+<div class="hintbar" id="hintbar" role="status" aria-live="polite">
+  <span class="walk"><svg viewBox="0 0 24 24"><circle cx="13" cy="4.5" r="2"/><path d="M10 22l2.5-6L10 13l1-5.5L15 9l3 2M10 13l-3 2M11 7.5L8 9l-1 4"/></svg></span>
+  <span style="min-width:0"><b id="hintName">—</b><p id="hintText">—</p></span>
+  <button class="x" id="hintClose" aria-label="Close directions"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+</div>
+
+<!-- ════════ ?board — the lobby directory with the QR ════════ -->
+<div class="board">
+  <div class="bwrap">
+    <div class="bhead">
+      <div class="kicker">Welcome in — here's the lay of the land</div>
+      <h1 id="storeNameB"></h1>
+    </div>
+    <div class="bcols">
+      <div class="mapcard">
+        <div id="mapBoard"></div>
+        <div class="legendgrid" id="legendBoard"></div>
+      </div>
+      <div class="qrcard">
+        <h3>Take the map with you</h3>
+        <p>Scan with your phone camera — search any department and get walking directions from the front door.</p>
+        <div id="qr" aria-label="QR code for the mobile store map"></div>
+        <p id="qrStatus" style="font-size:11.5px"></p>
+        <div class="qrurl noprint">
+          <input id="qrTarget" aria-label="Web address the QR code opens" />
+          <button class="btn ghost" id="qrRemake" style="min-height:44px;padding:0 16px">Update</button>
+        </div>
+      </div>
+    </div>
+    <div class="bactions noprint">
+      <button class="btn" id="printBtn"><svg viewBox="0 0 24 24"><path d="M7 8V3h10v5M7 17H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-3"/><rect x="7" y="14" width="10" height="7" rx="1"/></svg> Print the board</button>
+      <a class="btn ghost" href="./" style="text-decoration:none">Phone view</a>
+    </div>
+  </div>
+</div>
+
+<!-- QR generator: davidshimjs/qrcodejs (MIT) via CDN. §21.0 override permits CDN
+     assets; if it can't load (offline), the board says so instead of failing quietly. -->
+<script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
+<script>
+'use strict';
+const ICONS={
+  shirt:'<path d="M8 4l4 2 4-2 4 4-2.5 2.5L16 9v11H8V9l-1.5 1.5L4 8z"/>',
+  pot:'<path d="M5 11h14v6a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3zM3 11h18M9 7c0-2 6-2 6 0"/>',
+  scissors:'<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 7.5L20 18M8 16.5L20 6"/>',
+  leaf:'<path d="M6 20C6 12 10 6 19 5c-1 8-5 13-13 15z"/><path d="M6 20c3-4 6-7 9-9"/>',
+  hammer:'<path d="M13 6l5 5-8.5 8.5a2 2 0 0 1-3-3zM11 8l-2-2 3-3 4 2.5"/>',
+  kite:'<path d="M12 3l7 7-7 7-7-7z"/><path d="M12 17c0 2-1 3-3 4"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/>',
+  bag:'<path d="M6 8h12l-1 12H7zM9 8a3 3 0 0 1 6 0"/>',
+  door:'<rect x="6" y="3" width="12" height="18" rx="1"/><circle cx="14.5" cy="12" r="1"/>',
+  wc:'<circle cx="9" cy="5" r="2"/><path d="M9 8v5l-2 7M9 13l2 7M9 8c-2 0-3 1.5-3 3"/><circle cx="17" cy="5" r="2"/><path d="M17 8v13M17 8c2 0 3 1.5 3 3v3h-3"/>',
+};
+const dark=c=>{ // section colour -> a deeper chip colour for icons
+  const n=parseInt(c.slice(1),16), f=x=>Math.max(0,Math.round(x*.55));
+  return `rgb(${f(n>>16&255)},${f(n>>8&255)},${f(n&255)})`; };
+
+const board=new URLSearchParams(location.search).has('board');
+if(board) document.body.classList.add('boardmode');
+
+document.getElementById('storeName').textContent=STORE.name;
+document.getElementById('storeNameB').textContent=STORE.name;
+document.getElementById('storeTag').textContent=STORE.tagline;
+document.getElementById('footNote').textContent=STORE.mapNote;
+
+/* ---------- floor plan (SVG from data — same renderer both views) ---------- */
+function renderMap(el,interactive){
+  const S=STORE.sections.map(s=>{
+    const [x,y,w,h]=s.rect;
+    return `<g class="sec" data-id="${s.id}">
+      <rect class="sec-shape" x="${x}" y="${y}" width="${w}" height="${h}" rx="14" fill="${s.color}"
+        role="${interactive?'button':'img'}" tabindex="${interactive?0:-1}"
+        aria-label="${s.name}${s.aisle?', aisles '+s.aisle:''}"></rect>
+      <text class="sec-label" x="${x+16}" y="${y+30}" font-size="17">${s.name}</text>
+      ${s.aisle?`<text class="sec-aisle" x="${x+16}" y="${y+52}" font-size="13">Aisle ${s.aisle}</text>`:''}
+    </g>`;}).join('');
+  const e=STORE.entrance;
+  el.innerHTML=`<svg viewBox="0 0 1000 620" role="group" aria-label="Store floor plan">
+    <rect x="8" y="8" width="984" height="604" rx="20" fill="#fbf8f2"/>
+    <path class="walls" d="M8 28 Q8 8 28 8 H972 Q992 8 992 28 V592 Q992 612 972 612 H612 M388 612 H28 Q8 612 8 592 Z"/>
+    ${S}
+    <g aria-label="${e.label}">
+      <rect x="${e.x-112}" y="${e.y-24}" width="224" height="34" rx="10" fill="#26332c"/>
+      <text x="${e.x}" y="${e.y-1}" font-size="15" font-weight="600" fill="#f4efe4" text-anchor="middle" style="letter-spacing:.18em">⌂ ${e.label}</text>
+    </g>
+  </svg>`;
+}
+renderMap(document.getElementById(board?'mapBoard':'mapGuide'),!board);
+
+/* ---------- legends ---------- */
+if(board){
+  document.getElementById('legendBoard').innerHTML=STORE.sections.map(s=>
+    `<div class="lrow"><i style="background:${s.color};border:1px solid rgba(38,51,44,.2)"></i>${s.name}
+     ${s.aisle?`<span class="a">A${s.aisle}</span>`:''}</div>`).join('');
+}else{
+  document.getElementById('legendGuide').innerHTML=
+    STORE.sections.slice(0,6).map(s=>`<span><i style="background:${s.color};border:1px solid rgba(38,51,44,.2)"></i>${s.name}</span>`).join('');
+}
+
+/* ---------- guide view: directory + search + hints ---------- */
+let selected=null;
+if(!board){
+  const list=document.getElementById('deptList');
+  list.innerHTML=STORE.sections.map(s=>`
+    <button class="dept" data-id="${s.id}" role="option" aria-pressed="false">
+      <span class="dot" style="background:${dark(s.color)}"><svg viewBox="0 0 24 24">${ICONS[s.icon]||ICONS.bag}</svg></span>
+      <span style="min-width:0"><b>${s.name}</b><small>${s.blurb}</small></span>
+      ${s.aisle?`<span class="aisle">A ${s.aisle}</span>`:''}
+    </button>`).join('');
+
+  const hintbar=document.getElementById('hintbar');
+  function select(id){
+    selected=id===selected?null:id;
+    document.querySelectorAll('.dept').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.id===selected)));
+    document.querySelectorAll('#mapGuide .sec').forEach(gr=>gr.classList.toggle('sel',gr.dataset.id===selected));
+    const s=STORE.sections.find(x=>x.id===selected);
+    if(s){
+      document.getElementById('hintName').textContent=s.name+(s.aisle?' · Aisle '+s.aisle:'');
+      document.getElementById('hintText').textContent=s.hint;
+      hintbar.classList.add('show');
+      document.querySelector('.mapcard').scrollIntoView({behavior:'smooth',block:'nearest'});
+    } else hintbar.classList.remove('show');
+  }
+  list.addEventListener('click',e=>{ const b=e.target.closest('.dept'); if(b) select(b.dataset.id); });
+  document.getElementById('mapGuide').addEventListener('click',e=>{
+    const g=e.target.closest('.sec'); if(g) select(g.dataset.id); });
+  document.getElementById('mapGuide').addEventListener('keydown',e=>{
+    if(e.key==='Enter'||e.key===' '){ const g=e.target.closest('.sec'); if(g){ e.preventDefault(); select(g.dataset.id);} } });
+  document.getElementById('hintClose').onclick=()=>{ selected=null; select(null); };
+
+  const q=document.getElementById('q'), clearBtn=document.getElementById('clearBtn');
+  function filter(){
+    const v=q.value.trim().toLowerCase();
+    clearBtn.classList.toggle('show',!!v);
+    let shown=0;
+    document.querySelectorAll('.dept').forEach(b=>{
+      const s=STORE.sections.find(x=>x.id===b.dataset.id);
+      const hit=!v||(s.name+' '+s.blurb+' '+s.aisle).toLowerCase().includes(v);
+      b.style.display=hit?'':'none'; if(hit) shown++;
+    });
+    document.getElementById('noResults').style.display=shown?'none':'block';
+  }
+  q.addEventListener('input',filter);
+  clearBtn.onclick=()=>{ q.value=''; filter(); q.focus(); };
+}
+
+/* ---------- board view: QR ---------- */
+if(board){
+  const target=document.getElementById('qrTarget'), status=document.getElementById('qrStatus');
+  target.value=location.origin+location.pathname;          // strip ?board — the QR opens the PHONE view
+  function makeQR(){
+    const box=document.getElementById('qr'); box.innerHTML='';
+    if(typeof QRCode==='undefined'){
+      status.textContent='QR library could not load (offline?) — connect to the internet once and reload.';
+      status.style.color='var(--terra)'; return;
+    }
+    new QRCode(box,{text:target.value,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});
+    status.textContent='Points to: '+target.value;
+    status.style.color='var(--faint)';
+  }
+  document.getElementById('qrRemake').onclick=makeQR;
+  document.getElementById('printBtn').onclick=()=>print();
+  makeQR();
+}
+
+/* ---------- test hook (§21) ---------- */
+window.StoreMap={
+  get view(){ return board?'board':'guide'; },
+  get sections(){ return STORE.sections.length; },
+  get selected(){ return selected; },
+  select:id=>{ if(!board) document.querySelector(`.dept[data-id="${id}"]`)?.click(); },
+  search(v){ if(board) return -1; const q=document.getElementById('q'); q.value=v;
+    q.dispatchEvent(new Event('input'));
+    return [...document.querySelectorAll('.dept')].filter(b=>b.style.display!=='none').length; },
+  get hintShown(){ return document.getElementById('hintbar')?.classList.contains('show')||false; },
+  _qrReady(){ return board?!!document.querySelector('#qr img,#qr canvas'):null; },
+};
+</script>
+</body>
+</html>

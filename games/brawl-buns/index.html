@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Brawl Buns</title>
+<style>
+  :root{
+    --cream:#fff3d6; --crust:#c9812f; --crust-2:#a8631a; --jam:#e0345a; --jam-2:#b81f45;
+    --butter:#ffd23e; --choc:#5a3a26; --ink:#3a2410; --sky1:#ffe9a8; --sky2:#8fd0ff;
+    --panel:#fff8e9; --line:#e6c98d;
+    --font:'Baloo 2','Segoe UI',system-ui,-apple-system,'Comic Sans MS',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{background:#2a1c0e;font-family:var(--font);color:var(--ink);user-select:none;-webkit-user-select:none}
+  #wrap{position:relative;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center}
+  canvas{display:block;background:linear-gradient(180deg,var(--sky1),var(--sky2) 78%);box-shadow:0 0 60px rgba(0,0,0,.6);image-rendering:auto}
+
+  /* HUD */
+  #hud{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:14px;padding:12px 18px;pointer-events:none}
+  .pill{background:rgba(255,248,233,.92);border:2px solid var(--crust);border-radius:14px;padding:8px 14px;font-weight:800;box-shadow:0 4px 0 rgba(168,99,26,.5);display:flex;align-items:center;gap:8px}
+  .pill small{font-weight:700;opacity:.6;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+  #playerPill.p2{border-color:var(--jam);box-shadow:0 4px 0 rgba(184,31,69,.5)}
+  #ammo{display:flex;gap:5px}
+  .dot{font-size:20px;filter:drop-shadow(0 2px 0 rgba(0,0,0,.15))}
+  .dot.used{opacity:.25;filter:grayscale(1)}
+  #comboPill{margin-left:auto;background:var(--jam);color:#fff;border-color:var(--jam-2);transform:scale(0);transition:transform .18s cubic-bezier(.2,1.6,.4,1)}
+  #comboPill.show{transform:scale(1)}
+  #restart{pointer-events:auto;cursor:pointer}
+
+  #banner{position:absolute;top:38%;left:0;right:0;text-align:center;pointer-events:none;font-weight:900;
+    font-size:clamp(28px,6vw,64px);color:#fff;text-shadow:0 4px 0 var(--crust-2),0 0 24px rgba(0,0,0,.35);opacity:0;transition:opacity .3s,transform .3s;transform:translateY(10px)}
+  #banner.show{opacity:1;transform:none}
+
+  /* overlays */
+  .overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(42,28,14,.72);backdrop-filter:blur(3px);z-index:5}
+  .overlay.show{display:flex}
+  .card{background:var(--panel);border:4px solid var(--crust);border-radius:26px;padding:30px 34px;max-width:560px;width:90%;text-align:center;box-shadow:0 12px 0 rgba(168,99,26,.5),0 20px 60px rgba(0,0,0,.5)}
+  .card h1{font-size:clamp(38px,8vw,72px);line-height:.95;color:var(--jam);text-shadow:0 4px 0 var(--crust);letter-spacing:-.02em}
+  .card h1 .b2{color:var(--crust)}
+  .card .tag{font-weight:800;color:var(--crust-2);margin-top:4px;font-size:16px}
+  .card p{margin-top:16px;font-weight:600;line-height:1.5;font-size:15px}
+  .card p b{color:var(--jam-2)}
+  .btn{margin-top:22px;background:var(--jam);color:#fff;border:none;font-family:var(--font);font-weight:900;font-size:20px;
+    padding:14px 34px;border-radius:16px;cursor:pointer;box-shadow:0 6px 0 var(--jam-2);transition:transform .08s}
+  .btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--jam-2)}
+  .btn.alt{background:var(--butter);color:var(--ink);box-shadow:0 6px 0 var(--crust)}
+  .btnrow{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .who{display:inline-flex;align-items:center;gap:8px;font-weight:900}
+  .emoji{font-size:1.3em}
+  .result-scores{display:flex;gap:20px;justify-content:center;margin-top:18px}
+  .sc{flex:1;max-width:180px;background:#fff;border:3px solid var(--line);border-radius:16px;padding:14px}
+  .sc.win{border-color:var(--butter);box-shadow:0 0 0 4px var(--butter) inset,0 6px 0 var(--crust)}
+  .sc .n{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;opacity:.6}
+  .sc .v{font-size:34px;font-weight:900;color:var(--jam)}
+  .hint{font-size:12.5px;color:var(--crust-2);margin-top:14px;font-weight:700}
+
+  /* ===== AGENTS-v09-compliance (ui-ux-pro-max P2 Touch & Interaction = CRITICAL) =====
+     Brawl Buns already has real touch handlers (game.js: touchstart/move/end on the canvas);
+     this adds the tap-delay fix and guarantees the DOM controls meet 44x44. */
+  html{touch-action:manipulation}
+  button,[onclick]{min-height:44px;min-width:44px}
+  #score,#hud,.hud{font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c"></canvas>
+
+  <div id="hud">
+    <div class="pill" id="playerPill"><span id="playerEmoji">🥐</span><span><small id="playerLabel">Player 1</small><br><span id="turnLabel">Your turn</span></span></div>
+    <div class="pill"><small>Score</small> <span id="score">0</span></div>
+    <div class="pill"><small>Buns</small> <div id="ammo"></div></div>
+    <div class="pill" id="restart" title="Restart this turn">↻</div>
+    <div class="pill" id="comboPill">COMBO</div>
+  </div>
+
+  <div id="banner"></div>
+
+  <!-- MENU -->
+  <div class="overlay show" id="menu">
+    <div class="card">
+      <h1>BRAWL<span class="b2">BUNS</span></h1>
+      <div class="tag">🥐 Pastry Havoc · 2-Player Duel 🥯</div>
+      <p>The <b>Crumb Monster</b> stole the cereal and hid in a junk-food fortress. Fling your angry breakfast buns and <b>smash it to crumbs</b>. Most destruction wins.</p>
+      <p style="font-size:13.5px;opacity:.85"><b>How to play:</b> drag a bun back on the slingshot, aim, release. Knock out the monsters and demolish the fort. Chain hits fast for <b>COMBO</b> points. Each player takes the <i>same</i> fort — highest score wins the duel.</p>
+      <button class="btn" id="startBtn">START DUEL 🥊</button>
+      <div class="hint">Mouse or touch · press R to restart a turn</div>
+    </div>
+  </div>
+
+  <!-- HANDOFF between players -->
+  <div class="overlay" id="handoff">
+    <div class="card">
+      <h1 style="font-size:44px" id="handoffTitle">Player 1 done!</h1>
+      <div class="result-scores"><div class="sc"><div class="n">Scored</div><div class="v" id="handoffScore">0</div></div></div>
+      <p id="handoffMsg">Pass to Player 2 — same fort, beat that score.</p>
+      <button class="btn" id="handoffBtn">PLAYER 2, GO 🥯</button>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="overlay" id="result">
+    <div class="card">
+      <h1 id="resultTitle">🏆 Winner!</h1>
+      <div class="result-scores">
+        <div class="sc" id="scP1"><div class="n">🥐 Player 1</div><div class="v" id="rs1">0</div></div>
+        <div class="sc" id="scP2"><div class="n">🥯 Player 2</div><div class="v" id="rs2">0</div></div>
+      </div>
+      <div class="btnrow">
+        <button class="btn" id="rematchBtn">REMATCH 🔁</button>
+        <button class="btn alt" id="menuBtn">MENU</button>
+      </div>
+      <div class="hint" id="resultHint"></div>
+    </div>
+  </div>
+</div>
+
+<script src="./matter.min.js"></script>
+<script src="./game.js"></script>
+</body>
+</html>

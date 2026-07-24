@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>BEE — C · CINEMA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#07080a; --text:#f4f6fa; --muted:#8c93a3;
+    --hot:#ff5c2b; --cool:#4d7cff;
+    --font:'Inter',-apple-system,system-ui,sans-serif;
+    --ease:cubic-bezier(.16,1,.3,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--ink);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;width:100%;height:100%;z-index:6;pointer-events:none;opacity:.2;mix-blend-mode:overlay}
+  .vig{position:fixed;inset:0;z-index:5;pointer-events:none;
+    background:radial-gradient(120% 90% at 50% 45%,transparent 45%,rgba(0,0,0,.85))}
+  .tag{position:fixed;left:16px;top:16px;z-index:9;font-size:11px;letter-spacing:.3em;text-transform:uppercase;
+    color:var(--hot);background:rgba(0,0,0,.45);backdrop-filter:blur(10px);padding:8px 14px;border-radius:999px;
+    border:1px solid rgba(255,92,43,.35)}
+  .scrollhint{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:7;font-size:11px;
+    letter-spacing:.3em;text-transform:uppercase;color:var(--muted);animation:bob 2.6s ease-in-out infinite}
+  @keyframes bob{50%{transform:translateX(-50%) translateY(8px);opacity:.5}}
+
+  /* each act is a full viewport — the scroll IS the story */
+  .act{position:relative;min-height:100dvh;display:grid;place-items:center;padding:0 26px;overflow:hidden}
+  .molten{position:absolute;inset:-15%;z-index:0;filter:url(#melt);opacity:.9}
+  .molten i{position:absolute;border-radius:50%;mix-blend-mode:screen}
+  .m1{width:66vmax;height:66vmax;left:-8%;top:-12%;background:radial-gradient(circle at 40% 40%,rgba(255,92,43,.5),transparent 62%);animation:sw1 30s var(--ease) infinite alternate}
+  .m2{width:58vmax;height:58vmax;right:-10%;bottom:-14%;background:radial-gradient(circle at 55% 45%,rgba(77,124,255,.45),transparent 60%);animation:sw2 36s var(--ease) infinite alternate}
+  @keyframes sw1{to{transform:translate3d(12vw,10vh,0) scale(1.2)}}
+  @keyframes sw2{to{transform:translate3d(-14vw,-8vh,0) scale(1.15)}}
+
+  .inner{position:relative;z-index:2;max-width:1000px;text-align:center}
+  h1{font-size:clamp(54px,12vw,168px);font-weight:600;letter-spacing:-.055em;line-height:.88}
+  .line{display:block;overflow:hidden}
+  .line span{display:block;transform:translateY(105%);transition:transform 1.15s var(--ease)}
+  .act.on .line span{transform:none}
+  .line:nth-child(2) span{transition-delay:.09s}
+  .line:nth-child(3) span{transition-delay:.18s}
+  .kicker{font-size:12px;letter-spacing:.45em;text-transform:uppercase;color:var(--hot);margin-bottom:26px;
+    opacity:0;transform:translateY(12px);transition:all 1s .1s var(--ease)}
+  .act.on .kicker{opacity:1;transform:none}
+  .said{margin:28px auto 0;max-width:54ch;font-size:clamp(16px,2vw,20px);font-weight:300;color:var(--muted);line-height:1.6;
+    opacity:0;transform:translateY(18px);transition:all 1s .42s var(--ease)}
+  .act.on .said{opacity:1;transform:none}
+
+  /* the shared element that flies between acts */
+  .orb{position:fixed;z-index:4;width:120px;height:120px;border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle at 34% 32%,#fff,rgba(255,217,180,.9) 26%,var(--hot) 58%,rgba(255,92,43,0) 72%);
+    box-shadow:0 0 90px 20px rgba(255,92,43,.42);
+    left:50%;top:50%;transform:translate(-50%,-50%) scale(1);
+    transition:transform 1.25s var(--ease),opacity .8s var(--ease),box-shadow 1.2s var(--ease);
+    will-change:transform}
+  .stat{display:flex;gap:44px;justify-content:center;margin-top:46px;flex-wrap:wrap}
+  .stat div{opacity:0;transform:translateY(22px);transition:all .9s var(--ease)}
+  .act.on .stat div{opacity:1;transform:none}
+  .act.on .stat div:nth-child(2){transition-delay:.09s}
+  .act.on .stat div:nth-child(3){transition-delay:.18s}
+  .stat b{display:block;font-size:40px;font-weight:500;letter-spacing:-.03em}
+  .stat span{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+  .btn{margin-top:44px;font:inherit;font-size:15px;font-weight:500;padding:17px 38px;min-height:44px;border-radius:999px;
+    cursor:pointer;border:none;background:var(--text);color:#0a0b0d;
+    box-shadow:0 20px 50px -18px rgba(255,255,255,.5);
+    transition:transform .5s var(--ease),box-shadow .5s var(--ease);
+    opacity:0;transform:translateY(20px)}
+  .act.on .btn{opacity:1;transform:none;transition-delay:.5s}
+  .btn:hover{transform:translateY(-3px) scale(1.03)}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}
+    .line span,.kicker,.said,.stat div,.btn{transform:none!important;opacity:1!important}}
+</style>
+</head>
+<body>
+<div class="tag">C · Cinema</div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="melt">
+    <feTurbulence type="fractalNoise" baseFrequency="0.01 0.016" numOctaves="3" seed="3" result="n">
+      <animate attributeName="baseFrequency" dur="30s" values="0.01 0.016;0.016 0.01;0.01 0.016" repeatCount="indefinite"/>
+    </feTurbulence>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="70" xChannelSelector="R" yChannelSelector="G"/>
+    <feGaussianBlur stdDeviation="12"/>
+  </filter>
+  <filter id="gr"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4"/></filter>
+</svg>
+<svg class="grain" aria-hidden="true"><rect width="100%" height="100%" filter="url(#gr)"/></svg>
+<div class="vig"></div>
+<div class="orb" id="orb"></div>
+
+<section class="act" id="a1">
+  <div class="molten"><i class="m1"></i><i class="m2"></i></div>
+  <div class="inner">
+    <div class="kicker">Bee · local intelligence</div>
+    <h1><span class="line"><span>You think.</span></span><span class="line"><span>It builds.</span></span></h1>
+    <p class="said">An assistant that lives on your machine, remembers who you are, and finishes the work while you move on.</p>
+  </div>
+</section>
+
+<section class="act" id="a2">
+  <div class="inner">
+    <div class="kicker">Not a chatbot</div>
+    <h1><span class="line"><span>It uses</span></span><span class="line"><span>real tools.</span></span></h1>
+    <p class="said">Reads and writes your files. Runs commands. Deletes reversibly. Verifies the result before it ever says "done".</p>
+    <div class="stat">
+      <div><b>8</b><span>Live tools</span></div>
+      <div><b>0</b><span>Cloud calls</span></div>
+      <div><b>∞</b><span>Memory</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="act" id="a3">
+  <div class="molten"><i class="m2"></i></div>
+  <div class="inner">
+    <div class="kicker">Yours alone</div>
+    <h1><span class="line"><span>Nothing</span></span><span class="line"><span>leaves.</span></span></h1>
+    <p class="said">No subscription. No telemetry. No company holding your keys. Bee is a program you own, running on hardware you own.</p>
+    <button class="btn">Wake Bee</button>
+  </div>
+</section>
+
+<script>
+  const acts=[...document.querySelectorAll('.act')], orb=document.getElementById('orb');
+  // the SHARED ELEMENT: one orb that flies + resizes between acts instead of 3 separate props
+  const POSE=[{x:0,y:0,s:1,o:.95},{x:34,y:-6,s:.42,o:.75},{x:-30,y:8,s:1.5,o:.9}];
+  let current=-1;
+  // Driven by a continuous rAF loop rather than scroll/IntersectionObserver events.
+  // Event-driven reveals silently do nothing if the event never fires (measured: both
+  // the scroll listener and IO failed to fire in one browser). A loop that reads real
+  // geometry every frame cannot miss, and it costs one cheap read per frame.
+  function step(){
+    let i=0,best=1e9;
+    acts.forEach((a,n)=>{const d=Math.abs(a.getBoundingClientRect().top); if(d<best){best=d;i=n;}});
+    if(i!==current){
+      current=i;
+      acts.forEach((a,n)=>a.classList.toggle('on', n===i));   // reveal the act in view
+      const p=POSE[i];
+      orb.style.transform=`translate(calc(-50% + ${p.x}vw), calc(-50% + ${p.y}vh)) scale(${p.s})`;
+      orb.style.opacity=p.o;
+    }
+  }
+  function frame(){ step(); requestAnimationFrame(frame); }
+  requestAnimationFrame(frame);
+  step();                        // paint the opening state immediately, don't wait for a frame
+  // test hook — _tick() runs one frame by hand, because rAF is paused in hidden/preview
+  // tabs and an un-tickable animation is an unverifiable animation (§21 test-hook rule).
+  window.HeroC={variant:'cinema',_tick:step,
+    get activeActs(){return acts.filter(a=>a.classList.contains('on')).length},
+    get orbTransform(){return orb.style.transform}};
+</script>
+</body>
+</html>
