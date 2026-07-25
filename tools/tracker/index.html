@@ -112,6 +112,9 @@
   .task{gap:11px}                                       /* ≥8px between adjacent targets */
   .btn,.addtask button,.addtask input,.newproj input,.newproj button{min-height:44px}
   .addtask button{min-width:44px}
+  /* touch devices have no hover — the hover-reveal delete would be invisible & unusable,
+     so show it on coarse pointers (desktop keeps the clean hover-reveal). */
+  @media (pointer:coarse){ .task .del{opacity:.5} .task .del:active{opacity:1;color:#ff7a7c} }
   .pfoot{gap:8px}
   .pfoot button{position:relative;padding:6px 4px}
   .pfoot button::after{content:'';position:absolute;inset:-14px -6px}   /* expand tap area only */
