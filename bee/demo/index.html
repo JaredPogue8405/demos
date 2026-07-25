@@ -285,6 +285,8 @@
         <select class="model" id="model">
           <option>llama3.1:8b</option><option>qwen2.5:14b</option><option>mistral:7b</option><option>phi3:mini</option>
         </select>
+        <button id="reconn" title="Re-check for Ollama" aria-label="Reconnect to Ollama"
+          style="display:none;margin-left:6px;min-width:34px;min-height:34px;border-radius:9px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#cfe0ff;cursor:pointer;font-size:15px;line-height:1">&#8635;</button>
       </div>
       <div class="thread" id="thread"></div>
       <div class="composer">
@@ -402,7 +404,19 @@ makeCore(document.getElementById('core'),1);
 })();
 /* reflect the real Ollama link on the hero, without blocking anything */
 function reflectLink(ok){ const el=document.getElementById('linkState'); if(el) el.textContent = ok ? 'Ollama linked · local-first' : 'Sim mode · local-first'; }
-detectOllama().then(reflectLink);
+// reconnect: re-check for Ollama live (if it was started after page load) — no reload needed.
+function updateReconnVis(){ const b=document.getElementById('reconn'); if(b) b.style.display=LIVE?'none':''; }
+async function reconnect(){
+  const btn=document.getElementById('reconn'); if(btn){ btn.disabled=true; btn.style.opacity=.5; }
+  const ok=await detectOllama(); reflectLink(ok); updateReconnVis();
+  const b=addMsg('bee','');
+  if(ok){ setStat('LIVE · '+document.getElementById('model').value);
+    stream(b,"Reconnected — running on your local Ollama ("+document.getElementById('model').value+") now. What are we building?"); }
+  else stream(b,"Still no Ollama on localhost:11434. Start it (run “ollama serve”) and hit reconnect again — I'll switch to the real model live, no reload.");
+  if(btn){ btn.disabled=false; btn.style.opacity=1; }
+}
+detectOllama().then(ok=>{ reflectLink(ok); updateReconnVis(); });
+document.getElementById('reconn').onclick=reconnect;
 
 /* ---------------- navigation ---------------- */
 let miniStarted=false;
