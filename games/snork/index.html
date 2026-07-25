@@ -46,6 +46,9 @@
   .final .b .n{font-size:11px;font-weight:800;text-transform:uppercase;opacity:.55}
   .final .b .v{font-size:32px;font-weight:900;color:var(--pig-d)}
   .final .b.best .v{color:var(--gold);-webkit-text-stroke:1px var(--fence-dark)}
+  .diffrow{display:inline-flex;gap:6px;margin:12px 0 4px;background:#fff;border:2px solid var(--fence-dark);border-radius:14px;padding:4px}
+  .diff{font-family:var(--font);font-weight:900;font-size:14px;color:var(--fence-dark);background:none;border:none;border-radius:10px;padding:8px 14px;min-height:44px;cursor:pointer;transition:background .15s,color .15s}
+  .diff[aria-pressed="true"]{background:var(--pig-d);color:#fff}
 
   /* ===== AGENTS-v09-compliance (ui-ux-pro-max P2 Touch & Interaction = CRITICAL) ===== */
   html{touch-action:manipulation}
@@ -83,6 +86,11 @@
       <p>Guide your pig around the pen and gobble the <b>corn</b>.<br>Every cob makes you longer. Don't hit the fence or yourself!</p>
       <div class="keys"><span class="key">↑</span><span class="key">↓</span><span class="key">←</span><span class="key">→</span></div>
       <p style="margin-top:6px;font-size:12.5px">Arrow keys or <b>WASD</b> to steer · <b>P</b> to pause · ✨ <b>golden corn = 30 pts</b></p>
+      <div class="diffrow" id="diffRow" role="group" aria-label="Difficulty">
+        <button class="diff" data-diff="chill">Chill</button>
+        <button class="diff" data-diff="classic">Classic</button>
+        <button class="diff" data-diff="fast">Fast</button>
+      </div>
       <label style="display:inline-flex;align-items:center;gap:8px;margin:6px 0 2px;font-weight:800;color:var(--fence-dark);cursor:pointer;font-size:13.5px"><input type="checkbox" id="wrapToggle" style="width:18px;height:18px"> Wrap-around walls (pass through the edges)</label>
       <br><button class="btn" id="startBtn">START 🐽</button>
     </div>
@@ -131,12 +139,15 @@
   let snake, dir, nextDir, food, score, best = +(localStorage.getItem('snork.best') || 0), alive = false, paused = false;
   let acc = 0, interval = 150, prevCells = [], shake = 0, particles = [], eatPop = 0, foodBob = 0;
   let wrap = false, foodGold = false;
+  // difficulty sets the pig's base speed + how fast it can max out. Persisted.
+  const DIFF = { chill: { base: 190, floor: 95 }, classic: { base: 150, floor: 70 }, fast: { base: 110, floor: 52 } };
+  let difficulty = localStorage.getItem('snork.diff'); if (!DIFF[difficulty]) difficulty = 'classic';
   document.getElementById('best').textContent = best;
 
   function reset() {
     snake = [{ x: 6, y: 7 }, { x: 5, y: 7 }, { x: 4, y: 7 }];
     dir = { x: 1, y: 0 }; nextDir = { x: 1, y: 0 };
-    score = 0; interval = 150; alive = true; paused = false; particles = [];
+    score = 0; interval = DIFF[difficulty].base; alive = true; paused = false; particles = [];
     prevCells = snake.map((s) => ({ ...s }));
     placeFood(); updateHud();
   }
@@ -162,7 +173,7 @@
     snake.unshift(head);
     if (head.x === food.x && head.y === food.y) {
       score += foodGold ? 30 : 10; if (score > best) { best = score; localStorage.setItem('snork.best', best); document.getElementById('best').textContent = best; }
-      interval = Math.max(70, 150 - score * 0.6); eatPop = 1; burst(food.x, food.y);
+      interval = Math.max(DIFF[difficulty].floor, DIFF[difficulty].base - score * 0.6); eatPop = 1; burst(food.x, food.y);
       sNom(); placeFood(); updateHud();
       prevCells.push({ ...prevCells[prevCells.length - 1] }); // keep interp aligned on growth
     } else {
@@ -321,6 +332,13 @@
 
   function show(id) { document.querySelectorAll('.overlay').forEach((o) => o.classList.remove('show')); if (id) document.getElementById(id).classList.add('show'); }
   function startGame() { wrap = document.getElementById('wrapToggle').checked; show(null); reset(); }
+  // difficulty selector — reflects the saved choice and persists taps
+  function paintDiff() { document.querySelectorAll('.diff').forEach((b) => b.setAttribute('aria-pressed', b.dataset.diff === difficulty)); }
+  document.getElementById('diffRow').addEventListener('click', (e) => {
+    const b = e.target.closest('.diff'); if (!b) return;
+    difficulty = b.dataset.diff; try { localStorage.setItem('snork.diff', difficulty); } catch (e) {} paintDiff();
+  });
+  paintDiff();
   document.getElementById('startBtn').onclick = startGame;
   document.getElementById('againBtn').onclick = startGame;
 
@@ -330,6 +348,8 @@
     _tick: (n = 1) => { for (let i = 0; i < n; i++) tick(); return { score, alive, len: snake.length, head: { ...snake[0] } }; },
     get score() { return score; }, get alive() { return alive; }, get len() { return snake ? snake.length : 0; },
     get food() { return { ...food }; }, get head() { return { ...snake[0] }; }, get dir() { return { ...dir }; },
+    get interval() { return interval; }, get difficulty() { return difficulty; },
+    setDifficulty: (d) => { if (DIFF[d]) { difficulty = d; try { localStorage.setItem('snork.diff', d); } catch (e) {} paintDiff(); } },
   };
 
   reset(); alive = false; // draw a static board behind the menu

@@ -543,7 +543,8 @@ function openDetail(c){
         <div><b>${(len).toLocaleString()}</b><span>Yards</span></div><div><b>${c.cheap!=null?'$'+c.cheap:'—'}</b><span>From</span></div>
       </div>
       <div class="amen">${amen.map(a=>`<span class="a">${amIcon}${a[0]}</span>`).join('')||'<span class="a">Walk-ups welcome</span>'}</div>
-      <div class="seclabel">Book a tee time</div>
+      ${c.website?`<a class="btn big realbook" href="${esc(c.website)}" target="_blank" rel="noopener" style="margin:2px 0 10px;text-decoration:none;justify-content:center">Book on the course's official site &rarr;</a>`:''}
+      <div class="seclabel">${c.website?'Or preview times here (demo)':'Preview tee times (demo)'}</div>
       <div class="datebar" id="datebar">${dates.map((d,i)=>`<button data-day="${i}" aria-pressed="${i===0}">${d.dow}<small>${d.day}</small></button>`).join('')}</div>
       <div class="teegrid" id="teegrid"></div>
       <p class="demoline">Times, prices and availability are generated for this demo — they are not a live tee sheet. Booking reserves nothing and takes no payment.</p>
