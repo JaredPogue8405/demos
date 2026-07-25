@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>The Field Guide — GolfNow, APIs, Networking, Cloud & AI</title>
+<meta name="description" content="A direct, no-fluff primer: how GolfNow works, and the API / networking / cloud / AI fundamentals to break into the field with an edge." />
+<meta name="theme-color" content="#0b0e14" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b0e14'/%3E%3Cpath d='M8 20l4-8 4 5 3-4 5 7' fill='none' stroke='%2364d2ff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+<style>
+  /* ============================================================
+     THE FIELD GUIDE — a technical study reference.
+     Own identity: "terminal-meets-textbook" — near-black ground,
+     cyan/amber signal accents, mono for terms, generous type.
+     Committed dark (a reference you read at 1am), single-file,
+     system fonts (no CDN), phone-first with a sticky jump-nav.
+     ============================================================ */
+  :root{
+    --bg:#0b0e14; --bg2:#0f131c; --card:#141926; --card2:#182031; --line:#232c3d;
+    --text:#e7edf5; --muted:#93a1b8; --faint:#5f6d84;
+    --cyan:#64d2ff; --amber:#ffb454; --green:#7ee787; --violet:#b392f0; --pink:#ff7b9c;
+    --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
+    --mono:"SF Mono",ui-monospace,"Cascadia Code","JetBrains Mono",Consolas,monospace;
+    --ease:cubic-bezier(.16,1,.3,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;scroll-padding-top:64px}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(900px 500px at 80% -8%,rgba(100,210,255,.06),transparent 60%),radial-gradient(700px 500px at 0% 12%,rgba(255,180,84,.05),transparent 55%)}
+  :focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:6px}
+  a{color:var(--cyan)}
+
+  /* sticky jump nav */
+  nav.jump{position:sticky;top:0;z-index:20;background:rgba(11,14,20,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);overflow-x:auto}
+  nav.jump ul{display:flex;gap:2px;list-style:none;padding:8px 12px;min-width:max-content;max-width:940px;margin:0 auto}
+  nav.jump a{flex:none;font-size:12.5px;font-weight:600;color:var(--muted);text-decoration:none;padding:8px 12px;min-height:40px;
+    display:inline-flex;align-items:center;border-radius:8px;white-space:nowrap;transition:color .2s,background .2s}
+  nav.jump a:hover{color:var(--text);background:var(--card)}
+
+  .wrap{max-width:820px;margin:0 auto;padding:0 18px calc(80px + env(safe-area-inset-bottom))}
+
+  header.hero{padding:52px 0 24px;text-align:center}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--cyan)}
+  h1{font-size:clamp(30px,7vw,50px);font-weight:800;letter-spacing:-.03em;line-height:1.05;margin-top:12px;text-wrap:balance}
+  .hero p{max-width:52ch;margin:16px auto 0;color:var(--muted);font-size:16px}
+  .hero .meta{margin-top:16px;font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+
+  section{padding:34px 0;border-top:1px solid var(--line)}
+  .seclead{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .seclead .num{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--bg);background:var(--cyan);
+    width:26px;height:26px;border-radius:7px;display:grid;place-items:center;flex:none}
+  h2{font-size:clamp(22px,4.6vw,30px);font-weight:700;letter-spacing:-.02em}
+  .subhead{color:var(--muted);font-size:14.5px;margin:6px 0 18px}
+  h3{font-size:17px;font-weight:700;margin:22px 0 8px;letter-spacing:-.01em}
+  p{margin:9px 0;color:#cdd6e4}
+  strong{color:var(--text)}
+  em{color:var(--amber);font-style:normal;font-weight:600}
+  ul.pts{list-style:none;margin:10px 0;display:flex;flex-direction:column;gap:8px}
+  ul.pts li{padding-left:22px;position:relative;color:#cdd6e4;font-size:14.5px}
+  ul.pts li::before{content:"▸";position:absolute;left:2px;color:var(--cyan);font-size:12px;top:2px}
+  code{font-family:var(--mono);font-size:.88em;background:var(--card2);border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--amber)}
+  .term{font-family:var(--mono);color:var(--cyan)}
+
+  .card{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:14px 0}
+  .card.cyan{border-left:3px solid var(--cyan)} .card.amber{border-left:3px solid var(--amber)}
+  .card.green{border-left:3px solid var(--green)} .card.violet{border-left:3px solid var(--violet)}
+  .card h4{font-size:14px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .card h4 .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);
+    border:1px solid var(--line);border-radius:5px;padding:2px 6px}
+  .edge{background:rgba(100,210,255,.07);border:1px solid rgba(100,210,255,.28);border-radius:12px;padding:13px 15px;margin:14px 0;font-size:14px}
+  .edge b{color:var(--cyan)}
+  .warn{background:rgba(255,180,84,.07);border:1px solid rgba(255,180,84,.28);border-radius:12px;padding:13px 15px;margin:14px 0;font-size:14px}
+  .warn b{color:var(--amber)}
+
+  /* comparison / mapping tables */
+  .twrap{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:12px}
+  table{border-collapse:collapse;width:100%;min-width:420px;font-size:13.5px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);background:var(--bg2)}
+  td:first-child{font-weight:600;color:var(--text)}
+  tr:last-child td{border-bottom:none}
+  td .term{font-size:12.5px}
+
+  /* the flow diagram (a request's journey) */
+  .flow{display:flex;flex-direction:column;gap:8px;margin:14px 0}
+  .flow .step{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:11px 13px}
+  .flow .step .n{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--bg);background:var(--amber);width:22px;height:22px;border-radius:6px;display:grid;place-items:center;flex:none;margin-top:1px}
+  .flow .step b{color:var(--text);font-size:14px}
+  .flow .step span{color:var(--muted);font-size:13px;display:block;margin-top:2px}
+
+  pre{background:#080b11;border:1px solid var(--line);border-radius:11px;padding:14px;overflow-x:auto;margin:12px 0;font-family:var(--mono);font-size:12.5px;line-height:1.6;color:#cdd6e4}
+  pre .c{color:var(--faint)} pre .k{color:var(--pink)} pre .s{color:var(--green)} pre .fn{color:var(--cyan)}
+
+  footer{margin-top:30px;padding-top:20px;border-top:1px solid var(--line);color:var(--faint);font-size:12px;text-align:center;line-height:1.9}
+  footer a{color:var(--muted)}
+  .backtop{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:30;
+    width:46px;height:46px;border-radius:50%;background:var(--card);border:1px solid var(--line);color:var(--cyan);
+    display:grid;place-items:center;text-decoration:none;box-shadow:0 10px 30px -12px rgba(0,0,0,.7)}
+  @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<nav class="jump" aria-label="Sections">
+  <ul>
+    <li><a href="#golfnow">GolfNow</a></li>
+    <li><a href="#apis">APIs</a></li>
+    <li><a href="#networking">Networking</a></li>
+    <li><a href="#cloud">Cloud</a></li>
+    <li><a href="#ai">AI &amp; LLMs</a></li>
+    <li><a href="#edge">The Edge</a></li>
+    <li><a href="#loop">Loop Eng.</a></li>
+  </ul>
+</nav>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="kicker">The Field Guide</div>
+    <h1>Everything you need, direct.</h1>
+    <p>How GolfNow actually works, and the API / networking / cloud / AI fundamentals to walk in with an edge — no filler, built to re-read on your phone.</p>
+    <div class="meta">read top-to-bottom once · then use the jump-bar as a reference</div>
+  </header>
+
+  <!-- ============ 1 · GOLFNOW ============ -->
+  <section id="golfnow">
+    <div class="seclead"><span class="num">1</span><h2>How GolfNow actually works</h2></div>
+    <p class="subhead">It's not really a golf company. It's a two-sided marketplace whose real product is <em>software the courses can't afford to say no to</em>.</p>
+
+    <div class="card cyan">
+      <h4>The one thing to understand <span class="tag">the model</span></h4>
+      <p>GolfNow gives a golf course its <strong>tee-sheet software, point-of-sale, CRM, website booking, and app placement — often for little or no cash.</strong> In return, the course hands GolfNow a <strong>block of tee times every day</strong>. GolfNow resells those as discounted <em>"Hot Deals."</em> That's the famous <span class="term">barter model</span>: tech-for-inventory, not cash-for-commission.</p>
+    </div>
+
+    <h3>Why that's genius (and controversial)</h3>
+    <ul class="pts">
+      <li><strong>Supply lock-in:</strong> once a course runs its whole operation on GolfNow's tee sheet, leaving means ripping out the system that runs the pro shop. That's a moat.</li>
+      <li><strong>Aggregation:</strong> 9,000+ courses, 3M+ golfers. One app, every course — the golfer never needs another. Classic <em>network effect</em>: more courses → more golfers → more courses.</li>
+      <li><strong>The backlash:</strong> discounting tee times "80% off or free" trains golfers to never pay rack rate, and courses feel they've abdicated pricing. Know this — it's the opening for a competitor.</li>
+    </ul>
+
+    <h3>The technical spine (this is the part that upgrades Fairway)</h3>
+    <div class="flow">
+      <div class="step"><span class="n">1</span><div><b>The tee sheet is the source of truth</b><span>A cloud database of every slot: time, price, players allowed, cart/rider fees, restrictions. Lives on GolfNow's servers, synced in real time.</span></div></div>
+      <div class="step"><span class="n">2</span><div><b>An availability API reads it</b><span>The app calls a <span class="term">real-time API</span> → gets back open slots + live pricing + player limits. Refreshes constantly so two people can't grab the same 8:10am.</span></div></div>
+      <div class="step"><span class="n">3</span><div><b>A reservation API writes to it</b><span>Booking = a <span class="term">two-way</span> call that validates restrictions, applies fees, <strong>takes payment</strong>, decrements the slot, and fires a confirmation. This is the hard part.</span></div></div>
+      <div class="step"><span class="n">4</span><div><b>Distribution via open APIs</b><span>The same inventory is published to third-party distributors (Supreme Golf, Golfback, Barstool Golf…) through open APIs — one tee sheet, many storefronts. That's "distribution."</span></div></div>
+    </div>
+
+    <div class="warn">
+      <b>The honest gap in your Fairway demo.</b> Yours already <strong>beats</strong> GolfNow on discovery and UI. What it can't fake is steps 1–3: a <em>live tee sheet</em> (needs a distributor/course API), <em>real payment</em> (needs Stripe + a business), and <em>licensed photos</em>. Those are business deals, not code.
+    </div>
+    <div class="edge">
+      <b>Your realistic path to "real":</b> don't rebuild GolfNow's supply. (1) Aggregate <strong>course-owned booking links</strong> (you already open their site) → zero integrations, launch tomorrow. (2) Add one <strong>distributor API</strong> (Supreme Golf / a tee-time gateway) for real inventory in one region. (3) Add <strong>Stripe</strong> only when you're taking a cut. The wedge that beats them: <em>be the finder golfers actually trust — no dark-pattern discounting, real course info, hidden gems.</em>
+    </div>
+  </section>
+
+  <!-- ============ 2 · APIs ============ -->
+  <section id="apis">
+    <div class="seclead"><span class="num">2</span><h2>APIs — the whole idea in 5 minutes</h2></div>
+    <p class="subhead">An <span class="term">API</span> (Application Programming Interface) is a <em>menu one program offers another</em>: "here are the things you can ask me to do, and the exact format to ask in."</p>
+
+    <div class="card">
+      <h4>The restaurant mental model</h4>
+      <p>You (the <strong>client</strong>) don't walk into the kitchen. You read the <strong>menu</strong> (the API), tell the <strong>waiter</strong> (the request) what you want, and the kitchen (the <strong>server</strong>) sends back a <strong>plate</strong> (the response). You never see how the kitchen works — that's the point. APIs hide complexity behind a contract.</p>
+    </div>
+
+    <h3>REST — the style 90% of web APIs use</h3>
+    <p>You act on <em>resources</em> (a course, a booking, a user) at <em>URLs</em>, using HTTP <em>verbs</em>:</p>
+    <div class="twrap"><table>
+      <tr><th>Verb</th><th>Means</th><th>Example</th></tr>
+      <tr><td>GET</td><td>read (never changes anything)</td><td><span class="term">GET /courses?near=27526</span></td></tr>
+      <tr><td>POST</td><td>create</td><td><span class="term">POST /bookings</span></td></tr>
+      <tr><td>PUT / PATCH</td><td>update</td><td><span class="term">PATCH /bookings/88</span></td></tr>
+      <tr><td>DELETE</td><td>remove</td><td><span class="term">DELETE /bookings/88</span></td></tr>
+    </table></div>
+
+    <h3>What comes back: JSON + a status code</h3>
+    <pre><span class="c">// the server's reply to GET /courses/12</span>
+{
+  <span class="k">"id"</span>: <span class="s">12</span>,
+  <span class="k">"name"</span>: <span class="s">"Cedar Ridge Links"</span>,
+  <span class="k">"holes"</span>: <span class="s">18</span>,
+  <span class="k">"teeTimes"</span>: [ { <span class="k">"time"</span>: <span class="s">"08:10"</span>, <span class="k">"price"</span>: <span class="s">42</span> } ]
+}</pre>
+    <ul class="pts">
+      <li><span class="term">JSON</span> is just labeled data — <code>key: value</code>. Every language reads it. It's the lingua franca of APIs.</li>
+      <li><strong>Status codes</strong> tell you what happened: <code>200</code> OK · <code>201</code> created · <code>400</code> you sent junk · <code>401</code> not logged in · <code>403</code> not allowed · <code>404</code> not found · <code>429</code> slow down · <code>500</code> their bug.</li>
+    </ul>
+
+    <h3>Auth — proving who you are</h3>
+    <div class="twrap"><table>
+      <tr><th>Method</th><th>What it is</th><th>Used for</th></tr>
+      <tr><td>API key</td><td>a long secret string in a header</td><td>simple service-to-service (weather, maps)</td></tr>
+      <tr><td>OAuth 2.0</td><td>"log in with Google" — you never see the password</td><td>acting on a <em>user's</em> behalf</td></tr>
+      <tr><td>JWT / token</td><td>a signed pass that proves you logged in, expires</td><td>keeping a session after login</td></tr>
+    </table></div>
+    <div class="warn"><b>Rule that will save you:</b> a secret (API key, token) <strong>never</strong> goes in front-end code or a git commit. It lives in an environment variable on the server. Leaked keys get abused within minutes.</div>
+
+    <h3>Two more you'll hear</h3>
+    <ul class="pts">
+      <li><span class="term">Webhook</span> — the reverse of an API call. Instead of you asking "any news?", <em>they call you</em> when something happens (Stripe pings your server when a payment clears). "Don't call us, we'll call you."</li>
+      <li><span class="term">Rate limit</span> — "max 100 calls/minute." Exceed it → <code>429</code>. You handle it by backing off and retrying.</li>
+    </ul>
+  </section>
+
+  <!-- ============ 3 · NETWORKING ============ -->
+  <section id="networking">
+    <div class="seclead"><span class="num">3</span><h2>Networking — the layer you're being hired for</h2></div>
+    <p class="subhead">Everything is just <em>packets finding their way from one machine to another</em>. Master the path a request takes and you understand 80% of the job.</p>
+
+    <div class="card cyan">
+      <h4>The models: OSI (7 layers) &amp; TCP/IP (4) <span class="tag">memorize</span></h4>
+      <p>Interviews love the <span class="term">OSI model</span>. Mnemonic top-down: <strong>"All People Seem To Need Data Processing."</strong></p>
+      <div class="twrap"><table>
+        <tr><th>#</th><th>Layer</th><th>Does</th><th>You'll say</th></tr>
+        <tr><td>7</td><td>Application</td><td>the app talks</td><td>HTTP, DNS</td></tr>
+        <tr><td>6</td><td>Presentation</td><td>format/encrypt</td><td>TLS/SSL</td></tr>
+        <tr><td>5</td><td>Session</td><td>keep the convo</td><td>—</td></tr>
+        <tr><td>4</td><td>Transport</td><td>reliable delivery + ports</td><td>TCP, UDP</td></tr>
+        <tr><td>3</td><td>Network</td><td>routing between networks</td><td>IP, routers</td></tr>
+        <tr><td>2</td><td>Data Link</td><td>same-wire delivery</td><td>MAC, switches</td></tr>
+        <tr><td>1</td><td>Physical</td><td>the actual signal</td><td>cable, wifi</td></tr>
+      </table></div>
+    </div>
+
+    <h3>Follow one request: you type a URL, hit enter</h3>
+    <div class="flow">
+      <div class="step"><span class="n">1</span><div><b>DNS</b><span>Your machine asks a <span class="term">DNS</span> server "what's the IP for golfnow.com?" → gets <code>104.18.x.x</code>. DNS is the internet's phone book (names → numbers).</span></div></div>
+      <div class="step"><span class="n">2</span><div><b>TCP handshake</b><span>Your machine and the server do a 3-step "SYN → SYN-ACK → ACK" to open a reliable <span class="term">TCP</span> connection on <span class="term">port</span> 443.</span></div></div>
+      <div class="step"><span class="n">3</span><div><b>TLS</b><span>They swap certificates and set up encryption — the <span class="term">https</span> padlock. Now nobody in the middle can read it.</span></div></div>
+      <div class="step"><span class="n">4</span><div><b>The request routes</b><span>Your packet hops router → router across networks, each reading the destination <span class="term">IP</span> and forwarding it closer. That's <em>routing</em>.</span></div></div>
+      <div class="step"><span class="n">5</span><div><b>Response comes back</b><span>The server sends HTML/JSON back down the same path. Milliseconds.</span></div></div>
+    </div>
+
+    <h3>The vocabulary that gets you hired</h3>
+    <div class="twrap"><table>
+      <tr><th>Term</th><th>In one line</th></tr>
+      <tr><td>IP address</td><td>a machine's number. <span class="term">IPv4</span> = <code>192.168.1.10</code>; <span class="term">IPv6</span> = the longer new one (we ran out of IPv4).</td></tr>
+      <tr><td>Subnet / CIDR</td><td>slicing an IP range into networks. <code>/24</code> = 256 addresses. <strong>Subnetting is the #1 thing to drill.</strong></td></tr>
+      <tr><td>Port</td><td>a numbered door on a machine. 80=HTTP, 443=HTTPS, 22=SSH, 53=DNS.</td></tr>
+      <tr><td>TCP vs UDP</td><td>TCP = reliable, ordered (web, email). UDP = fast, lossy (video, games, DNS).</td></tr>
+      <tr><td>Router vs switch</td><td>switch connects devices <em>inside</em> one network (L2/MAC); router connects <em>between</em> networks (L3/IP).</td></tr>
+      <tr><td>VLAN</td><td>one physical switch split into isolated virtual networks.</td></tr>
+      <tr><td>NAT</td><td>many private devices sharing one public IP (your home router does this).</td></tr>
+      <tr><td>Firewall</td><td>rules for which traffic is allowed in/out (by port, IP, protocol).</td></tr>
+      <tr><td>Load balancer</td><td>spreads traffic across many servers so none tips over.</td></tr>
+      <tr><td>VPN</td><td>an encrypted tunnel making a remote machine act like it's on the local network.</td></tr>
+      <tr><td>OSPF / BGP</td><td>how routers decide paths. OSPF = inside one org; BGP = between orgs (runs the whole internet).</td></tr>
+    </table></div>
+    <div class="edge"><b>Drill these two to stand out fast:</b> <b>subnetting</b> (given <code>10.0.0.0/26</code>, how many hosts? which range?) and <b>"walk me through what happens when I load a website"</b> — the flow above. Nail both cold and you interview above your experience level.</div>
+  </section>
+
+  <!-- ============ 4 · CLOUD ============ -->
+  <section id="cloud">
+    <div class="seclead"><span class="num">4</span><h2>Cloud — renting someone else's computers, well</h2></div>
+    <p class="subhead">"The cloud" = data centers you rent by the minute via an API, instead of buying servers. The skill is <em>knowing which service to reach for</em>.</p>
+
+    <div class="card">
+      <h4>The three rental levels</h4>
+      <ul class="pts">
+        <li><span class="term">IaaS</span> (Infrastructure) — they give you a bare virtual machine, you install everything. Most control. <em>e.g. AWS EC2.</em></li>
+        <li><span class="term">PaaS</span> (Platform) — you hand them code, they run it. No servers to manage. <em>e.g. a managed app host.</em></li>
+        <li><span class="term">SaaS</span> (Software) — finished software you just use. <em>e.g. Gmail, GolfNow's tee sheet.</em></li>
+      </ul>
+      <p style="font-size:13px;color:var(--muted)">Analogy: IaaS = lease an empty kitchen · PaaS = a kitchen with staff, you bring recipes · SaaS = order the meal.</p>
+    </div>
+
+    <h3>The core primitives (every cloud has these — learn the concept once)</h3>
+    <div class="twrap"><table>
+      <tr><th>Concept</th><th>AWS</th><th>Azure</th><th>What it is</th></tr>
+      <tr><td>Virtual machine</td><td>EC2</td><td>Virtual Machine</td><td>a rented computer</td></tr>
+      <tr><td>Object storage</td><td>S3</td><td>Blob Storage</td><td>infinite bucket for files</td></tr>
+      <tr><td>Private network</td><td>VPC</td><td>VNet</td><td>your own isolated network in the cloud</td></tr>
+      <tr><td>Identity/permissions</td><td>IAM</td><td>Entra ID</td><td>who can do what — <strong>the security core</strong></td></tr>
+      <tr><td>Serverless function</td><td>Lambda</td><td>Functions</td><td>run code with no server, pay per call</td></tr>
+      <tr><td>Managed database</td><td>RDS</td><td>Azure SQL</td><td>a database they keep alive</td></tr>
+    </table></div>
+
+    <h3>Words that matter for the networking/cloud role</h3>
+    <ul class="pts">
+      <li><span class="term">Region &amp; Availability Zone</span> — a region is a geographic area; AZs are separate data centers in it. You spread across AZs so one fire doesn't kill you.</li>
+      <li><span class="term">VPC</span> networking = the same subnets, route tables, firewalls (called <em>security groups</em>) and gateways from Section 3, but virtual. <strong>Your networking knowledge maps directly onto cloud.</strong> That's your bridge.</li>
+      <li><span class="term">IaC</span> (Infrastructure as Code) — define your whole network/servers in a text file (<em>Terraform</em>) and deploy it repeatably. This is the modern job.</li>
+      <li><span class="term">Container</span> (<em>Docker</em>) — package an app + everything it needs into one portable box. <span class="term">Kubernetes</span> runs thousands of them.</li>
+      <li><span class="term">CI/CD</span> — automated pipeline: push code → it tests → it deploys. No manual steps.</li>
+    </ul>
+    <div class="edge"><b>The 6-month path everyone recommends, in order:</b> networking fundamentals → <b>one</b> cloud (pick AWS or Azure, don't split) → Linux + a scripting language → Terraform (IaC) → Docker/containers → CI/CD. Depth in one beats shallow in three.</div>
+  </section>
+
+  <!-- ============ 5 · AI ============ -->
+  <section id="ai">
+    <div class="seclead"><span class="num">5</span><h2>AI &amp; LLMs — what's under the hood</h2></div>
+    <p class="subhead">The AI you care about is the <span class="term">LLM</span> (Large Language Model) — the thing running this guide's author. Here's how it actually works, minus the hype.</p>
+
+    <div class="card violet">
+      <h4>What an LLM really does</h4>
+      <p>It's a giant math function trained on a huge slice of text to do <strong>one thing: predict the next chunk of text</strong>. Everything — answering, coding, reasoning — is that prediction, done extremely well. It is not a database and it doesn't "look things up" unless you give it a tool to.</p>
+    </div>
+
+    <h3>The five terms that unlock every AI conversation</h3>
+    <div class="twrap"><table>
+      <tr><th>Term</th><th>Meaning</th></tr>
+      <tr><td><span class="term">Token</span></td><td>a piece of a word (~4 chars). Models read/charge/limit by tokens, not words.</td></tr>
+      <tr><td><span class="term">Context window</span></td><td>how much it can "hold in mind" at once (its short-term memory). Overflow = it forgets the start.</td></tr>
+      <tr><td><span class="term">Training vs inference</span></td><td>training = the months of learning (done once, costs millions). Inference = you asking it something (cheap, instant).</td></tr>
+      <tr><td><span class="term">Prompt</span></td><td>everything you send in. Prompt quality is the single biggest lever on output quality.</td></tr>
+      <tr><td><span class="term">Hallucination</span></td><td>confident wrong answers. It predicts plausible text, not truth — so you verify, or give it tools/data.</td></tr>
+    </table></div>
+
+    <h3>The patterns that turn a chatbot into a product</h3>
+    <ul class="pts">
+      <li><span class="term">RAG</span> (Retrieval-Augmented Generation) — before answering, fetch relevant documents and paste them into the prompt. How you make an LLM answer from <em>your</em> data (a company's docs) without retraining.</li>
+      <li><span class="term">Embeddings</span> — turning text into a list of numbers so a computer can find "similar meaning." The search engine behind RAG.</li>
+      <li><span class="term">Tools / function calling</span> — you hand the model functions (search, send email, run code). It decides when to call them. This is the leap from "talks" to "does."</li>
+      <li><span class="term">Agent</span> — an LLM in a loop with tools and memory, working toward a goal across many steps. <strong>Your Bee is exactly this. So is the hourly loop running your repo.</strong></li>
+      <li><span class="term">Fine-tuning vs prompting</span> — prompting/RAG solves 95% of cases and is cheap. Fine-tuning (retraining on your examples) is a last resort. Don't reach for it first.</li>
+    </ul>
+
+    <h3>The API shape (this is literally how you'd build with me)</h3>
+    <pre><span class="c"># you POST a prompt, you get text back — same REST from Section 2</span>
+<span class="fn">POST</span> https://api.anthropic.com/v1/messages
+{
+  <span class="k">"model"</span>: <span class="s">"claude-..."</span>,
+  <span class="k">"max_tokens"</span>: <span class="s">1024</span>,
+  <span class="k">"messages"</span>: [ { <span class="k">"role"</span>:<span class="s">"user"</span>, <span class="k">"content"</span>:<span class="s">"..."</span> } ]
+}</pre>
+    <div class="edge"><b>Why this is your unfair advantage:</b> most networking/cloud people <em>fear</em> AI. If you're the cloud/network hire who can also wire an LLM into a workflow — automate tickets, summarize logs, build an agent that watches infra — you're not late, you're <b>early</b> to the combination almost nobody has yet.</div>
+  </section>
+
+  <!-- ============ 6 · THE EDGE ============ -->
+  <section id="edge">
+    <div class="seclead"><span class="num">6</span><h2>The competitive edge — late start, front of the line</h2></div>
+    <p class="subhead">You said you'll be "late to the knowledge." Good news: certs and tenure are not what separates people. <em>Demonstrable ability</em> is, and that you can manufacture fast.</p>
+
+    <div class="card green">
+      <h4>The three things that actually move you up</h4>
+      <ul class="pts">
+        <li><strong>1 · A portfolio that runs.</strong> A GitHub with real projects beats a resume of certs. <em>You already have one</em> — the demos we deployed. A hiring manager can click them. That is rare.</li>
+        <li><strong>2 · One cert to clear the filter.</strong> HR screens on paper. Get <span class="term">CompTIA Network+</span> (or <span class="term">CCNA</span>) for networking, then <span class="term">AWS Cloud Practitioner → Solutions Architect Associate</span> (or Azure <span class="term">AZ-900 → AZ-104</span>). One or two, not ten.</li>
+        <li><strong>3 · A home lab.</strong> Break and fix things: spin up a VPC, wire subnets, deploy a container, script it in Terraform. Stories from a home lab win interviews because they're specific.</li>
+      </ul>
+    </div>
+
+    <h3>Your 90-day plan (blunt version)</h3>
+    <div class="flow">
+      <div class="step"><span class="n">1</span><div><b>Weeks 1–3 · Networking fundamentals</b><span>OSI, TCP/IP, subnetting (drill it), DNS, the request-flow. Free: Professor Messer's Network+ videos. Goal: explain the request-flow cold.</span></div></div>
+      <div class="step"><span class="n">2</span><div><b>Weeks 4–7 · One cloud, hands-on</b><span>AWS free tier. Build a VPC, launch an EC2, put a static site on S3, lock it with IAM + security groups. You'll <em>feel</em> Section 3 become Section 4.</span></div></div>
+      <div class="step"><span class="n">3</span><div><b>Weeks 8–10 · Automate it</b><span>Rebuild that same setup in Terraform. Put a Docker container on it. Now you've done the modern job, not the 2010 job.</span></div></div>
+      <div class="step"><span class="n">4</span><div><b>Weeks 11–13 · Cert + AI wedge</b><span>Sit Network+ or AWS Cloud Practitioner. In parallel, wire one small LLM automation into your lab (an agent that summarizes your server logs). That combo is your edge.</span></div></div>
+    </div>
+    <div class="warn"><b>The trap to avoid:</b> "tutorial hell" — endlessly watching, never building. The moment a concept half-lands, <em>go build the smallest version of it.</em> Confusion resolves in the doing, not the watching.</div>
+  </section>
+
+  <!-- ============ 7 · LOOP ENGINEERING ============ -->
+  <section id="loop">
+    <div class="seclead"><span class="num">7</span><h2>Programming me — loop engineering for around-the-clock work</h2></div>
+    <p class="subhead">You want to point me at your startups and work and have me grind while you sleep. Here's the anatomy of a prompt/loop that actually does that safely — the exact pattern already running your repo.</p>
+
+    <div class="card amber">
+      <h4>An autonomous loop needs four things (yours already has them)</h4>
+      <ul class="pts">
+        <li><strong>A queue</strong> — an ordered list of work (your <code>BACKLOG.md</code>). The loop always takes the top. You steer by reordering it.</li>
+        <li><strong>A contract</strong> — the rules every cycle follows (your <code>LOOP.md</code> + <code>AGENTS.md</code>): build → <em>verify with real evidence</em> → small reversible commit → log → repeat.</li>
+        <li><strong>Guardrails</strong> — hard stops: never fake "done," never invent scope, never do anything irreversible/paid without a human. This is what makes unattended safe.</li>
+        <li><strong>A trigger</strong> — what fires it: an hourly schedule, or a <code>/loop</code> you start in a session.</li>
+      </ul>
+    </div>
+
+    <h3>The anatomy of a good "do my work" prompt</h3>
+    <pre><span class="c"># a self-contained autonomous prompt has these parts:</span>
+<span class="k">ROLE</span>      you are X working on repo Y at path Z
+<span class="k">SOURCE</span>    read these files first (backlog, rules, state)
+<span class="k">TASK</span>      take the top item; do ONE fully
+<span class="k">VERIFY</span>    prove it works before claiming done (run it)
+<span class="k">RECORD</span>    commit small + log what/why/how-to-undo
+<span class="k">GUARDRAIL</span> stop for a human on anything irreversible
+<span class="k">STOP</span>      one item per run; say what's next</pre>
+
+    <h3>The rules that keep an autonomous agent from wrecking things</h3>
+    <ul class="pts">
+      <li><strong>Small, reversible steps.</strong> One commit per unit, each with an undo. A bad cycle is a one-line rollback, not a disaster.</li>
+      <li><strong>Evidence beats confidence.</strong> The agent must <em>run</em> the thing and read the output — "should work" is banned. This one rule prevents most silent failures.</li>
+      <li><strong>It can add to the plan, not act on it.</strong> New ideas go into the backlog for you to approve — the loop can't expand its own mandate.</li>
+      <li><strong>Humans gate the irreversible.</strong> Deploys, payments, deletions, settings — the agent prepares them and stops. You pull the trigger.</li>
+    </ul>
+    <div class="edge"><b>How to actually run your empire this way:</b> one repo per venture, each with its own <code>BACKLOG.md</code> + <code>LOOP.md</code>. Point an hourly loop at each. You spend your time doing the one human job — <b>reordering the backlogs</b> — and wake up to committed, verified progress. That's the whole game. You've already built the template once; every future venture is a copy-paste of the pattern.</div>
+  </section>
+
+  <footer>
+    Built for Jared · a living reference — say the word and I'll expand any section into its own deep dive.<br>
+    Sources: GolfNow / NBC Sports Next for Golf · golfnowbusiness.com · SportsFirst golf APIs · 2026 cloud &amp; network engineer roadmaps (Scaler, Futurense, NetworkersHome). Fundamentals are stable; verify specific certs/prices before you buy.
+  </footer>
+</div>
+<a class="backtop" href="#top" aria-label="Back to top">↑</a>
+</body>
+</html>
