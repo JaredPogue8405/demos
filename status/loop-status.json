@@ -1,8 +1,8 @@
 {
-  "updated": "2026-07-24T12:08:00-04:00",
-  "now": "Idle between cycles — dashboard is live and self-updating",
-  "next": "Audit sweep resumes: skilltree → workshop → games → concepts",
-  "doneTotal": 8,
+  "updated": "2026-07-24T12:12:00-04:00",
+  "now": "Idle between cycles — auditing builds for real defects",
+  "next": "Continue the sweep — remaining games/concepts, then loop back",
+  "doneTotal": 9,
   "liveBuilds": "17",
   "needsYou": [
     ["Approve the loop's tools once", "Scheduled sidebar → hourly-backlog-loop → Run now (only if using the hourly backstop)"],
@@ -16,6 +16,7 @@
     { "label": "Fairway", "url": "https://jaredpogue8405.github.io/demos/tools/fairway/" }
   ],
   "cycles": [
+    { "n": 9, "kind": "fix", "title": "44px touch targets — study nav + workshop switch", "commit": "", "when": "Jul 24" },
     { "n": 8, "kind": "feat", "title": "Live Loop Dashboard — glanceable status, self-updating", "commit": "", "when": "Jul 24" },
     { "n": 7, "kind": "fix", "title": "Tracker: show delete button on touch devices", "commit": "52b2419", "when": "Jul 24" },
     { "n": 6, "kind": "feat", "title": "Bee: live Ollama reconnect (sim→live, no reload)", "commit": "826f0ea", "when": "Jul 24" },
