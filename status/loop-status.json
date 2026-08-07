@@ -1,0 +1,28 @@
+{
+  "updated": "2026-07-24T12:08:00-04:00",
+  "now": "Idle between cycles — dashboard is live and self-updating",
+  "next": "Audit sweep resumes: skilltree → workshop → games → concepts",
+  "doneTotal": 8,
+  "liveBuilds": "17",
+  "needsYou": [
+    ["Approve the loop's tools once", "Scheduled sidebar → hourly-backlog-loop → Run now (only if using the hourly backstop)"],
+    ["Allergy app on a real iPhone", "cd allergy-app/mobile && npx expo start — I have no device to test it"],
+    ["Your mom's real store layout", "Tell me the departments + rough positions and I'll make the map match"],
+    ["Paid APIs for real Fairway bookings", "A tee-time gateway + Stripe when you want live inventory/payment"]
+  ],
+  "links": [
+    { "label": "Live demos", "url": "https://jaredpogue8405.github.io/demos/" },
+    { "label": "Field Guide", "url": "https://jaredpogue8405.github.io/demos/study/" },
+    { "label": "Fairway", "url": "https://jaredpogue8405.github.io/demos/tools/fairway/" }
+  ],
+  "cycles": [
+    { "n": 8, "kind": "feat", "title": "Live Loop Dashboard — glanceable status, self-updating", "commit": "", "when": "Jul 24" },
+    { "n": 7, "kind": "fix", "title": "Tracker: show delete button on touch devices", "commit": "52b2419", "when": "Jul 24" },
+    { "n": 6, "kind": "feat", "title": "Bee: live Ollama reconnect (sim→live, no reload)", "commit": "826f0ea", "when": "Jul 24" },
+    { "n": 5, "kind": "feat", "title": "Fairway: real 'book on the course's site' link", "commit": "d3230ea", "when": "Jul 24" },
+    { "n": 4, "kind": "deploy", "title": "Branded 404 page on the live site", "commit": "", "when": "Jul 24" },
+    { "n": 3, "kind": "feat", "title": "SNORK: Chill/Classic/Fast difficulty selector", "commit": "046e32c", "when": "Jul 24" },
+    { "n": 2, "kind": "feat", "title": "Sandbox launcher: new tool tiles", "commit": "f735e72", "when": "Jul 24" },
+    { "n": 1, "kind": "deploy", "title": "Public deploy live + QR + Field Guide", "commit": "ffff504", "when": "Jul 24" }
+  ]
+}
