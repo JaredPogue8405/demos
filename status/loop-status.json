@@ -1,8 +1,8 @@
 {
-  "updated": "2026-07-24T12:12:00-04:00",
-  "now": "Idle between cycles — auditing builds for real defects",
-  "next": "Continue the sweep — remaining games/concepts, then loop back",
-  "doneTotal": 9,
+  "updated": "2026-08-21T00:00:00-04:00",
+  "now": "Idle between cycles — BACKLOG NOW section clear, next up is SellSmith/Tracker polish",
+  "next": "SellSmith -> product grade, or Mission Tracker polish (Bee repaint saved for a focused session)",
+  "doneTotal": 10,
   "liveBuilds": "17",
   "needsYou": [
     ["Approve the loop's tools once", "Scheduled sidebar → hourly-backlog-loop → Run now (only if using the hourly backstop)"],
@@ -16,6 +16,7 @@
     { "label": "Fairway", "url": "https://jaredpogue8405.github.io/demos/tools/fairway/" }
   ],
   "cycles": [
+    { "n": 10, "kind": "audit", "title": "Verified workshop QR already synced to public (no drift found)", "commit": "74b9e68", "when": "Aug 21" },
     { "n": 9, "kind": "fix", "title": "44px touch targets — study nav + workshop switch", "commit": "", "when": "Jul 24" },
     { "n": 8, "kind": "feat", "title": "Live Loop Dashboard — glanceable status, self-updating", "commit": "", "when": "Jul 24" },
     { "n": 7, "kind": "fix", "title": "Tracker: show delete button on touch devices", "commit": "52b2419", "when": "Jul 24" },
