@@ -151,6 +151,8 @@
         <button class="btn ghost sm" onclick="Tracker.expandAll(false)">Collapse tasks</button>
         <button class="btn ghost sm" onclick="Tracker.reset()">Reset to defaults</button>
         <button class="btn ghost sm" onclick="Tracker.exportJSON()">Export JSON</button>
+        <button class="btn ghost sm" onclick="document.getElementById('importFile').click()">Import JSON</button>
+        <input type="file" id="importFile" accept="application/json,.json" hidden>
       </div>
     </div>
   </div>
@@ -319,6 +321,23 @@ window.Tracker={
   reset(){ if(confirm('Reset the tracker to the seeded projects? Your custom edits will be lost.')){ data=seed(); render(); toast('Reset to defaults'); } },
   exportJSON(){ const blob=new Blob([JSON.stringify({projects:data},null,2)],{type:'application/json'});
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='mission-tracker.json'; a.click(); URL.revokeObjectURL(a.href); toast('Exported JSON'); },
+  importJSON(text){
+    let parsed;
+    try{ parsed=JSON.parse(text); }catch(e){ toast('Import failed: not valid JSON'); return false; }
+    const list=Array.isArray(parsed)?parsed:parsed?.projects;
+    if(!Array.isArray(list)){ toast('Import failed: no projects array found'); return false; }
+    // Normalize + validate each project/task so a hand-edited or partial file can't corrupt the tracker.
+    const clean=[];
+    for(const p of list){
+      if(!p||typeof p.name!=='string'||!p.name.trim()) continue;
+      const tasks=Array.isArray(p.tasks)?p.tasks.filter(t=>t&&typeof t.text==='string'&&t.text.trim())
+        .map(t=>({id:typeof t.id==='string'&&t.id?t.id:uid(p.id||'proj'),text:t.text.trim(),done:!!t.done})):[];
+      clean.push({id:typeof p.id==='string'&&p.id?p.id:uid('proj'),name:p.name.trim(),
+        kind:typeof p.kind==='string'&&p.kind?p.kind:'custom',open:!!p.open,tasks});
+    }
+    if(!clean.length){ toast('Import failed: no valid projects in file'); return false; }
+    data=clean; render(); toast('Imported '+clean.length+' project'+(clean.length===1?'':'s')); return true;
+  },
 };
 
 /* ================== 3D holographic core (fills with completion) ================== */
@@ -359,6 +378,15 @@ let last=0;
 function loop(ts){ const dt=Math.min(0.05,(ts-last)/1000||0.016); last=ts; drawCore(dt); if(!REDUCED) requestAnimationFrame(loop); }
 requestAnimationFrame(loop);
 if(REDUCED){ requestAnimationFrame(()=>drawCore(0.016)); }
+
+document.getElementById('importFile').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>Tracker.importJSON(r.result);
+  r.onerror=()=>toast('Import failed: could not read file');
+  r.readAsText(f);
+  e.target.value='';   // allow re-importing the same filename twice in a row
+});
 
 render();
 </script>
