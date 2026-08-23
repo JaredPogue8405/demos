@@ -1,8 +1,8 @@
 {
-  "updated": "2026-08-21T00:00:00-04:00",
-  "now": "Idle between cycles — BACKLOG NOW section clear, next up is SellSmith/Tracker polish",
-  "next": "SellSmith -> product grade, or Mission Tracker polish (Bee repaint saved for a focused session)",
-  "doneTotal": 10,
+  "updated": "2026-08-21T01:00:00-04:00",
+  "now": "Idle between cycles — Tracker gained Import JSON, next up is Tracker's remaining polish or Skilltree",
+  "next": "Mission Tracker (empty state + mobile visual pass) or Skill Tree -> data-driven (SellSmith merge saved for a focused session)",
+  "doneTotal": 11,
   "liveBuilds": "17",
   "needsYou": [
     ["Approve the loop's tools once", "Scheduled sidebar → hourly-backlog-loop → Run now (only if using the hourly backstop)"],
@@ -16,6 +16,7 @@
     { "label": "Fairway", "url": "https://jaredpogue8405.github.io/demos/tools/fairway/" }
   ],
   "cycles": [
+    { "n": 11, "kind": "feat", "title": "Mission Tracker: Import JSON (pairs with Export)", "commit": "0469a64", "when": "Aug 21" },
     { "n": 10, "kind": "audit", "title": "Verified workshop QR already synced to public (no drift found)", "commit": "74b9e68", "when": "Aug 21" },
     { "n": 9, "kind": "fix", "title": "44px touch targets — study nav + workshop switch", "commit": "", "when": "Jul 24" },
     { "n": 8, "kind": "feat", "title": "Live Loop Dashboard — glanceable status, self-updating", "commit": "", "when": "Jul 24" },
