@@ -158,7 +158,19 @@ const OLLAMA_BASE='http://localhost:11434';
 const $=id=>document.getElementById(id);
 let LIVE=false;
 
+/* A page served over HTTPS can never reach http://localhost — the browser
+   blocks it as mixed content before the request leaves. Probing anyway just
+   logs a console error for every visitor on the live site and delays the
+   offline state by a round trip that was never going to succeed. Local and
+   file:// keep probing exactly as before. */
+const OLLAMA_REACHABLE = location.protocol !== 'https:'
+  || ['localhost','127.0.0.1','[::1]'].includes(location.hostname);
 async function detect(){
+  if(!OLLAMA_REACHABLE){
+    $('statusText').textContent='Ollama offline — using built-in generator';
+    $('model').innerHTML='<option>offline</option>';
+    return;
+  }
   try{
     const r=await fetch(OLLAMA_BASE+'/api/tags'); if(!r.ok) throw 0;
     const d=await r.json(); const names=(d.models||[]).map(m=>m.name); if(!names.length) throw 0;
