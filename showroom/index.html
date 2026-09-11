@@ -311,9 +311,17 @@ document.querySelectorAll('.sec').forEach(s=>{
 });
 document.getElementById('yr').textContent=new Date().getFullYear();
 
-/* container layout? probe a container-root file; swap all hrefs if present. */
-fetch('../snork/index.html',{method:'HEAD'}).then(r=>{
-  if(r.ok){ container=true; cards.forEach(c=>{ const b=BUILDS.find(x=>x[0]===c.dataset.key); c.href=b[9]; }); }
+/* Container layout? Probe the REPO-layout path and swap only on an explicit
+   404. The probe used to ask for the container path ('../snork/index.html'),
+   which meant every visitor to the live site logged a 404 on page load — the
+   error landed in the common layout instead of the rare one. Asking for the
+   repo path inverts that: public visitors get a clean 200, and only the local
+   container sees the failed probe.
+   A network error is NOT treated as a container: offline, this file sits
+   outside the showroom's cache scope and fetch simply fails, and swapping
+   hrefs on that would break every link on an offline page load. */
+fetch('../games/snork/index.html',{method:'HEAD'}).then(r=>{
+  if(r.status===404){ container=true; cards.forEach(c=>{ const b=BUILDS.find(x=>x[0]===c.dataset.key); c.href=b[9]; }); }
 }).catch(()=>{});
 
 /* ---------- choreography ---------- */
