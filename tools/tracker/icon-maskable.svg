@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Mission Tracker">
+  <rect width="512" height="512" fill="#0b1120"/>
+  <circle cx="256" cy="256" r="104" fill="none" stroke="#182034" stroke-width="28"/>
+  <circle cx="256" cy="256" r="104" fill="none" stroke="#8fd0ff" stroke-width="28" stroke-linecap="round"
+    stroke-dasharray="653" stroke-dashoffset="163" transform="rotate(-90 256 256)"/>
+  <path d="M210 258l32 32 66-76" fill="none" stroke="#bfe6ff" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="256" cy="152" r="16" fill="#f5c518"/>
+</svg>

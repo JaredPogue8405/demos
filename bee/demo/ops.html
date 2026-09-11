@@ -4,6 +4,15 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>BEE — OPS (mission control)</title>
+<meta name="theme-color" content="#08090B" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2l8 4.6v9.2L12 22 4 15.8V6.6Z' fill='none' stroke='%23F5C518' stroke-width='1.8'/%3E%3Ccircle cx='12' cy='12' r='3.4' fill='%239FE0FF'/%3E%3C/svg%3E" />
+<link rel="icon" type="image/svg+xml" href="./icon.svg" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="apple-touch-icon" href="./icon-192.png" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="BEE" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -202,6 +211,15 @@ refresh(); setInterval(refresh,30000);
 
 /* test hook */
 window.Ops={ get state(){return state;}, refresh, SURFACES };
+/* ---- PWA — register only where a worker can actually run ---- */
+if ('serviceWorker' in navigator &&
+    (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+  addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+}
+window.BeePWA = {
+  get supported(){ return 'serviceWorker' in navigator; },
+  get controlled(){ return !!(navigator.serviceWorker && navigator.serviceWorker.controller); },
+};
 </script>
 <script src="shell.js"></script>
 </body>

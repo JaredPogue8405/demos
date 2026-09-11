@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Allergy Scanner">
+  <rect width="512" height="512" fill="#0a0c0f"/>
+  <g transform="translate(256 268) scale(13) translate(-12 -12)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 2.5l7.5 3v5.5c0 4.8-3.2 8.6-7.5 10.5-4.3-1.9-7.5-5.7-7.5-10.5V5.5l7.5-3z" stroke="#4f92e6" stroke-width="1.7"/>
+    <path d="M8.8 12.2l2.2 2.2 4.2-4.6" stroke="#2fc07a" stroke-width="1.7"/>
+  </g>
+</svg>

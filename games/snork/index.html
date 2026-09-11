@@ -4,6 +4,15 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>SNORK — a hungry little pig</title>
+<meta name="theme-color" content="#101a0b" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='17' r='11' fill='%23f4a9c6'/%3E%3Cellipse cx='16' cy='20' rx='6' ry='4.5' fill='%23ffc4dd'/%3E%3Cellipse cx='13.5' cy='20' rx='1.1' ry='1.8' fill='%23b05f83'/%3E%3Cellipse cx='18.5' cy='20' rx='1.1' ry='1.8' fill='%23b05f83'/%3E%3Ccircle cx='12' cy='14' r='1.7' fill='%232a1a12'/%3E%3Ccircle cx='20' cy='14' r='1.7' fill='%232a1a12'/%3E%3C/svg%3E" />
+<link rel="icon" type="image/svg+xml" href="./icon.svg" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="apple-touch-icon" href="./icon-192.png" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="SNORK" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
@@ -22,7 +31,21 @@
   body::before{content:"";position:fixed;inset:0;pointer-events:none;
     background-image:radial-gradient(rgba(255,247,234,.06) 1px,transparent 1.5px);background-size:26px 26px;
     -webkit-mask:radial-gradient(circle at 50% 40%,transparent 30%,#000 80%);mask:radial-gradient(circle at 50% 40%,transparent 30%,#000 80%)}
-  #wrap{position:relative}
+  /* signature moment: the barn-at-night yard beyond the fence is alive, not a dead backdrop.
+     A slow lantern glow breathes behind the pen; fireflies drift the dark past its edges. */
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(480px 320px at 50% 46%,rgba(255,207,63,.16),rgba(255,207,63,0) 70%);
+    animation:lantern 6s ease-in-out infinite}
+  @keyframes lantern{0%,100%{opacity:.55}50%{opacity:1}}
+  #fireflies{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+  #fireflies i{position:absolute;width:5px;height:5px;border-radius:50%;background:#fff2a0;
+    box-shadow:0 0 8px 2px rgba(255,242,160,.9);opacity:0;animation:drift linear infinite,glow 2.6s ease-in-out infinite}
+  @keyframes drift{
+    0%{transform:translate(var(--x0),var(--y0))}
+    100%{transform:translate(var(--x1),var(--y1))}
+  }
+  @keyframes glow{0%,100%{opacity:0}50%{opacity:.9}}
+  #wrap{position:relative;z-index:1}
   canvas{display:block;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.55),0 0 0 8px var(--fence),0 0 0 12px var(--fence-dark),0 0 70px rgba(255,207,63,.14)}
 
   #hud{position:absolute;top:-4px;left:0;right:0;transform:translateY(-100%);display:flex;align-items:center;gap:12px;padding:0 4px 10px}
@@ -33,6 +56,15 @@
 
   .overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(34,51,26,.72);backdrop-filter:blur(3px);border-radius:18px;z-index:5}
   .overlay.show{display:flex}
+  /* choreographed entrance — the card settles in, title leads by a beat. Transitions are the product. */
+  .overlay.show .card{animation:cardIn .5s cubic-bezier(.16,1,.3,1) both}
+  .overlay.show .card h1{animation:titleIn .55s cubic-bezier(.16,1,.3,1) both .06s}
+  @keyframes cardIn{from{opacity:0;transform:translateY(14px) scale(.94)}to{opacity:1;transform:none}}
+  @keyframes titleIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){
+    body::after,#fireflies i{animation:none!important;opacity:.6}
+    .overlay.show .card,.overlay.show .card h1{animation:none!important;opacity:1;transform:none}
+  }
   .card{background:var(--cream);border:5px solid var(--fence);border-radius:24px;padding:26px 30px;text-align:center;max-width:90%;box-shadow:0 12px 0 rgba(124,79,38,.5)}
   .card h1{font-size:clamp(40px,9vw,68px);color:var(--pig-d);text-shadow:0 4px 0 #fff,0 5px 0 var(--fence);line-height:.9}
   .card .tag{font-weight:800;color:var(--fence-dark);margin-top:2px}
@@ -71,6 +103,7 @@
 </style>
 </head>
 <body>
+<div id="fireflies" aria-hidden="true"></div>
 <div id="wrap">
   <div id="hud">
     <div class="brand">SNORK <span>🐷</span></div>
@@ -350,10 +383,36 @@
     get food() { return { ...food }; }, get head() { return { ...snake[0] }; }, get dir() { return { ...dir }; },
     get interval() { return interval; }, get difficulty() { return difficulty; },
     setDifficulty: (d) => { if (DIFF[d]) { difficulty = d; try { localStorage.setItem('snork.diff', d); } catch (e) {} paintDiff(); } },
+    get sw() { return { supported: 'serviceWorker' in navigator, controlled: !!(navigator.serviceWorker && navigator.serviceWorker.controller) }; },
   };
+
+  // ---- PWA — register only where a worker can actually run ----
+  if ('serviceWorker' in navigator &&
+      (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+    addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+  }
 
   reset(); alive = false; // draw a static board behind the menu
   requestAnimationFrame(frame);
+
+  // ---- ambient fireflies: the yard beyond the pen stays alive even when nothing is played ----
+  (function spawnFireflies() {
+    const host = document.getElementById('fireflies');
+    const n = 14;
+    for (let i = 0; i < n; i++) {
+      const el = document.createElement('i');
+      const x0 = Math.random() * window.innerWidth, y0 = Math.random() * window.innerHeight;
+      const x1 = x0 + (Math.random() - 0.5) * 220, y1 = y0 + (Math.random() - 0.5) * 160;
+      el.style.left = x0 + 'px'; el.style.top = y0 + 'px';
+      el.style.setProperty('--x0', '0px'); el.style.setProperty('--y0', '0px');
+      el.style.setProperty('--x1', (x1 - x0) + 'px'); el.style.setProperty('--y1', (y1 - y0) + 'px');
+      el.style.animationDuration = (7 + Math.random() * 8) + 's, ' + (1.8 + Math.random() * 2) + 's';
+      el.style.animationDelay = (-Math.random() * 10) + 's, ' + (-Math.random() * 2.6) + 's';
+      el.style.animationDirection = 'alternate, normal';
+      host.appendChild(el);
+    }
+  })();
+  window.Snork.fireflyCount = () => document.querySelectorAll('#fireflies i').length; // test hook
 })();
 </script>
 </body>

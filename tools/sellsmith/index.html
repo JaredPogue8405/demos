@@ -4,6 +4,14 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>SellSmith Market — buy & sell, with AI listings</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#0c0e13">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SellSmith">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -405,10 +413,17 @@ $('postBtn').onclick=()=>{
 };
 render();
 
+// PWA: register only on secure contexts; a failed registration never blocks the app.
+let swReg=null;
+if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
+  navigator.serviceWorker.register('sw.js').then(r=>{ swReg=r; }).catch(()=>{});
+}
+
 // test hook
 window.Market={ get listings(){return listings;}, get saved(){return [...savedIds];}, render, aiWrite, _fallback:fallbackWrite,
   _post(o){ listings.unshift(Object.assign({id:'t'+Date.now(),cat:'Other',cond:'Good',loc:'x',desc:'d',tags:[],img:'',seller:'you',at:Date.now(),mine:true},o)); save(listings); render(); return listings.length; },
-  get live(){return LIVE;}, setTab(t){ tab=t; render(); } };
+  get live(){return LIVE;}, setTab(t){ tab=t; render(); },
+  get sw(){ return { supported:'serviceWorker' in navigator, controlled:!!navigator.serviceWorker?.controller }; } };
 </script>
 </body>
 </html>

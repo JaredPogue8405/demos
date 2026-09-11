@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1" />
 <meta name="theme-color" content="#0a0d0b" />
 <title>EMBERFALL — molten court vs void court</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3l11 6.5v13L16 29 5 22.5v-13z' fill='%23ffc84a'/%3E%3Cpath d='M16 10l5.5 3.2v6.6L16 23l-5.5-3.2v-6.6z' fill='%23221a04'/%3E%3C/svg%3E" />
+<link rel="icon" type="image/svg+xml" href="./icon.svg" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="apple-touch-icon" href="./icon-192.png" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="EMBERFALL" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
@@ -292,6 +300,8 @@ function spawn(key,team,x,y){
   const n=c.count||1;
   // deploy juice: dust ring + thump where the cards hit the ground
   S.fx.push({type:'ring',x,y,life:.32,max:.32,r:16+n*3,col:team==='me'?'#ffc84a':'#c74ae0'});
+  // name tag: sell the character identity the instant it lands, not just in the hand card
+  S.fx.push({type:'nametag',x,y:y-14-n*1.5,life:1.1,max:1.1,text:c.name,team});
   for(let i=0;i<5;i++) S.fx.push({type:'p',x,y,vx:(Math.random()-.5)*120,vy:-Math.random()*90,life:.4,max:.4,team});
   if(!muted) tone(140,.09,'triangle',.05);
   for(let i=0;i<n;i++){
@@ -837,6 +847,14 @@ function drawFx(f){
     ctx.textAlign='center'; ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.85)';
     ctx.strokeText('-'+f.val,f.x,f.y); ctx.fillStyle=f.team==='me'?'#ff8f90':'#ffe08a';
     ctx.fillText('-'+f.val,f.x,f.y); ctx.globalAlpha=1;
+  } else if(f.type==='nametag'){
+    const rise=(1-p)*16, fadeIn=Math.min(1,(1-p)*6);   // pop in fast, drift up, fade out with the rest of the life
+    ctx.save(); ctx.globalAlpha=Math.min(fadeIn,p*1.8)*.95; ctx.textAlign='center';
+    ctx.font=`700 10px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.85)';
+    ctx.strokeText(f.text,f.x,f.y-rise);
+    ctx.fillStyle=COL[f.team].a; ctx.fillText(f.text,f.x,f.y-rise);
+    ctx.restore();
   }
 }
 function draw(){
@@ -1063,8 +1081,18 @@ window.Hive={
   get result(){return S.result;}, get over(){return S.over;},
   get record(){ return {...record}; },
   _clearRecord(){ record={v:1,w:0,l:0,d:0,streak:0,bestStreak:0}; LS.set('hive.record',record); },
-  _mute(){ muted=true; }
+  _mute(){ muted=true; },
+  get sw(){ return {
+    supported:'serviceWorker' in navigator,
+    controlled:!!(navigator.serviceWorker && navigator.serviceWorker.controller),
+  }; }
 };
+
+/* ---------- PWA — register only where a worker can actually run ---------- */
+if('serviceWorker' in navigator &&
+   (location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){
+  addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
 </script>
 </body>
 </html>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BEE">
+  <defs>
+    <linearGradient id="ring" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFD60A"/>
+      <stop offset="1" stop-color="#E0A800"/>
+    </linearGradient>
+    <radialGradient id="core" cx="0.5" cy="0.42" r="0.62">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.42" stop-color="#9FE0FF"/>
+      <stop offset="1" stop-color="#5FB8FF"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#9FE0FF" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#9FE0FF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="#08090B"/>
+  <circle cx="256" cy="256" r="128" fill="url(#glow)"/>
+  <path d="M256 112 L378 182 V322 L256 392 L134 322 V182 Z" fill="none" stroke="url(#ring)" stroke-width="22" stroke-linejoin="round"/>
+  <circle cx="256" cy="256" r="54" fill="url(#core)"/>
+</svg>

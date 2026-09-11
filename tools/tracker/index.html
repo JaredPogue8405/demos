@@ -4,6 +4,13 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>MISSION TRACKER — every project, every task, live</title>
+<meta name="theme-color" content="#07080c" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="icon" href="./icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="./icon-192.png" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Tracker" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -12,7 +19,7 @@
     --bg:#07080c; --panel:#111420; --panel-2:#161b2a; --line:#232838; --edge:rgba(120,180,255,.28);
     --holo:#8fd0ff; --holo-bright:#bfe6ff; --holo-deep:#4f92e6; --gold:#f5c518;
     --good:#3fd08a; --warn:#e0a63c; --idle:#5a6172;
-    --text:#eaf0f8; --muted:#8b93a8; --faint:#5b6172;
+    --text:#eaf0f8; --muted:#8b93a8; --faint:#7f899c;
     --font:'Segoe UI',system-ui,sans-serif;
     --display:'Chakra Petch','Segoe UI',system-ui,sans-serif;
     --mono:'JetBrains Mono','Consolas',ui-monospace,monospace;
@@ -60,7 +67,7 @@
   .btn.ghost:hover{border-color:var(--edge)}
   .btn.sm{padding:7px 13px;font-size:11px}
 
-  .projgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px;margin-top:18px}
+  .projgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(330px,100%),1fr));gap:14px;margin-top:18px}
   .proj{background:linear-gradient(180deg,#131826,var(--panel));border:1px solid var(--line);border-radius:15px;padding:15px;transition:border-color .2s,box-shadow .2s;display:flex;flex-direction:column}
   .proj:hover{border-color:var(--edge);box-shadow:0 12px 30px rgba(0,0,0,.4)}
   .phead{display:flex;align-items:center;gap:12px}
@@ -236,7 +243,7 @@ function taskRow(p,t){
   </li>`;
 }
 function projCard(p){
-  const pct=pctOf(p), color=pct===100?'#3fd08a':pct>0?'#8fd0ff':'#5a6172';
+  const pct=pctOf(p), color=pct===100?'#3fd08a':pct>0?'#8fd0ff':'#7f899c';
   const done=p.tasks.filter(t=>t.done).length;
   return `<div class="proj" data-p="${p.id}">
     <div class="phead">
@@ -266,13 +273,20 @@ function renderHero(){
   document.getElementById('sOpen').textContent=t.open;
   document.getElementById('sPct').textContent=t.pct+'%';
   document.getElementById('heroTitle').textContent=
+    t.projects===0 ? 'No projects yet — add one to get started.' :
     t.open===0 ? 'All clear — every task complete.' :
     `${t.open} task${t.open===1?'':'s'} open across ${t.projects} project${t.projects===1?'':'s'}.`;
   window.__coreFill=t.pct/100;
 }
+function emptyState(){
+  return `<div class="proj empty" style="align-items:center;justify-content:center;text-align:center;gap:8px;min-height:180px">
+    <div class="pname" style="justify-content:center">Nothing tracked right now</div>
+    <div class="pcount">Every project's been deleted. Add one on the right to start fresh.</div>
+  </div>`;
+}
 function render(){
   const grid=document.getElementById('grid');
-  grid.innerHTML=data.map(projCard).join('')+`
+  grid.innerHTML=(data.length?data.map(projCard).join(''):emptyState())+`
     <div class="newproj">
       <div class="hint">＋ New project</div>
       <input type="text" id="newProjName" placeholder="Project name (e.g. Garage shelves)" aria-label="New project name">
@@ -318,6 +332,10 @@ window.Tracker={
   addTask(pid,text){ const p=data.find(x=>x.id===pid); if(!p||!text) return false; p.tasks.push({id:uid(pid),text,done:false}); render(); return true; },
   toggle(pid,tid){ const p=data.find(x=>x.id===pid); const t=p?.tasks.find(x=>x.id===tid); if(!t) return false; t.done=!t.done; render(); return t.done; },
   expandAll(open){ data.forEach(p=>p.open=open); render(); },
+  get sw(){ return {
+    supported:'serviceWorker' in navigator,
+    controlled:!!(navigator.serviceWorker && navigator.serviceWorker.controller),
+  }; },
   reset(){ if(confirm('Reset the tracker to the seeded projects? Your custom edits will be lost.')){ data=seed(); render(); toast('Reset to defaults'); } },
   exportJSON(){ const blob=new Blob([JSON.stringify({projects:data},null,2)],{type:'application/json'});
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='mission-tracker.json'; a.click(); URL.revokeObjectURL(a.href); toast('Exported JSON'); },
@@ -389,6 +407,12 @@ document.getElementById('importFile').addEventListener('change',e=>{
 });
 
 render();
+
+/* ---------- PWA — register only where a worker can actually run ---------- */
+if('serviceWorker' in navigator &&
+   (location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){
+  addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
 </script>
 </body>
 </html>

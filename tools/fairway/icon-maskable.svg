@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Fairway">
+  <rect width="512" height="512" fill="#0e1b14"/>
+  <path d="M212 372V160l122 47-122 47" fill="none" stroke="#7ee2a8" stroke-width="34" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="212" cy="376" r="25" fill="#f0c33c"/>
+</svg>

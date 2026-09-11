@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en" data-theme="stock">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>The Ledger — 193 verified checks across 9 installable web apps</title>
+<meta name="description" content="Every web app I have made installable and offline-capable, with the exact headless-browser check count each one passed. Numbers, not adjectives." />
+<meta name="theme-color" content="#e9ebef" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23e9ebef'/%3E%3Cpath d='M8 16.5l5 5 11-11' fill='none' stroke='%231c5e4a' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   THE LEDGER — proof page for pwa-forge.
+
+   Brief: subject is a verification record; audience is a buyer
+   deciding whether to hire; the page's one job is to convert
+   "claims he can do it" into "has done it, repeatedly, and shows
+   his working."
+
+   World: a calibration certificate — engineering vellum, deep
+   ink, a seal. Deliberately NOT the three defaults: the ground
+   is cool blue-grey stock, not warm cream; the accent is a deep
+   stamp green and an ink blue, not a single acid colour on
+   near-black; the layout is a ledger with real column rhythm,
+   not a broadsheet.
+
+   Signature element: the tally. One large tabular number that
+   counts itself up inside a seal that draws itself. Everything
+   else stays quiet — the evidence is the drama.
+
+   z-scale: 0 wash · 1 grain · 3 content
+   ============================================================ */
+
+:root{
+  --stock:#e9ebef; --stock-2:#dfe3e9; --card:#f6f7f9;
+  --ink:#12161d; --ink-2:#454d5a; --ink-3:#6c7683;
+  --rule:#c9cfd8; --rule-2:#d9dee5;
+  --seal:#14584a; --seal-soft:#dbeae4;
+  --blue:#27407e;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --ease:cubic-bezier(.16,1,.3,1);
+  --pad:clamp(20px,5vw,64px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --stock:#111419; --stock-2:#171b22; --card:#181c23;
+    --ink:#eef1f5; --ink-2:#aeb6c2; --ink-3:#828b98;
+    --rule:#2a3039; --rule-2:#232830;
+    --seal:#5fd3ae; --seal-soft:#122a24;
+    --blue:#8fa8e8;
+  }
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  background:var(--stock);color:var(--ink);font-family:var(--font);
+  min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+  font-size:16px;line-height:1.6;
+}
+:focus-visible{outline:2.5px solid var(--blue);outline-offset:3px;border-radius:4px}
+
+/* ---------- the ground: a slow wash + paper grain ---------- */
+.wash{position:fixed;inset:-25%;z-index:0;pointer-events:none;filter:blur(70px);opacity:.72}
+.wash i{position:absolute;display:block;border-radius:50%}
+.wash i:nth-child(1){width:58vw;height:58vw;left:-8vw;top:-6vw;
+  background:radial-gradient(circle,rgba(20,88,74,.30),transparent 68%);animation:drift-a 38s var(--ease) infinite alternate}
+.wash i:nth-child(2){width:52vw;height:52vw;right:-10vw;top:26vh;
+  background:radial-gradient(circle,rgba(39,64,126,.26),transparent 68%);animation:drift-b 47s var(--ease) infinite alternate}
+.wash i:nth-child(3){width:44vw;height:44vw;left:22vw;bottom:-14vw;
+  background:radial-gradient(circle,rgba(20,88,74,.18),transparent 70%);animation:drift-a 53s var(--ease) infinite alternate-reverse}
+@keyframes drift-a{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(7vw,5vh,0) scale(1.14)}}
+@keyframes drift-b{from{transform:translate3d(0,0,0) scale(1.08)}to{transform:translate3d(-6vw,-6vh,0) scale(.94)}}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.14;mix-blend-mode:multiply}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .grain{mix-blend-mode:overlay;opacity:.2}}
+@media (prefers-reduced-motion:reduce){.wash i{animation:none}}
+
+main{position:relative;z-index:3;max-width:1020px;margin:0 auto;padding:var(--pad) var(--pad) 96px}
+
+/* ---------- reveal ---------- */
+.rv{opacity:0;transform:translateY(16px);
+  transition:opacity .8s var(--ease),transform .8s var(--ease)}
+.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}
+
+/* ---------- masthead ---------- */
+.kicker{font-family:var(--mono);font-size:11.5px;letter-spacing:.19em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:500}
+h1{font-size:clamp(33px,6.4vw,63px);line-height:1.02;letter-spacing:-.035em;font-weight:600;
+  margin:14px 0 0;max-width:16ch}
+h1 em{font-style:normal;color:var(--seal)}
+.lede{margin-top:20px;font-size:clamp(16.5px,2vw,19.5px);color:var(--ink-2);max-width:60ch;font-weight:350}
+
+/* ---------- the tally (signature element) ---------- */
+.tally{display:grid;grid-template-columns:auto 1fr;gap:clamp(20px,4vw,42px);align-items:center;
+  margin:clamp(38px,6vw,62px) 0;padding:clamp(22px,3.6vw,34px);
+  background:var(--card);border:1px solid var(--rule);border-radius:20px}
+.seal{position:relative;width:clamp(124px,20vw,166px);aspect-ratio:1;flex:none;display:grid;place-items:center}
+.seal svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.seal circle{fill:none;stroke-width:2}
+.seal .track{stroke:var(--rule)}
+.seal .draw{stroke:var(--seal);stroke-linecap:round;
+  stroke-dasharray:var(--circ);stroke-dashoffset:var(--circ);
+  transition:stroke-dashoffset 1.9s var(--ease) .15s}
+.seal.in .draw{stroke-dashoffset:0}
+@media (prefers-reduced-motion:reduce){.seal .draw{transition:none;stroke-dashoffset:0}}
+.seal b{font-family:var(--mono);font-size:clamp(33px,5.6vw,46px);font-weight:600;letter-spacing:-.04em;
+  font-variant-numeric:tabular-nums;color:var(--seal);line-height:1}
+.seal span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.17em;
+  text-transform:uppercase;color:var(--ink-3);margin-top:5px;text-align:center}
+.tally-copy h2{font-size:clamp(19px,2.5vw,24px);font-weight:560;letter-spacing:-.02em;margin-bottom:9px}
+.tally-copy p{color:var(--ink-2);font-size:15.5px;max-width:48ch}
+.tally-copy p + p{margin-top:9px}
+/* Below ~680px the two columns starve the copy — at 375px it measured
+   about a 20-character line, well under the readable floor. Stack it
+   and let the seal sit above the text. */
+@media (max-width:680px){
+  .tally{grid-template-columns:1fr;justify-items:start;gap:22px}
+  .seal{width:118px}
+}
+/* At 320px the page gutter plus the card's own padding was eating
+   84px of a 320px screen, dropping the copy to roughly a 30-character
+   line. Give the text the width back rather than letting the frame
+   keep it. */
+@media (max-width:420px){
+  :root{--pad:15px}
+  .tally{padding:17px}
+  .tally-copy p{font-size:15px}
+  .ledger .row{padding:17px 15px}
+}
+
+/* ---------- section heads ---------- */
+.head{display:flex;align-items:baseline;gap:14px;margin:clamp(46px,7vw,78px) 0 20px;flex-wrap:wrap}
+.head h2{font-size:clamp(22px,3vw,29px);font-weight:600;letter-spacing:-.025em}
+.head .note{font-size:13.5px;color:var(--ink-3);font-family:var(--mono)}
+
+/* ---------- the ledger ---------- */
+.ledger{border:1px solid var(--rule);border-radius:18px;overflow:hidden;background:var(--card)}
+.row{display:grid;grid-template-columns:1fr auto;gap:6px 22px;padding:19px clamp(16px,2.6vw,24px);
+  border-top:1px solid var(--rule-2);align-items:baseline}
+.row:first-child{border-top:0}
+.row .what{grid-column:1;min-width:0}
+.row h3{font-size:17.5px;font-weight:570;letter-spacing:-.015em;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.row .type{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:500;border:1px solid var(--rule);border-radius:99px;padding:2px 8px}
+.row .ev{font-size:14.5px;color:var(--ink-2);margin-top:6px;max-width:72ch}
+.row .score{grid-column:2;grid-row:1/span 2;text-align:right;font-family:var(--mono);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.row .score b{display:block;font-size:21px;font-weight:600;color:var(--seal);letter-spacing:-.03em}
+.row .score time{display:block;font-size:11.5px;color:var(--ink-3);margin-top:3px}
+@media (max-width:560px){
+  .row{grid-template-columns:1fr}
+  .row .score{grid-column:1;grid-row:auto;text-align:left;margin-top:9px;
+    display:flex;align-items:baseline;gap:10px}
+  .row .score time{margin-top:0}
+}
+
+/* ---------- deliverables ---------- */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(252px,100%),1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--rule);border-radius:18px;padding:22px}
+.card .ico{width:34px;height:34px;border-radius:10px;background:var(--seal-soft);color:var(--seal);
+  display:grid;place-items:center;margin-bottom:14px}
+.card h3{font-size:17px;font-weight:570;letter-spacing:-.015em;margin-bottom:7px}
+.card p{font-size:14.5px;color:var(--ink-2)}
+
+/* ---------- honesty block + close ---------- */
+.plain{margin-top:clamp(40px,6vw,64px);border-left:3px solid var(--rule);padding:4px 0 4px 22px}
+.plain h2{font-size:18px;font-weight:560;letter-spacing:-.02em;margin-bottom:10px}
+.plain p{color:var(--ink-2);font-size:15px;max-width:66ch}
+.plain p + p{margin-top:11px}
+.plain strong{color:var(--ink);font-weight:570}
+
+footer{margin-top:clamp(44px,6vw,72px);padding-top:24px;border-top:1px solid var(--rule);
+  display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+</style>
+</head>
+<body>
+
+<div class="wash" aria-hidden="true"><i></i><i></i><i></i></div>
+<svg class="grain" aria-hidden="true"><filter id="g"><feTurbulence type="fractalNoise" baseFrequency=".82" numOctaves="4" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#g)"/></svg>
+
+<main>
+
+  <header class="rv">
+    <p class="kicker">Installable web apps · verification record</p>
+    <h1><span id="n-apps">Nine</span> apps. <em><span id="n-checks">193</span> checks.</em> Every one run in a real browser.</h1>
+    <p class="lede">Anyone can drop a manifest file into a page and call it an app. What matters is whether it still opens when the signal dies — and whether anyone actually checked. Here is every app I have made installable, and the exact number of automated checks each one passed.</p>
+  </header>
+
+  <section class="tally rv" aria-labelledby="tally-h">
+    <div class="seal" id="seal">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="track" cx="50" cy="50" r="45"/>
+        <circle class="draw" cx="50" cy="50" r="45"/>
+      </svg>
+      <div>
+        <b id="count" data-to="193">0</b>
+        <span>checks passed</span>
+      </div>
+    </div>
+    <div class="tally-copy">
+      <h2 id="tally-h">193 passed. Zero failed. Zero skipped.</h2>
+      <p>Each app is loaded in a real headless Chromium, installed, reloaded, then <strong>cut off from the network and reloaded again</strong>. The screenshot that comes back is decoded and its pixels counted, because a cached page can return a clean 200 and render a blank white rectangle.</p>
+      <p>Every number on this page comes from a dated entry in my build log. Nothing here is an estimate.</p>
+    </div>
+  </section>
+
+  <div class="head rv">
+    <h2>The ledger</h2>
+    <p class="note">newest first · checks passed / checks run</p>
+  </div>
+
+  <div class="ledger" id="ledger"></div>
+
+  <div class="head rv">
+    <h2>What you get</h2>
+    <p class="note">three files, one report</p>
+  </div>
+
+  <div class="cards">
+    <article class="card rv">
+      <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.6"/><path d="M10.6 18.6h2.8"/></svg></div>
+      <h3>It installs</h3>
+      <p>A real icon set, a manifest, and the iOS tags most guides forget. Android offers “Install app”; iPhone gets a proper home-screen icon and opens with no address bar.</p>
+    </article>
+    <article class="card rv">
+      <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5a15 15 0 0 1 18 0"/><path d="M6.5 11.4a10 10 0 0 1 11 0"/><path d="M10 15.3a5 5 0 0 1 4 0"/><circle cx="12" cy="19.2" r="1.1" fill="currentColor"/><path d="M4 20L20 4"/></svg></div>
+      <h3>It survives losing signal</h3>
+      <p>A network-first service worker keeps a copy of the shell. Lose the connection and the app still opens instead of the dinosaur — but online visitors always get the live version, so nothing ever goes stale.</p>
+    </article>
+    <article class="card rv">
+      <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h8.5L19 8v12.5H6z"/><path d="M14 3.5V8h5"/><path d="M9 14.2l2 2 4-4.4"/></svg></div>
+      <h3>It comes with proof</h3>
+      <p>A one-page report listing every check, what it measured, and side-by-side screenshots of your app online and with the network disconnected. Yours to keep, or forward to whoever built the site.</p>
+    </article>
+  </div>
+
+  <section class="plain rv">
+    <h2>Two things I would rather say up front</h2>
+    <p><strong>These <span id="n-apps-2">nine</span> are my own builds, not client work.</strong> I built the tooling and ran it across my own catalogue first — a game, a food-allergy scanner, a course finder, a store map, an AI assistant with four separate screens. That is why the numbers vary: each app got the checks it actually needed, not a fixed template.</p>
+    <p><strong>Not every site should be an app.</strong> If your site is one page of text, a service worker adds a file and buys you almost nothing, and I will tell you so rather than take the job. This is worth real money when people come back to your site repeatedly, or use it somewhere with bad signal — a job site, a basement, a shop floor, a course, a parking garage.</p>
+  </section>
+
+  <footer>
+    <span>Verification record · last entry 2026-09-05</span>
+    <span>Every figure sourced from a dated build-log entry</span>
+  </footer>
+
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  /* Every row is real, and every figure below is quoted from a dated
+     PROGRESS_LOG entry in the repo. If a number here cannot be traced
+     to a log entry it does not belong on this page. */
+  var BUILDS = [
+    { name: 'Bee', type: 'AI assistant · 4 screens', pass: 36, of: 36, date: '2026-09-05',
+      ev: 'Four separate screens sharing one worker under a single scope. Offline, the chat demo runs its simulated replies and the other three degrade to their own error states instead of white-screening.' },
+    { name: 'Store Guide', type: 'In-store aisle finder', pass: 25, of: 25, date: '2026-09-05',
+      ev: 'With the network cut, the full 10-section floor plan, the 10-department directory and the search box all still work — the whole point of an app you open inside a shop.' },
+    { name: 'EMBERFALL', type: 'Real-time battler', pass: 23, of: 23, date: '2026-09-05',
+      ev: 'A canvas game still spawns units offline. The offline frame was decoded and measured at 210,605 painted pixels, because a blank canvas logs no errors.' },
+    { name: 'SellSmith', type: 'Listing + ad-copy tool', pass: 23, of: 23, date: '2026-08-30',
+      ev: 'Two pages under one scope. The AI backend is cross-origin and never cached, so the status light always reflects a live check. Root-caused a worker that hung in "installing" forever on one bad shell URL.' },
+    { name: 'SNORK', type: 'Arcade game', pass: 20, of: 20, date: '2026-09-05',
+      ev: 'Played offline to a score of 10. Offline frame measured at 364,140 painted pixels.' },
+    { name: 'Mission Tracker', type: 'Project tracker', pass: 20, of: 20, date: '2026-08-30',
+      ev: 'All state is stored on the device, so offline is fully functional rather than degraded — a project was added and a task toggled with no network at all.' },
+    { name: 'Fairway', type: 'Golf course finder', pass: 16, of: 16, date: '2026-08-30',
+      ev: 'The live course and map APIs are cross-origin and never cached, so tee times can never go stale. Offline still draws the generated course art — 81,760 pixels measured.' },
+    { name: 'Showroom', type: 'Collection landing page', pass: 16, of: 16, date: '2026-08-28',
+      ev: 'The first rollout. Offline reload still renders the hero and all 16 cards, with a clean console.' },
+    { name: 'Allergy Scanner', type: 'Food safety tool', pass: 14, of: 14, date: '2026-08-29',
+      ev: 'Safety-critical, so live food and recall data is never cached — only the shell. Offline it still scored a bundled sample correctly (Nutella + milk allergy → AVOID).' }
+  ];
+
+  var TOTAL = BUILDS.reduce(function (n, b) { return n + b.pass; }, 0);
+
+  var esc = function (s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  };
+
+  function render() {
+    var ledger = document.getElementById('ledger');
+    if (!ledger) return 0;
+    ledger.innerHTML = BUILDS.map(function (b) {
+      return '<article class="row rv">' +
+        '<div class="what">' +
+          '<h3>' + esc(b.name) + ' <span class="type">' + esc(b.type) + '</span></h3>' +
+          '<p class="ev">' + esc(b.ev) + '</p>' +
+        '</div>' +
+        '<div class="score"><b>' + b.pass + '/' + b.of + '</b>' +
+          '<time datetime="' + esc(b.date) + '">' + esc(b.date) + '</time></div>' +
+      '</article>';
+    }).join('');
+    return BUILDS.length;
+  }
+
+  /* The seal ring is drawn with stroke-dashoffset, which needs the real
+     circumference rather than a magic number, so the radius can change
+     without silently breaking the animation. */
+  function primeSeal() {
+    var seal = document.getElementById('seal');
+    if (!seal) return;
+    var r = 45, circ = 2 * Math.PI * r;
+    seal.style.setProperty('--circ', circ.toFixed(2));
+  }
+
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function countUp(el, to, ms) {
+    if (reduced) { el.textContent = String(to); return; }
+    var start = null;
+    function step(t) {
+      if (start === null) start = t;
+      var p = Math.min(1, (t - start) / ms);
+      // same long-tail easing as the rest of the page
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = String(Math.round(to * eased));
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* Reveal, with the fail-safe this repo learned the hard way: anything
+     already on screen reveals immediately, and everything reveals
+     unconditionally after 1.2s, so a never-firing observer can never
+     leave the page permanently invisible. */
+  function reveal() {
+    var items = [].slice.call(document.querySelectorAll('.rv'));
+    var seal = document.getElementById('seal');
+    var counter = document.getElementById('count');
+    var counted = false;
+
+    function show(el, i) {
+      if (el.classList.contains('in')) return;
+      el.classList.add('in');
+      if (el.contains(seal) || el === seal) {
+        seal.classList.add('in');
+        if (!counted) { counted = true; countUp(counter, TOTAL, 1900); }
+      }
+    }
+
+    /* Reduced motion means there is nothing to stage, so skip the
+       observer entirely. Leaving it in place kept the tally sitting at
+       0 until the 1.2s fail-safe fired for anyone who had asked for
+       less motion — the opposite of what they asked for. */
+    if (reduced || !('IntersectionObserver' in window)) {
+      items.forEach(show);
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e, i) {
+        if (!e.isIntersecting) return;
+        setTimeout(function () { show(e.target); }, Math.min(i * 45, 260));
+        io.unobserve(e.target);
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
+
+    items.forEach(function (el) {
+      var box = el.getBoundingClientRect();
+      if (box.top < window.innerHeight) show(el);
+      else io.observe(el);
+    });
+
+    setTimeout(function () { items.forEach(show); }, 1200);
+  }
+
+  /* The headline numbers are written FROM the data, never typed beside
+     it. The first draft of this page said "Ten apps" over a nine-row
+     ledger — on a page whose entire claim is that every figure is
+     sourced, that one word was the most expensive thing on it. */
+  var WORDS = ['zero','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve'];
+  function word(n) { return WORDS[n] || String(n); }
+
+  function stampCounts() {
+    var n = BUILDS.length;
+    var a = document.getElementById('n-apps');
+    var a2 = document.getElementById('n-apps-2');
+    var c = document.getElementById('n-checks');
+    if (a) a.textContent = word(n);
+    if (a2) a2.textContent = word(n).toLowerCase();
+    if (c) c.textContent = String(TOTAL);
+    document.title = 'The Ledger — ' + TOTAL + ' verified checks across ' + n + ' installable web apps';
+  }
+
+  var rows = render();
+  stampCounts();
+  primeSeal();
+  reveal();
+
+  /* Test hook (AGENTS.md §21) — lets the harness assert the page's real
+     state instead of eyeballing it. */
+  window.Proof = {
+    builds: BUILDS.length,
+    rows: rows,
+    total: TOTAL,
+    counterText: function () { return document.getElementById('count').textContent; },
+    revealed: function () { return document.querySelectorAll('.rv.in').length; },
+    tracked: function () { return document.querySelectorAll('.rv').length; },
+    sealDrawn: function () { return document.getElementById('seal').classList.contains('in'); },
+    headlineApps: function () { return document.getElementById('n-apps').textContent; },
+    headlineChecks: function () { return document.getElementById('n-checks').textContent; }
+  };
+})();
+</script>
+</body>
+</html>

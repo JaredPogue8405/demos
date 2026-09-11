@@ -1,32 +1,147 @@
 {
-  "updated": "2026-08-23T00:00:00-04:00",
-  "now": "Idle between cycles — Skill Tree confirmed already data-driven, no rebuild needed",
-  "next": "Mission Tracker mobile visual pass or PWA manifests (SellSmith merge + Bee repaint saved for a focused session)",
-  "doneTotal": 12,
-  "liveBuilds": "17",
+  "updated": "2026-09-11T00:45:00-04:00",
+  "now": "Published. Every one of the nine PWA builds is now actually live — the public site had been 17 cycles behind and carried no service workers at all, so 'installable' was only true on my machine. Also shipped pwa-forge: one command turns any static site into an installable, offline-capable app and proves it in a real browser (22 checks, including cutting the network and counting the pixels that come back). Its record is at /proof/.",
+  "next": "Fiverr gig copy + pricing, and a client intake form — but nothing earns until Jared creates the account (I cannot create accounts or handle payment details).",
+  "doneTotal": 30,
+  "liveBuilds": "18",
   "needsYou": [
-    ["Approve the loop's tools once", "Scheduled sidebar → hourly-backlog-loop → Run now (only if using the hourly backstop)"],
-    ["Allergy app on a real iPhone", "cd allergy-app/mobile && npx expo start — I have no device to test it"],
-    ["Your mom's real store layout", "Tell me the departments + rough positions and I'll make the map match"],
-    ["Paid APIs for real Fairway bookings", "A tee-time gateway + Stripe when you want live inventory/payment"]
+    [
+      "Approve the loop's tools once",
+      "Scheduled sidebar → hourly-backlog-loop → Run now (only if using the hourly backstop)"
+    ],
+    [
+      "Allergy app on a real iPhone",
+      "cd allergy-app/mobile && npx expo start — I have no device to test it"
+    ],
+    [
+      "Your mom's real store layout",
+      "Tell me the departments + rough positions and I'll make the map match"
+    ],
+    [
+      "Paid APIs for real Fairway bookings",
+      "A tee-time gateway + Stripe when you want live inventory/payment"
+    ],
+    [
+      "Fiverr account + payout method",
+      "The one blocker I cannot clear myself — I can never create accounts or handle payment details. Everything else for the gig is built."
+    ]
   ],
   "links": [
-    { "label": "Live demos", "url": "https://jaredpogue8405.github.io/demos/" },
-    { "label": "Field Guide", "url": "https://jaredpogue8405.github.io/demos/study/" },
-    { "label": "Fairway", "url": "https://jaredpogue8405.github.io/demos/tools/fairway/" }
+    {
+      "label": "Live demos",
+      "url": "https://jaredpogue8405.github.io/demos/"
+    },
+    {
+      "label": "Field Guide",
+      "url": "https://jaredpogue8405.github.io/demos/study/"
+    },
+    {
+      "label": "Fairway",
+      "url": "https://jaredpogue8405.github.io/demos/tools/fairway/"
+    },
+    {
+      "label": "Verification record",
+      "url": "https://jaredpogue8405.github.io/demos/proof/"
+    }
   ],
   "cycles": [
-    { "n": 12, "kind": "audit", "title": "Verified Skill Tree already data-driven (no drift found)", "commit": "", "when": "Aug 23" },
-    { "n": 11, "kind": "feat", "title": "Mission Tracker: Import JSON (pairs with Export)", "commit": "0469a64", "when": "Aug 21" },
-    { "n": 10, "kind": "audit", "title": "Verified workshop QR already synced to public (no drift found)", "commit": "74b9e68", "when": "Aug 21" },
-    { "n": 9, "kind": "fix", "title": "44px touch targets — study nav + workshop switch", "commit": "", "when": "Jul 24" },
-    { "n": 8, "kind": "feat", "title": "Live Loop Dashboard — glanceable status, self-updating", "commit": "", "when": "Jul 24" },
-    { "n": 7, "kind": "fix", "title": "Tracker: show delete button on touch devices", "commit": "52b2419", "when": "Jul 24" },
-    { "n": 6, "kind": "feat", "title": "Bee: live Ollama reconnect (sim→live, no reload)", "commit": "826f0ea", "when": "Jul 24" },
-    { "n": 5, "kind": "feat", "title": "Fairway: real 'book on the course's site' link", "commit": "d3230ea", "when": "Jul 24" },
-    { "n": 4, "kind": "deploy", "title": "Branded 404 page on the live site", "commit": "", "when": "Jul 24" },
-    { "n": 3, "kind": "feat", "title": "SNORK: Chill/Classic/Fast difficulty selector", "commit": "046e32c", "when": "Jul 24" },
-    { "n": 2, "kind": "feat", "title": "Sandbox launcher: new tool tiles", "commit": "f735e72", "when": "Jul 24" },
-    { "n": 1, "kind": "deploy", "title": "Public deploy live + QR + Field Guide", "commit": "ffff504", "when": "Jul 24" }
+    {
+      "n": 30,
+      "kind": "deploy",
+      "title": "Published all nine PWA builds to the live site (they had never shipped) + pwa-forge, the tool that makes and verifies them. Proof page at /proof/.",
+      "commit": "14a8f65",
+      "when": "Sep 11"
+    },
+    {
+      "n": 29,
+      "kind": "fix",
+      "title": "Mission Tracker audit — --faint text failed WCAG AA contrast (2.78–3.24:1) same as Store Guide; deepened token. Also fixed a real 320px grid overflow (18/20 headless)",
+      "commit": "b2f9187",
+      "when": "Sep 10"
+    },
+    {
+      "n": 28,
+      "kind": "fix",
+      "title": "Store Guide audit — secondary inks failed WCAG AA contrast (2.3–4.2:1); deepened --muted/--faint/--terra tokens + map aisle label, all clear 4.5:1 now (40/40 headless)",
+      "commit": "8e55bf4",
+      "when": "Sep 10"
+    },
+    {
+      "n": 27,
+      "kind": "audit",
+      "title": "Fairway swept — 0 defects, 15/15 headless (44px targets, no 320/375 sideways scroll, canvases paint, modal focus contained, SW + offline)",
+      "commit": "",
+      "when": "Sep 10"
+    },
+    {
+      "n": 26,
+      "kind": "fix",
+      "title": "Allergy demo audit — allergen chips were 40px + keyboard-dead <div>s; rebuilt as 44px keyboard-operable buttons (14/14 headless)",
+      "commit": "64c858f",
+      "when": "Sep 10"
+    },
+    {
+      "n": 25,
+      "kind": "fix",
+      "title": "Bee demo audit — fixed chat screen's phone-wide sideways scroll + 34px reconnect button (45/45 headless)",
+      "commit": "1576fbe",
+      "when": "Sep 10"
+    },
+    {
+      "n": 24,
+      "kind": "audit",
+      "title": "Showroom landing page swept — 0 defects, 14/14 headless (links, a11y, offline, 375px)",
+      "commit": "",
+      "when": "Sep 7"
+    },
+    {
+      "n": 23,
+      "kind": "feat",
+      "title": "Bee demo — all 4 surfaces as one installable PWA (network-first, chat runs offline)",
+      "commit": "b74ea3e",
+      "when": "Sep 5"
+    },
+    {
+      "n": 22,
+      "kind": "feat",
+      "title": "SNORK — installable PWA (network-first, fully playable offline)",
+      "commit": "b9b49ae",
+      "when": "Sep 5"
+    },
+    {
+      "n": 21,
+      "kind": "feat",
+      "title": "EMBERFALL (Hive Royale) — installable PWA (network-first, fully playable offline)",
+      "commit": "496fd6d",
+      "when": "Sep 5"
+    },
+    {
+      "n": 20,
+      "kind": "feat",
+      "title": "Store Guide — installable PWA (network-first, fully offline-capable)",
+      "commit": "5154e74",
+      "when": "Sep 5"
+    },
+    {
+      "n": 19,
+      "kind": "feat",
+      "title": "SellSmith — installable PWA (network-first, both pages as shell)",
+      "commit": "62b8e34",
+      "when": "Aug 30"
+    },
+    {
+      "n": 18,
+      "kind": "feat",
+      "title": "Mission Tracker — installable PWA (network-first, fully offline-capable)",
+      "commit": "2620f77",
+      "when": "Aug 30"
+    },
+    {
+      "n": 17,
+      "kind": "feat",
+      "title": "Fairway — installable PWA (network-first, no stale course data)",
+      "commit": "4d995b2",
+      "when": "Aug 30"
+    }
   ]
 }

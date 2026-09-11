@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="SNORK">
+  <defs>
+    <radialGradient id="lantern" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffcf3f" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#ffcf3f" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="face" cx="0.42" cy="0.4" r="0.7">
+      <stop offset="0" stop-color="#f9b9d1"/>
+      <stop offset="1" stop-color="#e88fb2"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="#101a0b"/>
+  <circle cx="256" cy="256" r="180" fill="url(#lantern)"/>
+  <!-- ears (tips peek above the face, kept inside the maskable safe zone) -->
+  <path d="M158 150 L222 146 L206 232 Z" fill="#e07fa6" stroke="#c96f95" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M354 150 L290 146 L306 232 Z" fill="#e07fa6" stroke="#c96f95" stroke-width="7" stroke-linejoin="round"/>
+  <circle cx="256" cy="266" r="118" fill="url(#face)" stroke="#d97fa6" stroke-width="9"/>
+  <circle cx="217" cy="246" r="21" fill="#fff"/>
+  <circle cx="295" cy="246" r="21" fill="#fff"/>
+  <circle cx="224" cy="249" r="10" fill="#2a1a12"/>
+  <circle cx="302" cy="249" r="10" fill="#2a1a12"/>
+  <ellipse cx="256" cy="314" rx="68" ry="52" fill="#ffc4dd" stroke="#e08cae" stroke-width="8"/>
+  <ellipse cx="236" cy="314" rx="12" ry="19" fill="#b05f83"/>
+  <ellipse cx="276" cy="314" rx="12" ry="19" fill="#b05f83"/>
+</svg>

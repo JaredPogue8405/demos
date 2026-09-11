@@ -4,6 +4,15 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>BEE SUPER — one Bee. chat + squad + voice.</title>
+<meta name="theme-color" content="#08090B" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2l8 4.6v9.2L12 22 4 15.8V6.6Z' fill='none' stroke='%23F5C518' stroke-width='1.8'/%3E%3Ccircle cx='12' cy='12' r='3.4' fill='%239FE0FF'/%3E%3C/svg%3E" />
+<link rel="icon" type="image/svg+xml" href="./icon.svg" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="apple-touch-icon" href="./icon-192.png" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="BEE" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -20,6 +29,10 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
+  /* clip the hero HUD rings/sweep — they spin via transform, so their rotated
+     bounding box pokes a few px past the viewport on narrow screens; body's
+     overflow-x isn't propagated to the viewport unless html clips too */
+  html{overflow-x:hidden}
   body{background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;-webkit-font-smoothing:antialiased}
   .brand,.wordmark,.tagline,.status,.chip,.cta,.ric,.chathead .title,.send,.navlinks a{font-family:var(--display)}
   :focus-visible{outline:2px solid var(--core-blue);outline-offset:2px}
@@ -118,7 +131,7 @@
   @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 
   /* ---------- chat workspace ---------- */
-  .work{position:relative;flex:1;display:grid;grid-template-columns:82px 1fr;min-height:0}
+  .work{position:relative;flex:1;display:grid;grid-template-columns:82px minmax(0,1fr);min-height:0}
   /* LIVE 3D: a real wireframe core rendered behind the workspace itself (not a picture) */
   .holo3d{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
   .rail,.chatcol,.squadcol{position:relative;z-index:1}
@@ -166,7 +179,7 @@
   .clarify.answered button.picked{opacity:1;background:var(--bee);color:#111}
 
   .composer{border-top:1px solid var(--line);padding:16px 24px;display:flex;gap:12px;align-items:flex-end}
-  .composer textarea{flex:1;resize:none;background:var(--panel);border:1px solid var(--line);border-radius:13px;color:var(--text);
+  .composer textarea{flex:1;min-width:0;resize:none;background:var(--panel);border:1px solid var(--line);border-radius:13px;color:var(--text);
     padding:13px 15px;font-family:var(--font);font-size:14.5px;line-height:1.45;max-height:140px;min-height:48px;transition:border-color .2s,box-shadow .2s}
   .composer textarea:focus{outline:none;border-color:var(--edge);box-shadow:0 0 0 3px rgba(245,197,24,.08)}
   .mic{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:13px;width:48px;height:48px;cursor:pointer;flex:none;transition:.15s;display:flex;align-items:center;justify-content:center}
@@ -198,7 +211,7 @@
   .send{background:linear-gradient(180deg,var(--bee-bright),var(--bee));border:none;color:#0a0a0a;font-weight:800;border-radius:13px;padding:0 24px;height:48px;cursor:pointer;letter-spacing:.08em;transition:transform .12s}
   .send:hover{transform:translateY(-1px)}.send:disabled{opacity:.4;cursor:default;transform:none}
   .hint{padding:0 24px 14px;color:#565b66;font-size:11px;letter-spacing:.02em}
-  @media(max-width:620px){.work{grid-template-columns:62px 1fr}.chip{font-size:9.5px;padding:7px 10px}.corner{display:none}}
+  @media(max-width:620px){.work{grid-template-columns:62px minmax(0,1fr)}.chip{font-size:9.5px;padding:7px 10px}.corner{display:none}}
 
   /* ---------- SUPER: squad workspace (merged from squad.html, sq-scoped) ---------- */
   .squadcol{display:none;flex-direction:column;min-height:0;background:linear-gradient(180deg,rgba(13,14,18,.6),rgba(8,9,11,.6))}
@@ -864,6 +877,15 @@ window.Super={ showMode, sqDetect, get squadReady(){ return SQ_MODELS.length>0; 
   get mode(){ return document.getElementById('squadcol').classList.contains('on')?'squad':'chat'; },
   holoPx(){ Holo3D.draw(); return Holo3D.px(); },
   get busy(){ return !!window.__beeBusy; }, _setBusy(v){ window.__beeBusy=!!v; } };
+/* ---- PWA — register only where a worker can actually run ---- */
+if ('serviceWorker' in navigator &&
+    (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+  addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+}
+window.BeePWA = {
+  get supported(){ return 'serviceWorker' in navigator; },
+  get controlled(){ return !!(navigator.serviceWorker && navigator.serviceWorker.controller); },
+};
 </script>
 <script src="shell.js"></script>
 </body>

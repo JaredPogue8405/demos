@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Fairway">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#12241a"/>
+      <stop offset="1" stop-color="#0a1410"/>
+    </linearGradient>
+  </defs>
+  <rect x="40" y="40" width="432" height="432" rx="120" fill="url(#bg)"/>
+  <path d="M196 400V128l150 58-150 58" fill="none" stroke="#7ee2a8" stroke-width="40" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="196" cy="404" r="30" fill="#f0c33c"/>
+</svg>

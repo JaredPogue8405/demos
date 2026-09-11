@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Showroom">
+  <rect width="512" height="512" fill="#f5bc55"/>
+  <path d="M256 156l92 53v106l-92 53-92-53V209z" fill="none" stroke="#1c1305" stroke-width="30" stroke-linejoin="round"/>
+  <path d="M256 214l40 23v46l-40 23-40-23v-46z" fill="#1c1305"/>
+</svg>
