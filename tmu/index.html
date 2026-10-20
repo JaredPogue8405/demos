@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Support Saints Bowling</title>
+<meta name="description" content="Help the Thomas More Saints Men's Bowling team cover travel, lane fees, equipment and tournament entries for the 2026–27 season.">
+<meta name="theme-color" content="#00549E">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Support Thomas More Saints Bowling">
+<meta property="og:description" content="Travel, lane fees, equipment and tournament entries for the 2026–27 season. Every dollar helps.">
+<meta property="og:url" content="https://jaredpogue8405.github.io/demos/tmu/">
+<meta property="og:image" content="https://jaredpogue8405.github.io/demos/tmu/img/share.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --saints: #00549E;
+    --saints-deep: #003a6e;
+    --charge: #3d8fe0;
+    --silver: #B5B7B9;
+    --ink: #0a1526;
+    --night: #061020;
+    --paper: #f4f6fa;
+    --white: #ffffff;
+    --muted: #5b6676;
+    --line: #dde3ec;
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 16px/1.55 Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  img { display: block; max-width: 100%; }
+  a { color: inherit; }
+  .display { font-family: "Big Shoulders Display", Impact, "Arial Narrow", sans-serif; font-weight: 900; text-transform: uppercase; letter-spacing: .01em; line-height: .92; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+
+  /* ---------- buttons ---------- */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    min-height: 54px; padding: 0 26px; border-radius: 999px; border: 0;
+    font: 700 17px/1 Inter, system-ui, sans-serif; text-decoration: none; cursor: pointer;
+    transition: transform .15s cubic-bezier(.16,1,.3,1), background-color .15s, box-shadow .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn:focus-visible { outline: 3px solid var(--charge); outline-offset: 3px; }
+  .btn svg { width: 20px; height: 20px; flex: none; }
+  .btn-donate { background: var(--white); color: var(--saints); box-shadow: 0 10px 30px -8px rgba(0,0,0,.45); }
+  .btn-donate:hover { background: #eaf2fc; }
+  .btn-donate.solid { background: var(--saints); color: var(--white); box-shadow: 0 12px 28px -10px rgba(0,84,158,.7); }
+  .btn-donate.solid:hover { background: var(--saints-deep); }
+  .btn-ghost { background: rgba(255,255,255,.12); color: var(--white); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.55); }
+  .btn-ghost:hover { background: rgba(255,255,255,.22); }
+  .btn-line { background: var(--white); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--line); }
+  .btn-line:hover { box-shadow: inset 0 0 0 1.5px var(--saints); color: var(--saints); }
+  .btn[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
+
+  /* ---------- hero ---------- */
+  .hero {
+    position: relative; min-height: 100svh; display: flex; align-items: flex-end;
+    color: var(--white); background: var(--night); overflow: hidden; isolation: isolate;
+  }
+  .hero picture, .hero picture img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; z-index: -2; }
+  .hero::after {
+    content: ""; position: absolute; inset: 0; z-index: -1;
+    background:
+      linear-gradient(180deg, rgba(6,16,32,.55) 0%, rgba(6,16,32,0) 28%, rgba(6,16,32,.25) 48%, rgba(0,40,80,.92) 78%, rgba(6,16,32,1) 100%);
+  }
+  .hero .wrap { width: 100%; padding-top: 90px; padding-bottom: calc(40px + env(safe-area-inset-bottom)); }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: #cfe2f7; }
+  .eyebrow::before { content: ""; width: 22px; height: 2px; background: currentColor; }
+  .hero h1 { margin: 14px 0 14px; font-size: clamp(54px, 15vw, 128px); text-shadow: 0 4px 30px rgba(0,0,0,.35); }
+  .hero h1 span { display: block; color: #9cc7f2; }
+  .hero p.lede { max-width: 34ch; margin: 0 0 26px; font-size: clamp(17px, 2.2vw, 20px); color: #e6eef8; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; }
+  .cta-row .btn { flex: 1 1 200px; max-width: 320px; }
+  .topbar { position: absolute; top: 0; left: 0; right: 0; padding: calc(14px + env(safe-area-inset-top)) 20px 0; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; }
+  .topbar a { text-decoration: none; opacity: .9; }
+  .topbar .mark { display: flex; align-items: center; gap: 10px; }
+  .topbar .mark b { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; background: var(--saints); font: 900 22px/1 "Big Shoulders Display", sans-serif; }
+
+  /* ---------- sections ---------- */
+  section { padding: 64px 0; }
+  .kicker { font-weight: 700; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--saints); margin: 0 0 10px; }
+  h2 { margin: 0 0 14px; font-size: clamp(40px, 9vw, 68px); color: var(--ink); }
+  .sub { margin: 0 0 32px; max-width: 58ch; color: var(--muted); font-size: 17px; }
+
+  .why { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .why div { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 22px 20px; }
+  .why b { display: block; font: 900 30px/1 "Big Shoulders Display", sans-serif; text-transform: uppercase; color: var(--saints); margin-bottom: 8px; }
+  .why span { color: var(--muted); font-size: 15px; }
+
+  /* gallery */
+  .gallery { display: grid; grid-template-columns: repeat(6, 1fr); grid-auto-rows: 120px; gap: 10px; }
+  .gallery figure { margin: 0; border-radius: 14px; overflow: hidden; background: #c9d6e6; }
+  .gallery img { width: 100%; height: 100%; object-fit: cover; }
+  .g1 { grid-column: span 3; grid-row: span 3; }
+  .g2 { grid-column: span 3; grid-row: span 3; }
+  .g3 { grid-column: span 2; grid-row: span 3; }
+  .g4 { grid-column: span 2; grid-row: span 3; }
+  .g5 { grid-column: span 2; grid-row: span 3; }
+  @media (max-width: 640px) {
+    .gallery { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 110px; }
+    .g1 { grid-column: span 2; grid-row: span 3; }
+    .g2, .g3, .g4, .g5 { grid-column: span 1; grid-row: span 2; }
+  }
+
+  /* schedule */
+  .sched-band { background: var(--ink); color: var(--white); }
+  .sched-band h2 { color: var(--white); }
+  .sched-band .kicker { color: #9cc7f2; }
+  .sched-band .sub { color: #aab8ca; }
+  .sched-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 28px; align-items: start; }
+  @media (max-width: 820px) { .sched-grid { grid-template-columns: 1fr; } }
+  .sched { list-style: none; margin: 0; padding: 0; border-top: 1px solid rgba(255,255,255,.12); }
+  .sched li { display: grid; grid-template-columns: 96px 1fr auto; gap: 12px; align-items: center; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,.12); }
+  .sched .d { font-variant-numeric: tabular-nums; font-weight: 700; color: #9cc7f2; font-size: 14px; letter-spacing: .02em; }
+  .sched .n { font-weight: 600; font-size: 15px; }
+  .sched .tag { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; }
+  .sched li.past { opacity: .5; }
+  .sched li.past .tag { background: rgba(255,255,255,.1); color: #c9d4e2; }
+  .sched li.next { opacity: 1; }
+  .sched li.next .tag { background: var(--saints); color: var(--white); box-shadow: 0 0 0 2px #3d8fe0 inset; }
+  .sched .break { padding: 10px 0 4px; border-bottom: 0; display: block; font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #6f86a3; }
+  .poster { border-radius: var(--radius); overflow: hidden; box-shadow: 0 30px 60px -30px rgba(0,0,0,.8); }
+  .poster-cap { margin-top: 12px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 14px; color: #aab8ca; }
+  .poster-cap a { color: #cfe2f7; font-weight: 600; }
+
+  /* give */
+  .give { background: linear-gradient(160deg, var(--saints) 0%, var(--saints-deep) 100%); color: var(--white); text-align: center; }
+  .give h2 { color: var(--white); }
+  .give .kicker { color: #cfe2f7; }
+  .give .sub { color: #dbe8f7; margin-left: auto; margin-right: auto; }
+  .give .btn-donate { min-height: 60px; font-size: 19px; }
+  .pay { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 16px; max-width: 900px; margin: 0 auto; align-items: start; }
+  .pay-card { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  .pay-card .btn { width: 100%; padding: 0 18px; }
+  .qr { width: 180px; padding: 14px; background: var(--white); border-radius: var(--radius); color: var(--ink); }
+  .pay-card.main .qr { width: 200px; }
+  .qrcode { aspect-ratio: 1; display: grid; place-items: center; }
+  .qrcode svg { width: 100%; height: 100%; }
+  .qr small { display: block; margin-top: 8px; font-size: 13px; font-weight: 600; color: var(--muted); }
+  .pay-note { margin: 22px auto 0; font-size: 14px; color: #cfe2f7; }
+  /* on a phone you tap, you can't scan your own screen: drop the QR codes */
+  @media (max-width: 760px) {
+    .pay { grid-template-columns: 1fr; max-width: 420px; gap: 12px; }
+    .pay .qr { display: none; }
+  }
+
+  /* share */
+  .share-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .share-grid .btn { width: 100%; }
+  .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); opacity: 0; pointer-events: none; background: var(--ink); color: var(--white); padding: 12px 18px; border-radius: 999px; font-weight: 600; font-size: 15px; transition: opacity .2s, transform .2s cubic-bezier(.16,1,.3,1); z-index: 20; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* follow */
+  .follow { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+  .follow a { display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); text-decoration: none; transition: border-color .15s, transform .15s; }
+  .follow a:hover { border-color: var(--saints); }
+  .follow a:active { transform: scale(.98); }
+  .follow a:focus-visible { outline: 3px solid var(--charge); outline-offset: 2px; }
+  .follow i { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: #e8f0fa; color: var(--saints); }
+  .follow i svg { width: 22px; height: 22px; }
+  .follow b { display: block; font-size: 16px; }
+  .follow small { color: var(--muted); font-size: 13px; }
+
+  footer { padding: 34px 0 calc(34px + env(safe-area-inset-bottom)); text-align: center; color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); }
+
+  /* sticky donate on phones */
+  .sticky { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 10; display: none; transform: translateY(140%); transition: transform .3s cubic-bezier(.16,1,.3,1); }
+  .sticky.on { transform: none; }
+  .sticky .btn { width: 100%; }
+  @media (max-width: 640px) { .sticky { display: block; } footer { padding-bottom: 110px; } }
+  @media (prefers-reduced-motion: reduce) { .sticky, .toast, .btn { transition: none; } }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <picture>
+    <source media="(max-width: 640px)" srcset="img/trick-shot.jpg">
+    <img src="img/lane-pin.jpg" alt="Two Saints bowlers posing on the lane, one crouched with a bowling pin" fetchpriority="high">
+  </picture>
+  <div class="topbar">
+    <a class="mark" href="https://thomasmoresaints.com/sports/mens-bowling" target="_blank" rel="noopener"><b>S</b>Thomas More</a>
+    <a href="#schedule">Schedule</a>
+  </div>
+  <div class="wrap">
+    <span class="eyebrow">2026–27 Fundraiser</span>
+    <h1 class="display">Saints<span>Men's Bowling</span></h1>
+    <p class="lede">Help the Thomas More Saints cover travel, lane fees, equipment and tournament entries this season. Every dollar keeps us on the lanes.</p>
+    <div class="cta-row">
+      <a class="btn btn-donate" data-donate href="#give">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.5 3 5 6.4 5c2 0 3.4 1.1 4.1 2.3h3c.7-1.2 2.1-2.3 4.1-2.3 3.4 0 5.5 3.5 4 6.8C19.5 16.4 12 21 12 21z"/></svg>
+        Donate
+      </a>
+      <button class="btn btn-ghost" type="button" data-share>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>
+        Share this page
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="why">
+    <div class="wrap">
+      <p class="kicker">Where your gift goes</p>
+      <h2 class="display">Keep the Saints rolling</h2>
+      <p class="sub">College bowling is a road sport. Twelve events across the Midwest and South this season, and every one of them costs money to get to and compete in.</p>
+      <div class="why">
+        <div><b>Travel</b><span>Gas, vans and hotel nights for road weekends from Indiana to the Carolinas.</span></div>
+        <div><b>Lane fees</b><span>Practice blocks so the team is ready for every oil pattern.</span></div>
+        <div><b>Equipment</b><span>Balls, resurfacing, shoes and team gear.</span></div>
+        <div><b>Entries</b><span>Tournament entry fees for collegiate events and the conference championship.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="team" style="padding-top:0">
+    <div class="wrap">
+      <p class="kicker">The team</p>
+      <h2 class="display">Meet the Saints</h2>
+      <div class="gallery">
+        <figure class="g1"><img src="img/blocking.jpg" alt="A Saints bowler in a defensive stance on the lane while a teammate holds a pin behind him" loading="lazy"></figure>
+        <figure class="g2"><img src="img/smile.jpg" alt="Saints bowler number 23 smiling with arms crossed in front of the lanes" loading="lazy"></figure>
+        <figure class="g3"><img src="img/trick-shot-2.jpg" alt="Three Saints bowlers on the lane, one swinging a golf club" loading="lazy"></figure>
+        <figure class="g4"><img src="img/portrait.jpg" alt="Saints bowler portrait under blue lane lights" loading="lazy"></figure>
+        <figure class="g5"><img src="img/lane-pin.jpg" alt="Saints bowler crouched on the lane holding a pin" loading="lazy"></figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="schedule" class="sched-band">
+    <div class="wrap sched-grid">
+      <div>
+        <p class="kicker">On the road</p>
+        <h2 class="display">2026–27 Schedule</h2>
+        <p class="sub">Twelve events. Follow along and cheer us on.</p>
+        <ol class="sched" id="sched"></ol>
+      </div>
+      <div>
+        <div class="poster"><img src="img/schedule-2026-27.jpg" alt="Saints Men's Bowling 2026–2027 schedule graphic" loading="lazy"></div>
+        <div class="poster-cap"><span>Official schedule graphic, @tmusaints</span><a href="https://thomasmoresaints.com/sports/mens-bowling/schedule" target="_blank" rel="noopener">Full schedule ↗</a></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="give" class="give">
+    <div class="wrap">
+      <p class="kicker">Make a gift</p>
+      <h2 class="display">Back the Saints</h2>
+      <p class="sub">Any amount helps. Give through GoFundMe, or send it straight over Venmo or Cash App.</p>
+      <div class="pay">
+        <div class="pay-card main">
+          <a class="btn btn-donate" data-donate href="#give">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.5 3 5 6.4 5c2 0 3.4 1.1 4.1 2.3h3c.7-1.2 2.1-2.3 4.1-2.3 3.4 0 5.5 3.5 4 6.8C19.5 16.4 12 21 12 21z"/></svg>
+            Donate on GoFundMe
+          </a>
+          <div class="qr"><div class="qrcode" data-qr="gofundme" role="img" aria-label="QR code for the GoFundMe page"></div><small>Scan for GoFundMe</small></div>
+        </div>
+        <div class="pay-card">
+          <a class="btn btn-ghost" data-pay="venmo" href="#give" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.4 3c.7 1.1 1 2.3 1 3.8 0 4.7-4 10.8-7.3 15.2H5.6L2.6 4.1l6.6-.6 1.6 12.9c1.5-2.4 3.3-6.3 3.3-8.9 0-1.4-.2-2.4-.6-3.2L19.4 3z"/></svg>
+            Venmo @Jared-Pogue-1
+          </a>
+          <div class="qr"><div class="qrcode" data-qr="venmo" role="img" aria-label="QR code for Venmo @Jared-Pogue-1"></div><small>Scan for Venmo</small></div>
+        </div>
+        <div class="pay-card">
+          <a class="btn btn-ghost" data-pay="cashapp" href="#give" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v18M16.5 7.5c-.8-1.2-2.4-2-4.4-2-2.6 0-4.3 1.3-4.3 3.2 0 4.4 9 2.4 9 6.8 0 2-1.9 3.4-4.6 3.4-2.1 0-3.9-.9-4.8-2.4"/></svg>
+            Cash App $JPogue011
+          </a>
+          <div class="qr"><div class="qrcode" data-qr="cashapp" role="img" aria-label="QR code for Cash App $JPogue011"></div><small>Scan for Cash App</small></div>
+        </div>
+      </div>
+      <p class="pay-note">Venmo and Cash App go to Jared Pogue, who is collecting for the team.</p>
+    </div>
+  </section>
+
+  <section id="share">
+    <div class="wrap">
+      <p class="kicker">Spread the word</p>
+      <h2 class="display">Send it to one more person</h2>
+      <p class="sub">Sharing is just as big as giving. One tap sends this page.</p>
+      <div class="share-grid">
+        <a class="btn btn-line" id="sms" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>
+          Text it
+        </a>
+        <a class="btn btn-line" id="email" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+          Email it
+        </a>
+        <a class="btn btn-line" id="fb" href="#" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 8h3V4h-3a4 4 0 0 0-4 4v2H7v4h3v8h4v-8h3l1-4h-4V8z"/></svg>
+          Facebook
+        </a>
+        <button class="btn btn-line" type="button" id="copy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          Copy link
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section id="follow" style="padding-top:0">
+    <div class="wrap">
+      <p class="kicker">Follow the season</p>
+      <h2 class="display">Stay in the loop</h2>
+      <div class="follow">
+        <a href="https://www.instagram.com/tmubowling/" target="_blank" rel="noopener">
+          <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg></i>
+          <span><b>@tmubowling</b><small>Saints Bowling on Instagram</small></span>
+        </a>
+        <a href="https://www.instagram.com/tmusaints/" target="_blank" rel="noopener">
+          <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg></i>
+          <span><b>@tmusaints</b><small>Thomas More Athletics on Instagram</small></span>
+        </a>
+        <a href="https://x.com/tmubowling" target="_blank" rel="noopener">
+          <i><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.8 3h3.1l-6.8 7.7L22 21h-6.2l-4.9-6.4L5.3 21H2.2l7.3-8.3L2 3h6.4l4.4 5.8L17.8 3zm-1.1 16.2h1.7L7.4 4.7H5.6l11.1 14.5z"/></svg></i>
+          <span><b>@tmubowling</b><small>Saints Bowling on X</small></span>
+        </a>
+        <a href="https://thomasmoresaints.com/sports/mens-bowling/roster" target="_blank" rel="noopener">
+          <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></i>
+          <span><b>Team roster</b><small>thomasmoresaints.com</small></span>
+        </a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">Thomas More University Saints Men's Bowling · Fundraiser organized by Jared Pogue</div>
+</footer>
+
+<div class="sticky" id="sticky"><a class="btn btn-donate solid" data-donate href="#give">Donate to Saints Bowling</a></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script>
+/* ===== Where the money goes. Change a link here and every button + QR follows. ===== */
+const DONATE_URL = 'https://www.gofundme.com/f/help-send-thomas-more-bowling-to-compete';
+const PAY = {
+  venmo: 'https://venmo.com/u/Jared-Pogue-1',
+  cashapp: 'https://cash.app/$JPogue011',
+};
+/* ================================================================================= */
+
+const PAGE_URL = 'https://jaredpogue8405.github.io/demos/tmu/';
+const SHARE_TEXT = "I'm raising money for the Thomas More Saints bowling team's 2026-27 season. Anything helps, even just sharing:";
+
+const SCHEDULE = [
+  ['2026-10-03', '2026-10-04', 'Oct 3–4',   'Midwest Collegiate Shootout'],
+  ['2026-10-09', '2026-10-11', 'Oct 9–11',  'DV8 Western Shootout'],
+  ['2026-10-24', '2026-10-25', 'Oct 24–25', 'MSC Lynne Jordan & Brandon Burns Memorial'],
+  ['2026-11-07', '2026-11-08', 'Nov 7–8',   'Bowlero Southern Collegiate Classic'],
+  ['2026-11-14', '2026-11-14', 'Nov 14',    'OBC #2'],
+  ['2027-01-16', '2027-01-17', 'Jan 16–17', 'Kegel-ISBPA Classic'],
+  ['2027-01-23', '2027-01-23', 'Jan 23',    'OBC #3'],
+  ['2027-02-06', '2027-02-06', 'Feb 6',     'OBC #4'],
+  ['2027-02-13', '2027-02-14', 'Feb 13–14', 'McKendree Baker Challenge'],
+  ['2027-02-20', '2027-02-21', 'Feb 20–21', 'Hoosier Classic'],
+  ['2027-03-12', '2027-03-14', 'Mar 12–14', 'ITC-ISC Sectionals'],
+  ['2027-03-19', '2027-03-21', 'Mar 19–21', 'G-MAC / Conference Carolinas Tournament'],
+];
+
+(function schedule() {
+  const ol = document.getElementById('sched');
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  let nextFound = false, lastYear = null;
+  for (const [start, end, label, name] of SCHEDULE) {
+    const y = start.slice(0, 4);
+    if (y !== lastYear) {
+      const b = document.createElement('li'); b.className = 'break'; b.textContent = y === '2026' ? 'Fall 2026' : 'Spring 2027';
+      ol.appendChild(b); lastYear = y;
+    }
+    const e = new Date(end + 'T23:59:59');
+    const s = new Date(start + 'T00:00:00');
+    const li = document.createElement('li');
+    let tag = '';
+    if (e < today) { li.className = 'past'; tag = 'Done'; }
+    else if (!nextFound) { nextFound = true; li.className = 'next'; tag = s <= new Date() ? 'Now' : 'Next'; }
+    li.innerHTML = '<span class="d"></span><span class="n"></span>' + (tag ? '<span class="tag"></span>' : '<span></span>');
+    li.querySelector('.d').textContent = label;
+    li.querySelector('.n').textContent = name;
+    if (tag) li.querySelector('.tag').textContent = tag;
+    ol.appendChild(li);
+  }
+})();
+
+(function donate() {
+  const live = /^https:\/\/(www\.)?(gofundme\.com|gofund\.me)\//.test(DONATE_URL);
+  document.querySelectorAll('[data-donate]').forEach(a => {
+    if (live) { a.href = DONATE_URL; a.target = '_blank'; a.rel = 'noopener'; }
+  });
+  document.querySelectorAll('[data-pay]').forEach(a => { a.href = PAY[a.dataset.pay]; });
+  const targets = { gofundme: live ? DONATE_URL : '', venmo: PAY.venmo, cashapp: PAY.cashapp };
+  document.querySelectorAll('[data-qr]').forEach(el => {
+    const url = targets[el.dataset.qr];
+    // QR lib is a CDN script; if it fails the buttons still work, so just drop the empty box
+    if (!url || !window.qrcode) { el.closest('.qr').hidden = true; return; }
+    const q = qrcode(0, 'M'); q.addData(url); q.make();
+    el.innerHTML = q.createSvgTag({ cellSize: 6, margin: 0, scalable: true });
+  });
+})();
+
+(function share() {
+  const toast = document.getElementById('toast');
+  let t;
+  const say = msg => { toast.textContent = msg; toast.classList.add('show'); clearTimeout(t); t = setTimeout(() => toast.classList.remove('show'), 2200); };
+  const msg = SHARE_TEXT + ' ' + PAGE_URL;
+  document.getElementById('sms').href = 'sms:?&body=' + encodeURIComponent(msg);
+  document.getElementById('email').href = 'mailto:?subject=' + encodeURIComponent('Help the Thomas More Saints bowling team') + '&body=' + encodeURIComponent(msg + '\n\nThank you!');
+  document.getElementById('fb').href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(PAGE_URL);
+
+  async function copy() {
+    try { await navigator.clipboard.writeText(PAGE_URL); say('Link copied'); }
+    catch (_) {
+      const ta = document.createElement('textarea'); ta.value = PAGE_URL; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); say('Link copied'); } catch (__) { say(PAGE_URL); }
+      ta.remove();
+    }
+  }
+  document.getElementById('copy').addEventListener('click', copy);
+  document.querySelector('[data-share]').addEventListener('click', async () => {
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Support Saints Bowling', text: SHARE_TEXT, url: PAGE_URL }); } catch (_) {}
+    } else {
+      document.getElementById('share').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    }
+  });
+})();
+
+(function sticky() {
+  const el = document.getElementById('sticky');
+  const hero = document.querySelector('.hero');
+  const give = document.getElementById('give');
+  let heroGone = false, giveSeen = false;
+  const upd = () => el.classList.toggle('on', heroGone && !giveSeen);
+  new IntersectionObserver(([e]) => { heroGone = !e.isIntersecting; upd(); }, { threshold: 0.05 }).observe(hero);
+  new IntersectionObserver(([e]) => { giveSeen = e.isIntersecting; upd(); }).observe(give);
+})();
+</script>
+</body>
+</html>
